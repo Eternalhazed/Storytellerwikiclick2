@@ -64,7 +64,7 @@ export function appendLeafNode(
 
   const taggedNode = {
     span: [markedNode],
-    ":@": { "@_id": tagId },
+    ":@": { "@_id": tagId, "@_class": "storyteller-sentence-span" },
   } as unknown as XmlNode
 
   taggedSentences.add(sentenceId)

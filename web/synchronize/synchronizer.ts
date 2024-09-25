@@ -415,7 +415,11 @@ export class Synchronizer {
 .-epub-media-overlay-active {
   background-color: #ffb;
 }
-      `,
+
+span.storyteller-sentence-span {
+  display: contents;
+}
+`,
       "utf-8",
     )
   }
