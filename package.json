@@ -2,12 +2,14 @@
   "name": "storyteller",
   "private": true,
   "type": "module",
-  "packageManager": "yarn@4.3.1",
+  "packageManager": "yarn@4.5.0",
   "workspaces": [
     "web/",
     "docs/",
     "mobile/",
-    "fuzzy/"
+    "ts-toolkit/shared/",
+    "ts-toolkit/navigator/",
+    "ts-toolkit/navigator-html-injectables/"
   ],
   "scripts": {
     "build:docs": "yarn workspace @storyteller/docs build",

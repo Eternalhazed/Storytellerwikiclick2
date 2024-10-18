@@ -1,0 +1,27 @@
+#bottom-bar,
+#top-bar {
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  touch-action: manipulation;
+}
+
+#top-bar {
+  justify-content: space-between;
+  padding: 0 1em;
+}
+
+.wrapper {
+  height: calc(100vh - 96px);
+  height: calc(100dvh - 96px); /* New browsers */
+  display: flex;
+  margin: 0;
+}
+
+.container {
+  contain: content;
+  width: 100%;
+  height: 100%;
+}

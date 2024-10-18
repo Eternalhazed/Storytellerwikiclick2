@@ -9,6 +9,15 @@
     },
     {
       "path": "mobile"
+    },
+    {
+      "path": "ts-toolkit/navigator"
+    },
+    {
+      "path": "ts-toolkit/navigator-html-injectables"
+    },
+    {
+      "path": "ts-toolkit/shared"
     }
   ]
 }

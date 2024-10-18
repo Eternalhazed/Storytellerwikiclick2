@@ -239,9 +239,9 @@ export class Epub {
     return entries.find((entry) => entry.filename === path)
   }
 
-  private async getFileData(path: string): Promise<Uint8Array>
-  private async getFileData(path: string, encoding: "utf-8"): Promise<string>
-  private async getFileData(
+  public async getFileData(path: string): Promise<Uint8Array>
+  public async getFileData(path: string, encoding: "utf-8"): Promise<string>
+  public async getFileData(
     path: string,
     encoding?: "utf-8" | undefined,
   ): Promise<string | Uint8Array> {

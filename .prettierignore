@@ -22,3 +22,5 @@ mobile/modules/*/android/build
 mobile/modules/*/ios/.build
 
 flake.*
+
+ts-toolkit
