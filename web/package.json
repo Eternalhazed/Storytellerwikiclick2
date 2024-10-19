@@ -65,6 +65,7 @@
     "@types/stream-json": "^1",
     "esbuild": "^0.23.0",
     "openapi-typescript-codegen": "^0.24.0",
+    "raw-loader": "^4.0.2",
     "stream-chain": "^2.2.5",
     "stream-json": "^1.8.0",
     "tsx": "^4.7.2",

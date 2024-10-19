@@ -2,13 +2,13 @@ import { MediaType } from "@readium/shared";
 import { Link, Publication } from "@readium/shared";
 
 // Readium CSS imports
-// The "?inline" query is to prevent some bundlers from injecting these into the page (e.g. vite)
+// The "!!raw-loader!" query is to prevent some bundlers from injecting these into the page (e.g. vite)
 // @ts-ignore
-import readiumCSSAfter from "readium-css/css/dist/ReadiumCSS-after.css?inline";
+import readiumCSSAfter from "!!raw-loader!readium-css/css/dist/ReadiumCSS-after.css";
 // @ts-ignore
-import readiumCSSBefore from "readium-css/css/dist/ReadiumCSS-before.css?inline";
+import readiumCSSBefore from "!!raw-loader!readium-css/css/dist/ReadiumCSS-before.css";
 // @ts-ignore
-import readiumCSSDefault from "readium-css/css/dist/ReadiumCSS-default.css?inline";
+import readiumCSSDefault from "!!raw-loader!readium-css/css/dist/ReadiumCSS-default.css";
 
 // Utilities
 const blobify = (source: string, type: string) => URL.createObjectURL(new Blob([source], { type }));

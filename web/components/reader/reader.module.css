@@ -18,6 +18,7 @@
   height: calc(100dvh - 96px); /* New browsers */
   display: flex;
   margin: 0;
+  width: 100%;
 }
 
 .container {

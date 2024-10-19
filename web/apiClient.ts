@@ -11,6 +11,8 @@ import {
   User,
   UserRequest,
 } from "./apiModels"
+import { Locator } from "@readium/shared"
+import { UUID } from "./uuid"
 
 export class ApiClientError extends Error {
   constructor(
@@ -542,5 +544,55 @@ export class ApiClient {
 
     const book = (await response.json()) as BookDetail
     return book
+  }
+
+  async getSyncedPosition(
+    bookUuid: UUID,
+  ): Promise<{ timestamp: number; locator: Locator }> {
+    const url = new URL(
+      `${this.rootPath}/books/${bookUuid}/positions`,
+      this.origin,
+    )
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const { timestamp, locator } = (await response.json()) as {
+      timestamp: number
+      locator: Locator
+    }
+    return { timestamp, locator }
+  }
+
+  async syncPosition(
+    bookUuid: UUID,
+    locator: Locator,
+    timestamp: number,
+  ): Promise<void> {
+    const url = new URL(
+      `${this.rootPath}/books/${bookUuid}/positions`,
+      this.origin,
+    )
+
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: this.getHeaders(),
+      credentials: "include",
+      body: JSON.stringify({
+        locator,
+        timestamp,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
   }
 }
