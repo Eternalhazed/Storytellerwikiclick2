@@ -1,0 +1,4 @@
+declined:
+  - "@smoores/epub"
+  - "@smoores/fs"
+  - "@storyteller/web"
