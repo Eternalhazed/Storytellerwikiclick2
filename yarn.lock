@@ -7988,7 +7988,6 @@ __metadata:
     debug: "npm:^4.3.4"
     echogarden: "npm:^2.0.7"
     esbuild: "npm:^0.23.0"
-    fast-xml-parser: "npm:^4.3.6"
     form-data: "npm:^4.0.0"
     http-proxy: "npm:^1.18.1"
     js-levenshtein: "npm:^1.1.6"
@@ -14593,7 +14592,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-xml-parser@npm:^4.0.12, fast-xml-parser@npm:^4.2.4, fast-xml-parser@npm:^4.3.6":
+"fast-xml-parser@npm:^4.0.12, fast-xml-parser@npm:^4.2.4":
   version: 4.3.6
   resolution: "fast-xml-parser@npm:4.3.6"
   dependencies:
