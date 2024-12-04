@@ -7841,7 +7841,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@smoores/epub@workspace:epub"
   dependencies:
-    "@smoores/fs": "workspace:^*"
+    "@smoores/fs": "workspace:^"
     "@swc/cli": "npm:^0.5.2"
     "@swc/core": "npm:^1.10.0"
     "@tsconfig/strictest": "npm:^2.0.5"
@@ -7852,7 +7852,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@smoores/fs@workspace:*, @smoores/fs@workspace:^*, @smoores/fs@workspace:fs":
+"@smoores/fs@workspace:*, @smoores/fs@workspace:^, @smoores/fs@workspace:fs":
   version: 0.0.0-use.local
   resolution: "@smoores/fs@workspace:fs"
   dependencies:
