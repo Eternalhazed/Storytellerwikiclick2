@@ -6,6 +6,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  transpilePackages: ["@smoores/epub", "smoores/fs"],
   serverExternalPackages: ["piscina", "@mapbox/node-pre-gyp"],
 }
 

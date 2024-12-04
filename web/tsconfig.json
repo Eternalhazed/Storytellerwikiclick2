@@ -33,7 +33,11 @@
       // }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      // This allows us to treat our typescript source files
+      // in dependent packages as internal to this workspace
+      // for development purposes (e.g. hot module reloading, etc)
+      "@smoores/*": ["../*/index.ts"]
     },
     "outDir": "tsbuild",
     "noEmit": false
