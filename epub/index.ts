@@ -145,6 +145,13 @@ export type MetadataEntry = {
 
 export type EpubMetadata = MetadataEntry[]
 
+/**
+ * A single EPUB instance.
+ *
+ * ```ts
+ * const epub = await Epub.from('./path/to/book.epub');
+ * const title = await epub.getTitle()
+ */
 export class Epub {
   static xmlParser = new XMLParser({
     allowBooleanAttributes: true,
