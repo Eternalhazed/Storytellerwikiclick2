@@ -16,6 +16,8 @@
   "dependencies": {
     "@ariakit/react": "^0.4.1",
     "@echogarden/espeak-ng-emscripten": "^0.3.3",
+    "@smoores/epub": "workspace:*",
+    "@smoores/fs": "workspace:*",
     "@zip.js/zip.js": "^2.7.40",
     "argon2": "^0.40.1",
     "axios": " 1.6.7",

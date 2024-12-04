@@ -8,7 +8,7 @@ import {
   addLink,
   formatDuration,
   getBody,
-} from "@/epub"
+} from "@smoores/epub"
 import { getTrackDuration } from "@/audio"
 import {
   SentenceRange,

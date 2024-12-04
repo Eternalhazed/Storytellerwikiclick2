@@ -1,6 +1,6 @@
 import { join } from "node:path"
 import { describe, it } from "node:test"
-import { Epub, ParsedXml, getBody, textContent } from "../epub"
+import { Epub, ParsedXml, getBody, textContent } from "./index.js"
 import assert from "node:assert"
 import { stat } from "node:fs/promises"
 

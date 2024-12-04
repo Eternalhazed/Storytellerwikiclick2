@@ -3,7 +3,7 @@ import { getBookUuid } from "@/database/books"
 import { open } from "node:fs/promises"
 import { NextResponse } from "next/server"
 import { basename } from "node:path"
-import { Epub } from "@/epub"
+import { Epub } from "@smoores/epub"
 import { getAudioCoverFilepath, getEpubCoverFilepath } from "@/assets/covers"
 import { getEpubFilepath } from "@/assets/paths"
 

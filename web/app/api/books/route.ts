@@ -8,7 +8,7 @@ import {
 } from "@/assets/assets"
 import { withHasPermission } from "@/auth"
 import { createBook, getBooks } from "@/database/books"
-import { Epub } from "@/epub"
+import { Epub } from "@smoores/epub"
 import { isProcessing, isQueued } from "@/work/distributor"
 import { NextResponse } from "next/server"
 import { basename, join } from "node:path"

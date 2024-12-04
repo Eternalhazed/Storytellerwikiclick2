@@ -21,4 +21,12 @@ mobile/.expo
 mobile/modules/*/android/build
 mobile/modules/*/ios/.build
 
+epub/index.js
+epub/index.d.ts
+epub/index.test.d.ts
+
+fs/index.js
+fs/index.d.ts
+fs/index.test.d.ts
+
 flake.*

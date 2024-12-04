@@ -1,5 +1,5 @@
 import { describe, it } from "node:test"
-import { Epub, ParsedXml, XmlNode } from "../../epub"
+import { Epub, ParsedXml, XmlNode } from "@smoores/epub"
 import { appendTextNode, tagSentences } from "../tagSentences"
 import assert from "node:assert"
 

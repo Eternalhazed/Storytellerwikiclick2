@@ -1,6 +1,6 @@
 import { UUID } from "@/uuid"
 import { extname } from "node:path"
-import { Epub } from "@/epub"
+import { Epub } from "@smoores/epub"
 import { getEpubFilepath } from "@/assets/paths"
 import { getEpubCoverFilepath, persistCustomEpubCover } from "@/assets/covers"
 

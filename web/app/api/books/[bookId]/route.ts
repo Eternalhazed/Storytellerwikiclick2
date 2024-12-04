@@ -16,7 +16,7 @@ import {
   getBooks,
   updateBook,
 } from "@/database/books"
-import { Epub } from "@/epub"
+import { Epub } from "@smoores/epub"
 import { isProcessing } from "@/work/distributor"
 import { extension } from "mime-types"
 import { NextResponse } from "next/server"

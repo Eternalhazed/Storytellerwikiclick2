@@ -47,5 +47,13 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next", "tsbuild", "work-dist"]
+  "exclude": ["node_modules", ".next", "tsbuild", "work-dist"],
+  "references": [
+    {
+      "path": "../epub"
+    },
+    {
+      "path": "../fs"
+    }
+  ]
 }

@@ -11,7 +11,7 @@ import { XMLBuilder, XMLParser } from "fast-xml-parser"
 import memoize, { memoizeClear } from "memoize"
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path/posix"
-import { streamFile } from "./fs"
+import { streamFile } from "@smoores/fs"
 
 export type XmlNode = Record<string, ParsedXml> & {
   ":@"?: Record<string, string>
@@ -117,7 +117,7 @@ export class ZipEntry {
     if (this.data) return this.data
 
     const writer = new Uint8ArrayWriter()
-    const data = await this.entry!.getData!(writer)
+    const data = await this.entry!.getData!<Uint8Array>(writer)
     this.data = data
     return this.data
   }

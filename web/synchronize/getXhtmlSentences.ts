@@ -1,4 +1,9 @@
-import { ParsedXml, getElementName, isTextNode, textContent } from "@/epub"
+import {
+  ParsedXml,
+  getElementName,
+  isTextNode,
+  textContent,
+} from "@smoores/epub"
 import { tokenizeSentences } from "./nlp"
 import { BLOCKS } from "./semantics"
 

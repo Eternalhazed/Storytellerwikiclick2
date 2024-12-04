@@ -4,7 +4,7 @@ import {
   findByName,
   getElementName,
   isTextNode,
-} from "@/epub"
+} from "@smoores/epub"
 import { BLOCKS } from "./semantics"
 import { getXHtmlSentences } from "./getXhtmlSentences"
 
