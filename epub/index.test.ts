@@ -16,6 +16,15 @@ void describe("xhtml parsing", () => {
 })
 
 void describe("Epub", () => {
+  void it("can be created from scratch", async () => {
+    const epub = await Epub.create([
+      { id: undefined, type: "dc:title", properties: {}, value: "Title" },
+    ])
+    const title = await epub.getTitle()
+    assert.equal(title, "Title")
+    await epub.close()
+  })
+
   void it("can read from an archived .epub file", async () => {
     const filepath = join("__fixtures__", "moby-dick.epub")
     const epub = await Epub.from(filepath)
@@ -117,7 +126,7 @@ void describe("Epub", () => {
 
     coverPageData[0]!["html"]![1]!["head"]![1]!["title"]![0]!["#text"] =
       "Test title"
-    await epub.writeXhtmlItemContents(spineItems[0]!.id, coverPageData, "xhtml")
+    await epub.writeXhtmlItemContents(spineItems[0]!.id, coverPageData)
 
     const outputFilepath = join(
       "__fixtures__",

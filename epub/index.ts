@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   Entry,
-  Reader,
   Uint8ArrayReader,
   Uint8ArrayWriter,
   ZipReader,
@@ -106,7 +105,7 @@ export type ManifestItem = {
   properties?: string[] | undefined
 }
 
-export class ZipEntry {
+export class EpubEntry {
   filename: string
 
   private entry: Entry | null = null
@@ -148,9 +147,24 @@ export type EpubMetadata = MetadataEntry[]
 /**
  * A single EPUB instance.
  *
+ * The entire EPUB contents will be read into memory.
+ *
  * ```ts
+ * import { Epub, getBody, findByName, textContent } from '@smoores/epub';
+ *
  * const epub = await Epub.from('./path/to/book.epub');
- * const title = await epub.getTitle()
+ * const title = await epub.getTitle();
+ * const spineItems = await epub.getSpineItems();
+ * const chptOne = spineItems[0];
+ * const chptOneXml = await epub.readXhtmlItemContents(chptOne.id);
+ *
+ * const body = getBody(chptOneXml);
+ * const h1 = findByName('h1', body);
+ * const headingText = textContent(h1);
+ *
+ * await epub.setTitle(headingText);
+ * await epub.writeToFile('./path/to/updated.epub');
+ * await epub.close();
  */
 export class Epub {
   static xmlParser = new XMLParser({
@@ -202,18 +216,16 @@ export class Epub {
 
   private dataWriter: Uint8ArrayWriter
 
-  private zipReader: ZipReader<Uint8Array>
-
-  private entries: ZipEntry[] = []
-
   private rootfile: string | null = null
 
   private manifest: Record<string, ManifestItem> | null = null
 
   private spine: string[] | null = null
 
-  private constructor(dataReader: Reader<unknown>) {
-    this.zipReader = new ZipReader(dataReader)
+  private constructor(
+    private entries: EpubEntry[],
+    private onClose?: () => Promise<void> | void,
+  ) {
     this.dataWriter = new Uint8ArrayWriter()
     this.zipWriter = new ZipWriter(this.dataWriter)
 
@@ -226,17 +238,80 @@ export class Epub {
     )
   }
 
+  /**
+   * Close the Epub. Must be called before the Epub goes out
+   * of scope/is garbage collected.
+   */
   async close() {
-    await this.zipReader.close()
+    await this.onClose?.()
+    // TODO: Is it actually necessary to close the writer?
+    // It will always be empty at this point, and close will
+    // actually do more unnecessary work to produce an empty
+    // ZIP archive.
     await this.zipWriter.close()
   }
 
+  /**
+   * Construct an Epub instance, optionally beginning
+   * with the provided metadata.
+   *
+   * @param metadata An array of metadata entries, representing the
+   *  initial metadata for the Epub
+   */
+  static async create(metadata: EpubMetadata = []): Promise<Epub> {
+    const entries = []
+    const encoder = new TextEncoder()
+    const container = encoder.encode(`<?xml version="1.0"?>
+<container>
+  <rootfiles>
+    <rootfile media-type="application/oebps-package+xml" full-path="OEBPS/content.opf"/>
+  </rootfiles>
+</container>
+`)
+    entries.push(
+      new EpubEntry({ filename: "META-INF/container.xml", data: container }),
+    )
+
+    const packageDocument = encoder.encode(`<?xml version="1.0"?>
+<package>
+  <metadata>
+  </metadata>
+  <manifest>
+  </manifest>
+  <spine>
+  </spine>
+</package>    
+`)
+    entries.push(
+      new EpubEntry({ filename: "OEBPS/content.opf", data: packageDocument }),
+    )
+
+    const epub = new Epub(entries)
+    await Promise.all(
+      metadata.map((entry) =>
+        epub.addMetadata(
+          entry.type,
+          { ...entry.properties, ...(entry.id && { id: entry.id }) },
+          entry.value,
+        ),
+      ),
+    )
+    return epub
+  }
+
+  /**
+   * Construct an Epub instance by reading an EPUB
+   * file from `path`.
+   *
+   * @param path Must be a valid filepath to an EPUB archive
+   */
   static async from(path: string): Promise<Epub> {
     const fileData = await streamFile(path)
-    const reader = new Uint8ArrayReader(fileData)
-    const epub = new Epub(reader)
-    const entries = await epub.zipReader.getEntries()
-    epub.entries = entries.map((entry) => new ZipEntry(entry))
+    const dataReader = new Uint8ArrayReader(fileData)
+    const zipReader = new ZipReader(dataReader)
+    const zipEntries = await zipReader.getEntries()
+    const epubEntries = zipEntries.map((entry) => new EpubEntry(entry))
+    const epub = new Epub(epubEntries, () => zipReader.close())
     return epub
   }
 
@@ -327,6 +402,12 @@ export class Epub {
     return packageDocument
   }
 
+  /**
+   * Retrieve the manifest for the Epub.
+   *
+   * This is represented as a map from each manifest items'
+   * id to the rest of its properties.
+   */
   async getManifest() {
     if (this.manifest !== null) return this.manifest
 
@@ -364,6 +445,15 @@ export class Epub {
     return this.manifest
   }
 
+  /**
+   * Retrieve the metadata entries for the Epub.
+   *
+   * This is represented as an array of metadata entries,
+   * in the order that they're presented in the Epub package document.
+   *
+   * For more useful semantic representations of metadata, use
+   * specific methods such as `getTitle()` and `getAuthors()`.
+   */
   async getMetadata() {
     const packageDocument = await this.getPackageDocument()
 
@@ -403,7 +493,14 @@ export class Epub {
     return metadata
   }
 
-  async getEpub2CoverImage() {
+  /**
+   * Even "EPUB 3" publications sometimes still only use the
+   * EPUB 2 specification for identifying the cover image.
+   * This is a private method that is used as a fallback if
+   * we fail to find the cover image according to the EPUB 3
+   * spec.
+   */
+  private async getEpub2CoverImage() {
     const packageDocument = await this.getPackageDocument()
 
     const packageElement = findByName("package", packageDocument)
@@ -433,7 +530,15 @@ export class Epub {
     )
   }
 
-  async getCoverImage() {
+  /**
+   * Retrieve the cover image manifest item.
+   *
+   * This does not return the actual image data. To
+   * retrieve the image data, pass this item's id to
+   * epub.readItemContents, or use epub.getCoverImage()
+   * instead.
+   */
+  async getCoverImageItem() {
     const manifest = await this.getManifest()
     const coverImage = Object.values(manifest).find((item) =>
       item.properties?.includes("cover-image"),
@@ -443,6 +548,27 @@ export class Epub {
     return this.getEpub2CoverImage()
   }
 
+  /**
+   * Retrieve the cover image data as a byte array.
+   *
+   * This does not include, for example, the cover image's
+   * filename or mime type. To retrieve the image manifest
+   * item, use epub.getCoverImageItem().
+   */
+  async getCoverImage() {
+    const coverImageItem = await this.getCoverImageItem()
+    if (!coverImageItem) return coverImageItem
+
+    return this.readItemContents(coverImageItem.id)
+  }
+
+  /**
+   * Retrieve the Epub's language as specified in its
+   * package document metadata.
+   *
+   * If no language metadata is specified, returns null.
+   * Returns the language as an Intl.Locale instance.
+   */
   async getLanguage() {
     const metadata = await this.getMetadata()
     const languageEntries = metadata.filter(
@@ -460,6 +586,10 @@ export class Epub {
     return new Intl.Locale(locale)
   }
 
+  /**
+   * Update the Epub's language metadata entry.
+   */
+  // TODO: Should this take a Locale instead of a string?
   async setLanguage(languageCode: string) {
     const packageDocument = await this.getPackageDocument()
 
@@ -494,6 +624,13 @@ export class Epub {
     this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
   }
 
+  /**
+   * Retrieve the title of the Epub.
+   *
+   * @param short Optional - whether to return only the first title segment
+   *  if multiple are found. Otherwise, will follow the spec to combine title
+   *  segments
+   */
   async getTitle(short = false) {
     const metadata = await this.getMetadata()
     const titleEntries = metadata.filter((entry) => entry.type === "dc:title")
@@ -553,6 +690,17 @@ export class Epub {
       .join(", ")
   }
 
+  /**
+   * Set the title of the Epub.
+   *
+   * If a title already exists, only the first title metadata
+   * entry will be modified to match the new value.
+   *
+   * If no title currently exists, a single title metadata entry
+   * will be created.
+   */
+  // TODO: This should allow users to optionally specify an array,
+  // rather than a single string, to support expanded titles.
   async setTitle(title: string) {
     const packageDocument = await this.getPackageDocument()
 
@@ -587,6 +735,13 @@ export class Epub {
     this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
   }
 
+  /**
+   * Retrieve the list of authors.
+   *
+   * Each author object will contain a name, an optional role,
+   * and a "fileAs" (which defaults to the author's name, if none
+   * is specified).
+   */
   async getAuthors(): Promise<
     {
       name: string
@@ -653,6 +808,12 @@ export class Epub {
     return this.spine
   }
 
+  /**
+   * Retrieve the manifest items that make up the Epub's spine.
+   *
+   * The spine specifies the order that the contents of the Epub
+   * should be displayed to users by default.
+   */
   async getSpineItems() {
     const spine = await this.getSpine()
     const manifest = await this.getManifest()
@@ -672,6 +833,14 @@ export class Epub {
     return resolve(absoluteStartPath, href).slice(1)
   }
 
+  /**
+   * Retrieve the contents of a manifest item, given its id.
+   *
+   * @param id The id of the manifest item to retrieve
+   * @param [encoding] Optional - must be the string "utf-8". If
+   *  provided, the function will encode the data into a unicode string.
+   *  Otherwise, the data will be returned as a byte array.
+   */
   async readItemContents(id: string): Promise<Uint8Array>
   async readItemContents(id: string, encoding: "utf-8"): Promise<string>
   async readItemContents(
@@ -692,6 +861,13 @@ export class Epub {
     return itemEntry
   }
 
+  /**
+   * Retrieves the contents of an XHTML item, given its manifest id.
+   *
+   * @param id The id of the manifest item to retrieve
+   * @param [as] Optional - whether to return the parsed XML document tree,
+   *  or the concatenated text of the document. Defaults to the parsed XML tree.
+   */
   async readXhtmlItemContents(id: string, as?: "xhtml"): Promise<ParsedXml>
   async readXhtmlItemContents(id: string, as: "text"): Promise<string>
   async readXhtmlItemContents(
@@ -706,9 +882,13 @@ export class Epub {
     return textContent(body)
   }
 
-  writeEntryContents(path: string, contents: Uint8Array): void
-  writeEntryContents(path: string, contents: string, encoding: "utf-8"): void
-  writeEntryContents(
+  private writeEntryContents(path: string, contents: Uint8Array): void
+  private writeEntryContents(
+    path: string,
+    contents: string,
+    encoding: "utf-8",
+  ): void
+  private writeEntryContents(
     path: string,
     contents: Uint8Array | string,
     encoding?: "utf-8",
@@ -725,6 +905,20 @@ export class Epub {
     entry.setData(data)
   }
 
+  /**
+   * Write new contents for an existing manifest item,
+   * specified by its id.
+   *
+   * The id must reference an existing manifest item. If
+   * creating a new item, use `epub.addManifestItem()` instead.
+   *
+   * @param id The id of the manifest item to write new contents for
+   * @param contents The new contents. May be either a utf-8 encoded string
+   *  or a byte array, as determined by the encoding
+   * @param [encoding] Optional - must be the string "utf-8". If provided,
+   *  the contents will be interpreted as a unicode string. Otherwise, the
+   *  contents must be a byte array.
+   */
   async writeItemContents(id: string, contents: Uint8Array): Promise<void>
   async writeItemContents(
     id: string,
@@ -753,29 +947,34 @@ export class Epub {
     }
   }
 
-  async writeXhtmlItemContents(
-    id: string,
-    contents: ParsedXml,
-    as?: "xhtml",
-  ): Promise<void>
-  async writeXhtmlItemContents(
-    id: string,
-    contents: string,
-    as: "text",
-  ): Promise<void>
-  async writeXhtmlItemContents(
-    id: string,
-    contents: ParsedXml | string,
-    as: "xhtml" | "text" = "xhtml",
-  ): Promise<void> {
-    const stringContents =
-      as === "text"
-        ? (contents as string)
-        : (Epub.xhtmlBuilder.build(contents) as string)
-
-    await this.writeItemContents(id, stringContents, "utf-8")
+  /**
+   * Write new contents for an existing XHTML item,
+   * specified by its id.
+   *
+   * The id must reference an existing manifest item. If
+   * creating a new item, use `epub.addManifestItem()` instead.
+   *
+   * @param id The id of the manifest item to write new contents for
+   * @param contents The new contents. Must be a parsed XML tree.
+   */
+  async writeXhtmlItemContents(id: string, contents: ParsedXml): Promise<void> {
+    await this.writeItemContents(
+      id,
+      Epub.xhtmlBuilder.build(contents) as string,
+      "utf-8",
+    )
   }
 
+  /**
+   * Create a new manifest item and write its contents to a
+   * new entry.
+   *
+   * @param id The id of the manifest item to write new contents for
+   * @param contents The new contents. May be either a parsed XML tree
+   *  or a unicode string, as determined by the `as` argument.
+   * @param encoding Optional - whether to interpret contents as a parsed
+   *  XML tree, a unicode string, or a byte array. Defaults to a byte array.
+   */
   async addManifestItem(
     item: ManifestItem,
     contents: ParsedXml,
@@ -808,6 +1007,8 @@ export class Epub {
         "Failed to parse EPUB: Found no manifest element in package document",
       )
 
+    // TODO: Should we ensure that there isn't already a manifest
+    // item with this id first?
     manifest["manifest"].push({
       item: [],
       ":@": {
@@ -845,9 +1046,15 @@ export class Epub {
           )
         : (contents as Uint8Array)
 
-    this.entries.push(new ZipEntry({ filename, data }))
+    this.entries.push(new EpubEntry({ filename, data }))
   }
 
+  /**
+   * Update the manifest entry for an existing item.
+   *
+   * To update the contents of an entry, use `epub.writeItemContents()`
+   * or `epub.writeXhtmlItemContents()`
+   */
   async updateManifestItem(id: string, newItem: Omit<ManifestItem, "id">) {
     const packageDocument = await this.getPackageDocument()
 
@@ -898,6 +1105,18 @@ export class Epub {
     this.manifest = null
   }
 
+  /**
+   * Add a new metadata entry to the Epub.
+   *
+   * This method, like `epub.getMetadata()`, operates on
+   * metadata entries. For more useful semantic representations
+   * of metadata, use specific methods such as `setTitle()` and
+   * `setLanguage()`.
+   *
+   * @param name The name of the element, usually "meta"
+   * @param attributes
+   * @param value Optional
+   */
   async addMetadata(
     name: string,
     attributes: Record<string, string>,
@@ -936,6 +1155,18 @@ export class Epub {
     this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
   }
 
+  /**
+   * Write the current contents of the Epub to a new
+   * EPUB archive on disk.
+   *
+   * This _does not_ close the Epub. It can continue to
+   * be modified after it has been written to disk. Use
+   * `epub.close()` to close the Epub.
+   *
+   * @param path The file path to write the new archive to. The
+   *  parent directory does not need te exist -- the path will be
+   *  recursively created.
+   */
   async writeToFile(path: string) {
     let mimetypeEntry = this.getEntry("mimetype")
     if (!mimetypeEntry) {

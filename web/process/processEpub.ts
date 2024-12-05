@@ -23,7 +23,7 @@ export async function processEpub(bookUuid: UUID) {
   const epub = await readEpub(bookUuid)
 
   try {
-    const coverImageItem = await epub.getCoverImage()
+    const coverImageItem = await epub.getCoverImageItem()
     if (!coverImageItem) {
       console.log(
         `Could not find cover image while processing EPUB file for book ${bookUuid}`,
