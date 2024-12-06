@@ -1,6 +1,14 @@
 import { join } from "node:path"
 import { describe, it } from "node:test"
-import { Epub, ParsedXml, getBody, textContent } from "./index.js"
+import {
+  Epub,
+  ParsedXml,
+  XmlElement,
+  XmlTextNode,
+  getBody,
+  getChildren,
+  textContent,
+} from "./index.js"
 import assert from "node:assert"
 import { stat } from "node:fs/promises"
 
@@ -22,6 +30,29 @@ void describe("Epub", () => {
     ])
     const title = await epub.getTitle()
     assert.equal(title, "Title")
+    await epub.close()
+  })
+
+  void it("strips leading and trailing whitespace from metadata values", async () => {
+    const epub = await Epub.create([
+      { id: undefined, type: "dc:title", properties: {}, value: "\n  Title\n" },
+    ])
+    const title = await epub.getTitle()
+    assert.equal(title, "Title")
+    await epub.close()
+  })
+
+  void it("collapses internal whitespace from metadata values", async () => {
+    const epub = await Epub.create([
+      {
+        id: undefined,
+        type: "dc:title",
+        properties: {},
+        value: "Test  \tTitle",
+      },
+    ])
+    const title = await epub.getTitle()
+    assert.equal(title, "Test Title")
     await epub.close()
   })
 
@@ -57,12 +88,14 @@ void describe("Epub", () => {
     const epub = await Epub.from(filepath)
     const spineItems = await epub.getSpineItems()
     const coverPageData = await epub.readXhtmlItemContents(spineItems[0]!.id)
-    assert.ok(coverPageData[0]!["html"])
-    assert.ok(coverPageData[0]!["html"][1]!["head"]![0])
-    assert.strictEqual(
-      coverPageData[0]!["html"][1]!["head"]![1]!["title"]![0]!["#text"],
-      '"Cover"',
-    )
+    const html = coverPageData[0] as XmlElement<"html">
+    assert.ok(html)
+    const head = getChildren(html)[1] as XmlElement<"head">
+    assert.ok(head)
+    const title = getChildren(head)[1] as XmlElement<"title">
+    assert.ok(title)
+    const titleText = (getChildren(title)[0] as XmlTextNode)["#text"]
+    assert.strictEqual(titleText, '"Cover"')
     await epub.close()
   })
 
@@ -87,11 +120,13 @@ void describe("Epub", () => {
     const epub = await Epub.from(filepath)
     const spineItems = await epub.getSpineItems()
     const chapterOneData = await epub.readXhtmlItemContents(spineItems[1]!.id)
-    assert.ok(chapterOneData[1]!["html"]![1]!["head"]![1]!["meta"])
-    assert.strictEqual(
-      chapterOneData[1]!["html"]![1]!["head"]![1]![":@"]!["@_charset"],
-      "utf-8",
-    )
+    const html = chapterOneData[1] as XmlElement<"html">
+    assert.ok(html)
+    const head = getChildren(html)[1] as XmlElement<"head">
+    assert.ok(head)
+    const meta = getChildren(head)[1] as XmlElement<"meta">
+    assert.ok(meta)
+    assert.strictEqual(meta[":@"]?.["@_charset"], "utf-8")
     await epub.close()
   })
 
@@ -119,13 +154,16 @@ void describe("Epub", () => {
     const spineItems = await epub.getSpineItems()
     const coverPageData = await epub.readXhtmlItemContents(spineItems[0]!.id)
 
-    assert.notStrictEqual(
-      coverPageData[0]!["html"]![1]!["head"]![1]!["title"]![0]!["#text"],
-      "Test title",
-    )
+    const html = coverPageData[0] as XmlElement<"html">
+    assert.ok(html)
+    const head = getChildren(html)[1] as XmlElement<"head">
+    assert.ok(head)
+    const title = getChildren(head)[1] as XmlElement<"title">
+    assert.ok(title)
+    const titleText = (getChildren(title)[0] as XmlTextNode)["#text"]
 
-    coverPageData[0]!["html"]![1]!["head"]![1]!["title"]![0]!["#text"] =
-      "Test title"
+    assert.notStrictEqual(titleText, "Test title")
+    ;(getChildren(title)[0] as XmlTextNode)["#text"] = "Test title"
     await epub.writeXhtmlItemContents(spineItems[0]!.id, coverPageData)
 
     const outputFilepath = join(
@@ -144,10 +182,17 @@ void describe("Epub", () => {
       updatedSpineItems[0]!.id,
     )
 
-    assert.strictEqual(
-      updatedCoverPageData[0]!["html"]![1]!["head"]![1]!["title"]![0]!["#text"],
-      "Test title",
-    )
+    const updatedHtml = updatedCoverPageData[0] as XmlElement<"html">
+    assert.ok(updatedHtml)
+    const updatedHead = getChildren(updatedHtml)[1] as XmlElement<"head">
+    assert.ok(updatedHead)
+    const updatedTitle = getChildren(updatedHead)[1] as XmlElement<"title">
+    assert.ok(updatedTitle)
+    const updatedTitleText = (getChildren(updatedTitle)[0] as XmlTextNode)[
+      "#text"
+    ]
+
+    assert.strictEqual(updatedTitleText, "Test title")
     await updatedEpub.close()
   })
 

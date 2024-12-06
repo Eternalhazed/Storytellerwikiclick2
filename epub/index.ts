@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   Entry,
   Uint8ArrayReader,
@@ -12,35 +11,52 @@ import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path/posix"
 import { streamFile } from "@smoores/fs"
 
-export type XmlNode = Record<string, ParsedXml> & {
+export type ElementName =
+  `${"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"}${string}`
+
+export type XmlElement<Name extends ElementName = ElementName> = {
   ":@"?: Record<string, string>
-  "#text"?: string
+} & {
+  [key in Name]: ParsedXml
 }
+
+export type XmlTextNode = { "#text": string }
+
+export type XmlNode = XmlElement | XmlTextNode
 
 export type ParsedXml = Array<XmlNode>
 
-export function isTextNode(
-  node: XmlNode,
-): node is XmlNode & { "#text": string } {
+export function isTextNode(node: XmlNode): node is XmlTextNode {
   return "#text" in node
 }
 
-export function findByName<Name extends string>(
+export function findByName<Name extends ElementName>(
   name: Name,
   xml: ParsedXml,
-): (XmlNode & { [x in Name]: ParsedXml }) | undefined {
-  const element = xml.find((e) => name in e)
-  return element as (XmlNode & { [x in Name]: ParsedXml }) | undefined
+  filter?: (node: XmlNode) => boolean,
+): XmlElement<Name> | undefined {
+  const element = xml.find((e) => name in e && (filter ? filter(e) : true))
+  return element as XmlElement<Name> | undefined
 }
 
-export function getElementName(element: XmlNode): string {
+export function getChildren<Name extends ElementName>(
+  element: XmlElement<Name>,
+): ParsedXml {
+  const elementName = getElementName(element)
+  // It's not clear to me why this needs to be cast
+  return element[elementName] as ParsedXml
+}
+
+export function getElementName<Name extends ElementName>(
+  element: XmlElement<Name>,
+): Name {
   const keys = Object.keys(element)
   const elementName = keys.find((key) => key !== ":@" && key !== "#text")
   if (!elementName)
     throw new Error(
       `Invalid XML Element: missing tag name\n${JSON.stringify(element, null, 2)}`,
     )
-  return elementName
+  return elementName as Name
 }
 
 export function textContent(xml: ParsedXml): string {
@@ -51,8 +67,7 @@ export function textContent(xml: ParsedXml): string {
       continue
     }
 
-    const elementName = getElementName(child)
-    const children = child[elementName]!
+    const children = getChildren(child)
     text += textContent(children)
   }
   return text
@@ -85,7 +100,7 @@ export function addLink(
       "@_href": link.href,
       "@_type": link.type,
     },
-  } as unknown as XmlNode)
+  })
 }
 
 export function formatDuration(duration: number) {
@@ -93,6 +108,9 @@ export function formatDuration(duration: number) {
   const minutes = Math.floor(duration / 60 - hours * 60)
   const secondsAndMillis = duration - minutes * 60 - hours * 3600
   const [seconds, millis] = secondsAndMillis.toFixed(2).split(".")
+  // It's not actually possible for .split() to return fewer than one
+  // item, so it's safe to assert that seconds is a defined string
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds!.padStart(2, "0")}.${millis ?? "0"}`
 }
 
@@ -116,6 +134,10 @@ export class EpubEntry {
     if (this.data) return this.data
 
     const writer = new Uint8ArrayWriter()
+    // If this.data is undefined, then this.entry must be defined.
+    // It's not clear why .getData is typed as conditional, since it
+    // seems to always be defined.
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const data = await this.entry!.getData!<Uint8Array>(writer)
     this.data = data
     return this.data
@@ -137,7 +159,7 @@ export class EpubEntry {
 
 export type MetadataEntry = {
   id: string | undefined
-  type: string
+  type: ElementName
   properties: Record<string, string>
   value: string | undefined
 }
@@ -352,28 +374,26 @@ export class Epub {
       throw new Error("Failed to parse EPUB: Missing META-INF/container.xml")
 
     const containerDocument = Epub.xmlParser.parse(containerString) as ParsedXml
-    const container = containerDocument.find(
-      (element) => "container" in element,
-    )
+    const container = findByName("container", containerDocument)
 
     if (!container)
       throw new Error(
         "Failed to parse EPUB container.xml: Found no container element",
       )
 
-    const rootfiles = container["container"]!.find(
-      (element) => "rootfiles" in element,
-    )
+    const rootfiles = findByName("rootfiles", getChildren(container))
 
     if (!rootfiles)
       throw new Error(
         "Failed to parse EPUB container.xml: Found no rootfiles element",
       )
 
-    const rootfile = rootfiles["rootfiles"]!.find(
-      (element) =>
-        "rootfile" in element &&
-        element[":@"]?.["@_media-type"] === "application/oebps-package+xml",
+    const rootfile = findByName(
+      "rootfile",
+      getChildren(rootfiles),
+      (node) =>
+        !isTextNode(node) &&
+        node[":@"]?.["@_media-type"] === "application/oebps-package+xml",
     )
 
     if (!rootfile?.[":@"]?.["@_full-path"])
@@ -420,25 +440,37 @@ export class Epub {
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const manifest = findByName("manifest", packageElement["package"])
+    const manifest = findByName("manifest", getChildren(packageElement))
 
     if (!manifest)
       throw new Error(
         "Failed to parse EPUB: Found no manifest element in package document",
       )
 
-    this.manifest = manifest["manifest"].reduce<Record<string, ManifestItem>>(
-      (acc, item) => ({
-        ...acc,
-        [item[":@"]!["@_id"]!]: {
-          id: item[":@"]!["@_id"]!,
-          href: item[":@"]!["@_href"]!,
-          mediaType: item[":@"]!["@_media-type"]!,
-          mediaOverlay: item[":@"]!["@_media-overlay"],
-          fallback: item[":@"]!["@_fallback"],
-          properties: item[":@"]!["@_properties"]?.split(" "),
-        },
-      }),
+    this.manifest = getChildren(manifest).reduce<Record<string, ManifestItem>>(
+      (acc, item) => {
+        if (isTextNode(item)) return acc
+
+        if (
+          !item[":@"]?.["@_id"] ||
+          !item[":@"]["@_href"] ||
+          !item[":@"]["@_media-type"]
+        ) {
+          return acc
+        }
+
+        return {
+          ...acc,
+          [item[":@"]["@_id"]]: {
+            id: item[":@"]["@_id"],
+            href: item[":@"]["@_href"],
+            mediaType: item[":@"]["@_media-type"],
+            mediaOverlay: item[":@"]["@_media-overlay"],
+            fallback: item[":@"]["@_fallback"],
+            properties: item[":@"]["@_properties"]?.split(" "),
+          },
+        }
+      },
       {},
     )
 
@@ -471,24 +503,34 @@ export class Epub {
         "Failed to parse EPUB: Found no metadata element in package document",
       )
 
-    const metadata: EpubMetadata = metadataElement.metadata.map((item) => {
-      const elementName = getElementName(item)
-      const id = item[":@"]?.["@_id"]
-      const value = item[elementName]![0]?.["#text"]
-      const attributes = item[":@"]
-      const properties = Object.fromEntries(
-        Object.entries(attributes ?? {}).map(([attrName, value]) => [
-          attrName.slice(2),
+    const metadata: EpubMetadata = metadataElement.metadata
+      .filter((node): node is XmlElement => !isTextNode(node))
+      .map((item) => {
+        const id = item[":@"]?.["@_id"]
+        const elementName = getElementName(item)
+        const textNode = getChildren(item)[0]
+        if (!textNode || !isTextNode(textNode)) return null
+
+        // https://www.w3.org/TR/epub-33/#sec-metadata-values
+        // Whitespace within these element values is not significant.
+        // Sequences of one or more whitespace characters are collapsed
+        // to a single space [infra] during processing .
+        const value = textNode["#text"].replaceAll(/\s+/g, " ")
+        const attributes = item[":@"] ?? {}
+        const properties = Object.fromEntries(
+          Object.entries(attributes).map(([attrName, value]) => [
+            attrName.slice(2),
+            value,
+          ]),
+        )
+        return {
+          id,
+          type: elementName,
+          properties,
           value,
-        ]),
-      )
-      return {
-        id,
-        type: elementName,
-        properties,
-        value,
-      }
-    })
+        }
+      })
+      .filter((element) => !!element)
 
     return metadata
   }
@@ -510,15 +552,16 @@ export class Epub {
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const metadataElement = findByName("metadata", packageElement.package)
+    const metadataElement = findByName("metadata", getChildren(packageElement))
 
     if (!metadataElement)
       throw new Error(
         "Failed to parse EPUB: Found no metadata element in package document",
       )
 
-    const coverImageElement = metadataElement.metadata.find(
-      (element) => element[":@"]?.["@_name"] === "cover",
+    const coverImageElement = getChildren(metadataElement).find(
+      (node): node is XmlElement =>
+        !isTextNode(node) && node[":@"]?.["@_name"] === "cover",
     )
 
     const manifestItemId = coverImageElement?.[":@"]?.["@_content"]
@@ -664,12 +707,14 @@ export class Epub {
           titleEntry.id &&
           titleRefinements.some(
             (entry) =>
+              entry.value &&
               entry.properties["refines"]?.slice(1) === titleEntry.id &&
               entry.properties["property"] === "display-seq" &&
-              !Number.isNaN(parseInt(entry.value!, 10)),
+              !Number.isNaN(parseInt(entry.value, 10)),
           ),
       )
       .sort((a, b) => {
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const refinementA = titleRefinements.find(
           (entry) =>
             entry.properties["property"] === "display-seq" &&
@@ -682,6 +727,7 @@ export class Epub {
         )!
         const sortA = parseInt(refinementA.value!, 10)
         const sortB = parseInt(refinementB.value!, 10)
+        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         return sortA - sortB
       })
 
@@ -761,27 +807,31 @@ export class Epub {
           entry.properties["property"] === "file-as"),
     )
 
-    return creatorEntries.map((creatorEntry) => {
-      const name = creatorEntry.value!
-      if (!creatorEntry.id) return { name, fileAs: name, role: null }
+    return creatorEntries
+      .filter((creatorEntry) => !!creatorEntry.value)
+      .map((creatorEntry) => {
+        // We've already filtered out all of the entries that don't have values
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const name = creatorEntry.value!
+        if (!creatorEntry.id) return { name, fileAs: name, role: null }
 
-      const roleEntry = creatorRefinements.find(
-        (entry) =>
-          entry.properties["property"] === "role" &&
-          entry.properties["refines"]?.slice(1) === creatorEntry.id,
-      )
-      const fileAsEntry = creatorRefinements.find(
-        (entry) =>
-          entry.properties["property"] === "file-as" &&
-          entry.properties["refines"]?.slice(1) === creatorEntry.id,
-      )
+        const roleEntry = creatorRefinements.find(
+          (entry) =>
+            entry.properties["property"] === "role" &&
+            entry.properties["refines"]?.slice(1) === creatorEntry.id,
+        )
+        const fileAsEntry = creatorRefinements.find(
+          (entry) =>
+            entry.properties["property"] === "file-as" &&
+            entry.properties["refines"]?.slice(1) === creatorEntry.id,
+        )
 
-      return {
-        name: name,
-        role: roleEntry?.value ?? null,
-        fileAs: fileAsEntry?.value ?? name,
-      }
-    })
+        return {
+          name: name,
+          role: roleEntry?.value ?? null,
+          fileAs: fileAsEntry?.value ?? name,
+        }
+      })
   }
 
   private async getSpine() {
@@ -803,7 +853,10 @@ export class Epub {
         "Failed to parse EPUB: Found no spine element in package document",
       )
 
-    this.spine = spine["spine"].map((itemref) => itemref[":@"]!["@_idref"]!)
+    this.spine = spine["spine"]
+      .filter((node): node is XmlElement => !isTextNode(node))
+      .map((itemref) => itemref[":@"]?.["@_idref"])
+      .filter((idref): idref is string => !!idref)
 
     return this.spine
   }
@@ -818,7 +871,7 @@ export class Epub {
     const spine = await this.getSpine()
     const manifest = await this.getManifest()
 
-    return spine.map((itemref) => manifest[itemref]!)
+    return spine.map((itemref) => manifest[itemref]).filter((entry) => !!entry)
   }
 
   /**
@@ -1019,7 +1072,7 @@ export class Epub {
         ...(item.mediaOverlay && { "@_media-overlay": item.mediaOverlay }),
         ...(item.properties && { "@_properties": item.properties.join(" ") }),
       },
-    } as unknown as XmlNode)
+    })
 
     const updatedPackageDocument = (await Epub.xmlBuilder.build(
       packageDocument,
@@ -1065,7 +1118,7 @@ export class Epub {
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const manifest = findByName("manifest", packageElement["package"])
+    const manifest = findByName("manifest", getChildren(packageElement))
 
     if (!manifest)
       throw new Error(
@@ -1073,7 +1126,7 @@ export class Epub {
       )
 
     const itemIndex = manifest["manifest"].findIndex(
-      (item) => item[":@"]?.["@_id"] === id,
+      (item) => !isTextNode(item) && item[":@"]?.["@_id"] === id,
     )
 
     manifest["manifest"].splice(itemIndex, 1, {
@@ -1090,7 +1143,7 @@ export class Epub {
           "@_properties": newItem.properties.join(" "),
         }),
       },
-    } as unknown as XmlNode)
+    })
 
     const updatedPackageDocument = (await Epub.xmlBuilder.build(
       packageDocument,
@@ -1117,8 +1170,8 @@ export class Epub {
    * @param attributes
    * @param value Optional
    */
-  async addMetadata(
-    name: string,
+  async addMetadata<Name extends ElementName>(
+    name: Name,
     attributes: Record<string, string>,
     value?: string,
   ) {
@@ -1144,7 +1197,7 @@ export class Epub {
         ]),
       ),
       [name]: value !== undefined ? [{ "#text": value }] : [],
-    } as unknown as XmlNode)
+    } as XmlElement)
 
     const updatedPackageDocument = (await Epub.xmlBuilder.build(
       packageDocument,
@@ -1171,6 +1224,8 @@ export class Epub {
     let mimetypeEntry = this.getEntry("mimetype")
     if (!mimetypeEntry) {
       this.writeEntryContents("mimetype", "application/epub+zip", "utf-8")
+      // This is guaranteed to exist; we just created it
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       mimetypeEntry = this.getEntry("mimetype")!
     }
 

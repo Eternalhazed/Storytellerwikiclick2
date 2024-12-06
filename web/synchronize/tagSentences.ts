@@ -1,7 +1,10 @@
 import {
+  ElementName,
   ParsedXml,
+  XmlElement,
   XmlNode,
   findByName,
+  getChildren,
   getElementName,
   isTextNode,
 } from "@smoores/epub"
@@ -9,7 +12,7 @@ import { BLOCKS } from "./semantics"
 import { getXHtmlSentences } from "./getXhtmlSentences"
 
 type Mark = {
-  elementName: string
+  elementName: ElementName
   attributes: Record<string, string> | undefined
 }
 
@@ -23,7 +26,7 @@ export function appendTextNode(
 ) {
   if (text.length === 0) return
 
-  const textNode = { "#text": text } as unknown as XmlNode
+  const textNode = { "#text": text }
 
   appendLeafNode(chapterId, xml, textNode, marks, taggedSentences, sentenceId)
 }
@@ -38,12 +41,12 @@ export function appendLeafNode(
 ) {
   const tagId = `${chapterId}-sentence${sentenceId}`
 
-  const markedNode = [...marks].reverse().reduce<XmlNode>(
+  const markedNode = [...marks].reverse().reduce<XmlElement>(
     (acc, mark) =>
       ({
         [mark.elementName]: [acc],
         ":@": mark.attributes,
-      }) as unknown as XmlNode,
+      }) as XmlElement,
     node,
   )
 
@@ -67,7 +70,7 @@ export function appendLeafNode(
   const taggedNode = {
     span: [markedNode],
     ":@": { "@_id": tagId },
-  } as unknown as XmlNode
+  }
 
   taggedSentences.add(sentenceId)
   xml.push(taggedNode)
@@ -214,10 +217,9 @@ function tagSentencesInXml(
         const block = {
           [childTagName]: [],
           ":@": child[":@"],
-        } as unknown as XmlNode
+        } as XmlElement
         nextTaggedXml.push(block)
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        nextTaggedXml = block[childTagName]!
+        nextTaggedXml = getChildren(block)
       } else {
         nextMarks.push({
           elementName: childTagName,
@@ -259,7 +261,7 @@ function copyOuterXml(xml: ParsedXml) {
   html["html"].splice(bodyIndex, 1, {
     ...body,
     body: [],
-  } as unknown as XmlNode)
+  })
 
   return outerXml
 }

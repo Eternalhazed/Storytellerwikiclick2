@@ -73,7 +73,7 @@ function createMediaOverlay(
         },
       ],
     },
-  ] as unknown as ParsedXml
+  ]
 }
 
 type SyncedChapter = {
