@@ -27,108 +27,52 @@ declare global {
   }
 }
 
-export type ElementName =
-  `${"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"}${string}`
+type Letter =
+  | "a"
+  | "b"
+  | "c"
+  | "d"
+  | "e"
+  | "f"
+  | "g"
+  | "h"
+  | "i"
+  | "j"
+  | "k"
+  | "l"
+  | "m"
+  | "n"
+  | "o"
+  | "p"
+  | "q"
+  | "r"
+  | "s"
+  | "t"
+  | "u"
+  | "v"
+  | "w"
+  | "x"
+  | "y"
+  | "z"
 
+/** A valid name for an XML element (must start with a letter) */
+export type ElementName = `${Letter | Uppercase<Letter>}${string}`
+
+/** An XML element, e.g. <meta> */
 export type XmlElement<Name extends ElementName = ElementName> = {
   ":@"?: Record<string, string>
 } & {
   [key in Name]: ParsedXml
 }
 
+/** A text node in an XML document */
 export type XmlTextNode = { "#text": string }
 
+/** A valid XML node. May be either an element or a text node. */
 export type XmlNode = XmlElement | XmlTextNode
 
+/** An XML structure */
 export type ParsedXml = Array<XmlNode>
-
-export function isTextNode(node: XmlNode): node is XmlTextNode {
-  return "#text" in node
-}
-
-export function findByName<Name extends ElementName>(
-  name: Name,
-  xml: ParsedXml,
-  filter?: (node: XmlNode) => boolean,
-): XmlElement<Name> | undefined {
-  const element = xml.find((e) => name in e && (filter ? filter(e) : true))
-  return element as XmlElement<Name> | undefined
-}
-
-export function getChildren<Name extends ElementName>(
-  element: XmlElement<Name>,
-): ParsedXml {
-  const elementName = getElementName(element)
-  // It's not clear to me why this needs to be cast
-  return element[elementName] as ParsedXml
-}
-
-export function getElementName<Name extends ElementName>(
-  element: XmlElement<Name>,
-): Name {
-  const keys = Object.keys(element)
-  const elementName = keys.find((key) => key !== ":@" && key !== "#text")
-  if (!elementName)
-    throw new Error(
-      `Invalid XML Element: missing tag name\n${JSON.stringify(element, null, 2)}`,
-    )
-  return elementName as Name
-}
-
-export function textContent(xml: ParsedXml): string {
-  let text = ""
-  for (const child of xml) {
-    if (isTextNode(child)) {
-      text += child["#text"]
-      continue
-    }
-
-    const children = getChildren(child)
-    text += textContent(children)
-  }
-  return text
-}
-
-export function getBody(xml: ParsedXml): ParsedXml {
-  const html = findByName("html", xml)
-  if (!html) throw new Error("Invalid XHTML document: no html element")
-
-  const body = findByName("body", html["html"])
-  if (!body) throw new Error("Invalid XHTML document: No body element")
-
-  return body["body"]
-}
-
-export function addLink(
-  xml: ParsedXml,
-  link: { rel: string; href: string; type: string },
-) {
-  const html = findByName("html", xml)
-  if (!html) throw new Error("Invalid XHTML document: no html element")
-
-  const head = findByName("head", html.html)
-  if (!head) throw new Error("Invalid XHTML document: no head element")
-
-  head["head"].push({
-    link: [],
-    ":@": {
-      "@_rel": link.rel,
-      "@_href": link.href,
-      "@_type": link.type,
-    },
-  })
-}
-
-export function formatDuration(duration: number) {
-  const hours = Math.floor(duration / 3600)
-  const minutes = Math.floor(duration / 60 - hours * 60)
-  const secondsAndMillis = duration - minutes * 60 - hours * 3600
-  const [seconds, millis] = secondsAndMillis.toFixed(2).split(".")
-  // It's not actually possible for .split() to return fewer than one
-  // item, so it's safe to assert that seconds is a defined string
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds!.padStart(2, "0")}.${millis ?? "0"}`
-}
 
 export type ManifestItem = {
   id: string
@@ -139,7 +83,7 @@ export type ManifestItem = {
   properties?: string[] | undefined
 }
 
-export class EpubEntry {
+class EpubEntry {
   filename: string
 
   private entry: Entry | null = null
@@ -216,6 +160,8 @@ export interface DublinCore {
  *
  * The entire EPUB contents will be read into memory.
  *
+ * Example usage:
+ *
  * ```ts
  * import { Epub, getBody, findByName, textContent } from '@smoores/epub';
  *
@@ -226,12 +172,15 @@ export interface DublinCore {
  * const chptOneXml = await epub.readXhtmlItemContents(chptOne.id);
  *
  * const body = getBody(chptOneXml);
- * const h1 = findByName('h1', body);
+ * const h1 = Epub.findXmlChildByName('h1', body);
  * const headingText = textContent(h1);
  *
  * await epub.setTitle(headingText);
  * await epub.writeToFile('./path/to/updated.epub');
  * await epub.close();
+ * ```
+ *
+ * @link https://www.w3.org/TR/epub-33/
  */
 export class Epub {
   static xmlParser = new XMLParser({
@@ -280,6 +229,130 @@ export class Epub {
     suppressEmptyNode: true,
   })
 
+  /**
+   * Format a duration, provided as a number of seconds, as
+   * a SMIL clock value, to be used for Media Overlays.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-duration
+   */
+  static formatSmilDuration(duration: number) {
+    const hours = Math.floor(duration / 3600)
+    const minutes = Math.floor(duration / 60 - hours * 60)
+    const secondsAndMillis = duration - minutes * 60 - hours * 3600
+    const [seconds, millis] = secondsAndMillis.toFixed(2).split(".")
+    // It's not actually possible for .split() to return fewer than one
+    // item, so it's safe to assert that seconds is a defined string
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds!.padStart(2, "0")}.${millis ?? "0"}`
+  }
+
+  /**
+   * Given an XML structure representing a complete XHTML document,
+   * add a `link` element to the `head` of the document.
+   *
+   * This method modifies the provided XML structure.
+   */
+  static addLinkToXhtmlHead(
+    xml: ParsedXml,
+    link: { rel: string; href: string; type: string },
+  ) {
+    const html = Epub.findXmlChildByName("html", xml)
+    if (!html) throw new Error("Invalid XHTML document: no html element")
+
+    const head = Epub.findXmlChildByName("head", html.html)
+    if (!head) throw new Error("Invalid XHTML document: no head element")
+
+    head["head"].push({
+      link: [],
+      ":@": {
+        "@_rel": link.rel,
+        "@_href": link.href,
+        "@_type": link.type,
+      },
+    })
+  }
+
+  /**
+   * Given an XML structure representing a complete XHTML document,
+   * return the sub-structure representing the children of the
+   * document's body element.
+   */
+  static getXhtmlBody(xml: ParsedXml): ParsedXml {
+    const html = Epub.findXmlChildByName("html", xml)
+    if (!html) throw new Error("Invalid XHTML document: no html element")
+
+    const body = Epub.findXmlChildByName("body", html["html"])
+    if (!body) throw new Error("Invalid XHTML document: No body element")
+
+    return body["body"]
+  }
+
+  /**
+   * Given an XML structure representing a complete XHTML document,
+   * return a string representing the concatenation of all text nodes
+   * in the document.
+   */
+  static getXhtmlTextContent(xml: ParsedXml): string {
+    let text = ""
+    for (const child of xml) {
+      if (Epub.isXmlTextNode(child)) {
+        text += child["#text"]
+        continue
+      }
+
+      const children = Epub.getXmlChildren(child)
+      text += Epub.getXhtmlTextContent(children)
+    }
+    return text
+  }
+
+  /**
+   * Given an XMLElement, return its tag name.
+   */
+  static getXmlElementName<Name extends ElementName>(
+    element: XmlElement<Name>,
+  ): Name {
+    const keys = Object.keys(element)
+    const elementName = keys.find((key) => key !== ":@" && key !== "#text")
+    if (!elementName)
+      throw new Error(
+        `Invalid XML Element: missing tag name\n${JSON.stringify(element, null, 2)}`,
+      )
+    return elementName as Name
+  }
+
+  /**
+   * Given an XMLElement, return a list of its children
+   */
+  static getXmlChildren<Name extends ElementName>(
+    element: XmlElement<Name>,
+  ): ParsedXml {
+    const elementName = Epub.getXmlElementName(element)
+    // It's not clear to me why this needs to be cast
+    return element[elementName] as ParsedXml
+  }
+
+  /**
+   * Given an XML structure, find the first child matching
+   * the provided name and optional filter.
+   */
+  static findXmlChildByName<Name extends ElementName>(
+    name: Name,
+    xml: ParsedXml,
+    filter?: (node: XmlNode) => boolean,
+  ): XmlElement<Name> | undefined {
+    const element = xml.find((e) => name in e && (filter ? filter(e) : true))
+    return element as XmlElement<Name> | undefined
+  }
+
+  /**
+   * Given an XMLNode, determine whether it represents
+   * a text node or an XML element.
+   */
+  static isXmlTextNode(node: XmlNode): node is XmlTextNode {
+    return "#text" in node
+  }
+
   private zipWriter: ZipWriter<Uint8Array>
 
   private dataWriter: Uint8ArrayWriter
@@ -323,8 +396,8 @@ export class Epub {
    * Construct an Epub instance, optionally beginning
    * with the provided metadata.
    *
-   * @param additionalMetadata An array of metadata entries, representing the
-   *  initial metadata for the Epub
+   * @param dublinCore Core metadata terms
+   * @param additionalMetadata An array of additional metadata entries
    */
   static async create(
     {
@@ -452,25 +525,28 @@ export class Epub {
       throw new Error("Failed to parse EPUB: Missing META-INF/container.xml")
 
     const containerDocument = Epub.xmlParser.parse(containerString) as ParsedXml
-    const container = findByName("container", containerDocument)
+    const container = Epub.findXmlChildByName("container", containerDocument)
 
     if (!container)
       throw new Error(
         "Failed to parse EPUB container.xml: Found no container element",
       )
 
-    const rootfiles = findByName("rootfiles", getChildren(container))
+    const rootfiles = Epub.findXmlChildByName(
+      "rootfiles",
+      Epub.getXmlChildren(container),
+    )
 
     if (!rootfiles)
       throw new Error(
         "Failed to parse EPUB container.xml: Found no rootfiles element",
       )
 
-    const rootfile = findByName(
+    const rootfile = Epub.findXmlChildByName(
       "rootfile",
-      getChildren(rootfiles),
+      Epub.getXmlChildren(rootfiles),
       (node) =>
-        !isTextNode(node) &&
+        !Epub.isXmlTextNode(node) &&
         node[":@"]?.["@_media-type"] === "application/oebps-package+xml",
     )
 
@@ -505,52 +581,56 @@ export class Epub {
    *
    * This is represented as a map from each manifest items'
    * id to the rest of its properties.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-pkg-manifest
    */
   async getManifest() {
     if (this.manifest !== null) return this.manifest
 
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
 
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const manifest = findByName("manifest", getChildren(packageElement))
+    const manifest = Epub.findXmlChildByName(
+      "manifest",
+      Epub.getXmlChildren(packageElement),
+    )
 
     if (!manifest)
       throw new Error(
         "Failed to parse EPUB: Found no manifest element in package document",
       )
 
-    this.manifest = getChildren(manifest).reduce<Record<string, ManifestItem>>(
-      (acc, item) => {
-        if (isTextNode(item)) return acc
+    this.manifest = Epub.getXmlChildren(manifest).reduce<
+      Record<string, ManifestItem>
+    >((acc, item) => {
+      if (Epub.isXmlTextNode(item)) return acc
 
-        if (
-          !item[":@"]?.["@_id"] ||
-          !item[":@"]["@_href"] ||
-          !item[":@"]["@_media-type"]
-        ) {
-          return acc
-        }
+      if (
+        !item[":@"]?.["@_id"] ||
+        !item[":@"]["@_href"] ||
+        !item[":@"]["@_media-type"]
+      ) {
+        return acc
+      }
 
-        return {
-          ...acc,
-          [item[":@"]["@_id"]]: {
-            id: item[":@"]["@_id"],
-            href: item[":@"]["@_href"],
-            mediaType: item[":@"]["@_media-type"],
-            mediaOverlay: item[":@"]["@_media-overlay"],
-            fallback: item[":@"]["@_fallback"],
-            properties: item[":@"]["@_properties"]?.split(" "),
-          },
-        }
-      },
-      {},
-    )
+      return {
+        ...acc,
+        [item[":@"]["@_id"]]: {
+          id: item[":@"]["@_id"],
+          href: item[":@"]["@_href"],
+          mediaType: item[":@"]["@_media-type"],
+          mediaOverlay: item[":@"]["@_media-overlay"],
+          fallback: item[":@"]["@_fallback"],
+          properties: item[":@"]["@_properties"]?.split(" "),
+        },
+      }
+    }, {})
 
     return this.manifest
   }
@@ -563,18 +643,23 @@ export class Epub {
    *
    * For more useful semantic representations of metadata, use
    * specific methods such as `getTitle()` and `getAuthors()`.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-pkg-metadata
    */
   async getMetadata() {
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
 
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const metadataElement = findByName("metadata", packageElement.package)
+    const metadataElement = Epub.findXmlChildByName(
+      "metadata",
+      packageElement.package,
+    )
 
     if (!metadataElement)
       throw new Error(
@@ -582,12 +667,12 @@ export class Epub {
       )
 
     const metadata: EpubMetadata = metadataElement.metadata
-      .filter((node): node is XmlElement => !isTextNode(node))
+      .filter((node): node is XmlElement => !Epub.isXmlTextNode(node))
       .map((item) => {
         const id = item[":@"]?.["@_id"]
-        const elementName = getElementName(item)
-        const textNode = getChildren(item)[0]
-        if (!textNode || !isTextNode(textNode)) return null
+        const elementName = Epub.getXmlElementName(item)
+        const textNode = Epub.getXmlChildren(item)[0]
+        if (!textNode || !Epub.isXmlTextNode(textNode)) return null
 
         // https://www.w3.org/TR/epub-33/#sec-metadata-values
         // Whitespace within these element values is not significant.
@@ -623,23 +708,26 @@ export class Epub {
   private async getEpub2CoverImage() {
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
 
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const metadataElement = findByName("metadata", getChildren(packageElement))
+    const metadataElement = Epub.findXmlChildByName(
+      "metadata",
+      Epub.getXmlChildren(packageElement),
+    )
 
     if (!metadataElement)
       throw new Error(
         "Failed to parse EPUB: Found no metadata element in package document",
       )
 
-    const coverImageElement = getChildren(metadataElement).find(
+    const coverImageElement = Epub.getXmlChildren(metadataElement).find(
       (node): node is XmlElement =>
-        !isTextNode(node) && node[":@"]?.["@_name"] === "cover",
+        !Epub.isXmlTextNode(node) && node[":@"]?.["@_name"] === "cover",
     )
 
     const manifestItemId = coverImageElement?.[":@"]?.["@_content"]
@@ -658,6 +746,8 @@ export class Epub {
    * retrieve the image data, pass this item's id to
    * epub.readItemContents, or use epub.getCoverImage()
    * instead.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-cover-image
    */
   async getCoverImageItem() {
     const manifest = await this.getManifest()
@@ -675,6 +765,8 @@ export class Epub {
    * This does not include, for example, the cover image's
    * filename or mime type. To retrieve the image manifest
    * item, use epub.getCoverImageItem().
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-cover-image
    */
   async getCoverImage() {
     const coverImageItem = await this.getCoverImageItem()
@@ -688,6 +780,8 @@ export class Epub {
    * in the EPUB metadata as a Date object.
    *
    * If there is no dc:date element, returns null.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dcdate
    */
   async getPublicationDate() {
     const metadata = await this.getMetadata()
@@ -701,6 +795,8 @@ export class Epub {
    *
    * Updates the existing dc:date element if one exists.
    * Otherwise creates a new element
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dcdate
    */
   async setPublicationDate(date: Date) {
     await this.replaceMetadata(({ type }) => type === "dc:date", {
@@ -710,6 +806,14 @@ export class Epub {
     })
   }
 
+  /**
+   * Set the dc:type metadata element.
+   *
+   * Updates the existing dc:type element if one exists.
+   * Otherwise creates a new element.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dctype
+   */
   async setType(type: string) {
     await this.replaceMetadata(({ type }) => type === "dc:type", {
       type: "dc:type",
@@ -718,11 +822,27 @@ export class Epub {
     })
   }
 
+  /**
+   * Retrieve the publication type from the dc:type element
+   * in the EPUB metadata.
+   *
+   * If there is no dc:type element, returns null.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dctype
+   */
   async getType() {
     const metadata = await this.getMetadata()
     return metadata.find(({ type }) => type === "dc:type") ?? null
   }
 
+  /**
+   * Add a subject to the EPUB metadata.
+   *
+   * @param subject May be a string representing just a schema-less
+   *  subject name, or a DcSubject object
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dcsubject
+   */
   async addSubject(subject: string | DcSubject) {
     const subjectEntry =
       typeof subject === "string"
@@ -752,6 +872,16 @@ export class Epub {
     }
   }
 
+  /**
+   * Retrieve the list of subjects for this EPUB.
+   *
+   * Subjects without associated authority and term metadata
+   * will be returned as strings. Otherwise, they will
+   * be represented as DcSubject objects, with a value,
+   * authority, and term.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dcsubject
+   */
   async getSubjects() {
     const metadata = await this.getMetadata()
 
@@ -794,6 +924,8 @@ export class Epub {
    *
    * If no language metadata is specified, returns null.
    * Returns the language as an Intl.Locale instance.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dclanguage
    */
   async getLanguage() {
     const metadata = await this.getMetadata()
@@ -817,6 +949,8 @@ export class Epub {
    *
    * Updates the existing dc:language element if one exists.
    * Otherwise creates a new element
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dclanguage
    */
   async setLanguage(locale: Intl.Locale) {
     await this.replaceMetadata(({ type }) => type === "dc:language", {
@@ -832,6 +966,8 @@ export class Epub {
    * @param short Optional - whether to return only the first title segment
    *  if multiple are found. Otherwise, will follow the spec to combine title
    *  segments
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dctitle
    */
   async getTitle(short = false) {
     const metadata = await this.getMetadata()
@@ -903,25 +1039,27 @@ export class Epub {
    *
    * If no title currently exists, a single title metadata entry
    * will be created.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dctitle
    */
   // TODO: This should allow users to optionally specify an array,
   // rather than a single string, to support expanded titles.
   async setTitle(title: string) {
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: found no package element in package document",
       )
 
-    const metadata = findByName("metadata", packageElement.package)
+    const metadata = Epub.findXmlChildByName("metadata", packageElement.package)
     if (!metadata)
       throw new Error(
         "Failed to parse EPUB: found no metadata element in package document",
       )
 
-    const titleElement = findByName("dc:title", metadata.metadata)
+    const titleElement = Epub.findXmlChildByName("dc:title", metadata.metadata)
 
     if (!titleElement) {
       metadata.metadata.push({
@@ -942,6 +1080,8 @@ export class Epub {
 
   /**
    * Retrieve the list of creators.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dccreator
    */
   async getCreators(type: "creator" | "contributor" = "creator") {
     const metadata = await this.getMetadata()
@@ -993,40 +1133,99 @@ export class Epub {
     return creators
   }
 
+  /**
+   * Retrieve the list of contributors.
+   *
+   * This is a convenience method for
+   * `epub.getCreators('contributor')`.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dccontributor
+   */
   getContributors() {
     return this.getCreators("contributor")
   }
 
+  /**
+   * Add a creator to the EPUB metadata.
+   *
+   * If index is provided, the creator will be placed at
+   * that index in the list of creators. Otherwise, it
+   * will be added to the end of the list.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dccreator
+   */
   async addCreator(
-    author: DcCreator,
+    creator: DcCreator,
+    index?: number,
     type: "creator" | "contributor" = "creator",
   ) {
     const creatorId = randomUUID()
-    await this.addMetadata({
-      id: creatorId,
-      type: `dc:${type}`,
-      properties: {},
-      value: author.name,
-    })
 
-    if (author.role) {
+    // Order matters for creators and contributors,
+    // so we can't just append these to the end of the
+    // metadata element's children using `addMetadata`.
+    // We have to manually find the correct insertion point
+    // based on the provided index
+    const packageDocument = await this.getPackageDocument()
+
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
+    if (!packageElement)
+      throw new Error(
+        "Failed to parse EPUB: found no package element in package document",
+      )
+
+    const metadata = Epub.findXmlChildByName("metadata", packageElement.package)
+    if (!metadata)
+      throw new Error(
+        "Failed to parse EPUB: found no metadata element in package document",
+      )
+
+    let creatorCount = 0
+    let metadataIndex = 0
+    for (const meta of Epub.getXmlChildren(metadata)) {
+      if (creatorCount === index) break
+      metadataIndex++
+      if (Epub.isXmlTextNode(meta)) continue
+      if (Epub.getXmlElementName(meta) !== `dc:${type}`) continue
+      creatorCount++
+    }
+
+    Epub.getXmlChildren(metadata).splice(metadataIndex, 0, {
+      ":@": {
+        "@_id": creatorId,
+      },
+      [`dc:${type}`]: [{ "#text": creator.name }],
+    } as XmlElement)
+
+    const updatedPackageDocument = (await Epub.xmlBuilder.build(
+      packageDocument,
+    )) as string
+
+    const rootfile = await this.getRootfile()
+
+    this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
+
+    // These can all just go at the end; order is only
+    // important for the `dc:creator`/`dc:contributor`
+    // elements
+    if (creator.role) {
       await this.addMetadata({
         type: "meta",
         properties: { refines: `#${creatorId}`, property: "role" },
-        value: author.role,
+        value: creator.role,
       })
     }
 
-    if (author.fileAs) {
+    if (creator.fileAs) {
       await this.addMetadata({
         type: "meta",
         properties: { refines: `#${creatorId}`, property: "file-as" },
-        value: author.fileAs,
+        value: creator.fileAs,
       })
     }
 
-    if (author.alternateScripts) {
-      for (const alternate of author.alternateScripts) {
+    if (creator.alternateScripts) {
+      for (const alternate of creator.alternateScripts) {
         await this.addMetadata({
           type: "meta",
           properties: {
@@ -1040,8 +1239,20 @@ export class Epub {
     }
   }
 
-  addContributor(contributor: DcCreator) {
-    return this.addCreator(contributor, "contributor")
+  /**
+   * Add a contributor to the EPUB metadata.
+   *
+   * If index is provided, the creator will be placed at
+   * that index in the list of creators. Otherwise, it
+   * will be added to the end of the list.
+   *
+   * This is a convenience method for
+   * `epub.addCreator(contributor, index, 'contributor')`.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-opf-dccreator
+   */
+  addContributor(contributor: DcCreator, index?: number) {
+    return this.addCreator(contributor, index, "contributor")
   }
 
   private async getSpine() {
@@ -1049,14 +1260,14 @@ export class Epub {
 
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
 
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const spine = findByName("spine", packageElement["package"])
+    const spine = Epub.findXmlChildByName("spine", packageElement["package"])
 
     if (!spine)
       throw new Error(
@@ -1064,7 +1275,7 @@ export class Epub {
       )
 
     this.spine = spine["spine"]
-      .filter((node): node is XmlElement => !isTextNode(node))
+      .filter((node): node is XmlElement => !Epub.isXmlTextNode(node))
       .map((itemref) => itemref[":@"]?.["@_idref"])
       .filter((idref): idref is string => !!idref)
 
@@ -1076,12 +1287,110 @@ export class Epub {
    *
    * The spine specifies the order that the contents of the Epub
    * should be displayed to users by default.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-spine-elem
    */
   async getSpineItems() {
     const spine = await this.getSpine()
     const manifest = await this.getManifest()
 
     return spine.map((itemref) => manifest[itemref]).filter((entry) => !!entry)
+  }
+
+  /**
+   * Add an item to the spine of the EPUB.
+   *
+   * If `index` is undefined, the item will be added
+   * to the end of the spine. Otherwise it will be
+   * inserted at the specified index.
+   *
+   * If the manifestId does not correspond to an item
+   * in the manifest, this will throw an error.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-spine-elem
+   */
+  async addSpineItem(manifestId: string, index?: number) {
+    const item: XmlElement<"itemref"> = {
+      itemref: [],
+      ":@": {
+        "@_idref": manifestId,
+      },
+    }
+
+    const manifest = await this.getManifest()
+    const manifestItem = manifest[manifestId]
+
+    if (!manifestItem)
+      throw new Error(`Manifest item not found with id "${manifestId}"`)
+
+    const packageDocument = await this.getPackageDocument()
+
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
+
+    if (!packageElement)
+      throw new Error(
+        "Failed to parse EPUB: Found no package element in package document",
+      )
+
+    const spine = Epub.findXmlChildByName("spine", packageElement["package"])
+
+    if (!spine)
+      throw new Error(
+        "Failed to parse EPUB: Found no spine element in package document",
+      )
+
+    if (index === undefined) {
+      Epub.getXmlChildren(spine).push(item)
+    } else {
+      Epub.getXmlChildren(spine).splice(index, 0, item)
+    }
+
+    const updatedPackageDocument = (await Epub.xmlBuilder.build(
+      packageDocument,
+    )) as string
+
+    const rootfile = await this.getRootfile()
+
+    this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
+
+    // Reset the spine cache
+    this.spine = null
+  }
+
+  /**
+   * Remove the spine item at the specified index.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-spine-elem
+   */
+  async removeSpineItem(index: number) {
+    const packageDocument = await this.getPackageDocument()
+
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
+
+    if (!packageElement)
+      throw new Error(
+        "Failed to parse EPUB: Found no package element in package document",
+      )
+
+    const spine = Epub.findXmlChildByName("spine", packageElement["package"])
+
+    if (!spine)
+      throw new Error(
+        "Failed to parse EPUB: Found no spine element in package document",
+      )
+
+    Epub.getXmlChildren(spine).splice(index, 1)
+
+    const updatedPackageDocument = (await Epub.xmlBuilder.build(
+      packageDocument,
+    )) as string
+
+    const rootfile = await this.getRootfile()
+
+    this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
+
+    // Reset the spine cache
+    this.spine = null
   }
 
   /**
@@ -1103,6 +1412,8 @@ export class Epub {
    * @param [encoding] Optional - must be the string "utf-8". If
    *  provided, the function will encode the data into a unicode string.
    *  Otherwise, the data will be returned as a byte array.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-contentdocs
    */
   async readItemContents(id: string): Promise<Uint8Array>
   async readItemContents(id: string, encoding: "utf-8"): Promise<string>
@@ -1130,6 +1441,8 @@ export class Epub {
    * @param id The id of the manifest item to retrieve
    * @param [as] Optional - whether to return the parsed XML document tree,
    *  or the concatenated text of the document. Defaults to the parsed XML tree.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-xhtml
    */
   async readXhtmlItemContents(id: string, as?: "xhtml"): Promise<ParsedXml>
   async readXhtmlItemContents(id: string, as: "text"): Promise<string>
@@ -1141,8 +1454,8 @@ export class Epub {
     const xml = Epub.xhtmlParser.parse(contents) as ParsedXml
     if (as === "xhtml") return xml
 
-    const body = getBody(xml)
-    return textContent(body)
+    const body = Epub.getXhtmlBody(xml)
+    return Epub.getXhtmlTextContent(body)
   }
 
   private writeEntryContents(path: string, contents: Uint8Array): void
@@ -1181,6 +1494,8 @@ export class Epub {
    * @param [encoding] Optional - must be the string "utf-8". If provided,
    *  the contents will be interpreted as a unicode string. Otherwise, the
    *  contents must be a byte array.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-contentdocs
    */
   async writeItemContents(id: string, contents: Uint8Array): Promise<void>
   async writeItemContents(
@@ -1219,6 +1534,8 @@ export class Epub {
    *
    * @param id The id of the manifest item to write new contents for
    * @param contents The new contents. Must be a parsed XML tree.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-xhtml
    */
   async writeXhtmlItemContents(id: string, contents: ParsedXml): Promise<void> {
     await this.writeItemContents(
@@ -1237,6 +1554,9 @@ export class Epub {
    *  or a unicode string, as determined by the `as` argument.
    * @param encoding Optional - whether to interpret contents as a parsed
    *  XML tree, a unicode string, or a byte array. Defaults to a byte array.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-pkg-manifest
+   * @link https://www.w3.org/TR/epub-33/#sec-contentdocs
    */
   async addManifestItem(
     item: ManifestItem,
@@ -1256,14 +1576,17 @@ export class Epub {
   ): Promise<void> {
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
 
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const manifest = findByName("manifest", packageElement["package"])
+    const manifest = Epub.findXmlChildByName(
+      "manifest",
+      packageElement["package"],
+    )
 
     if (!manifest)
       throw new Error(
@@ -1317,18 +1640,23 @@ export class Epub {
    *
    * To update the contents of an entry, use `epub.writeItemContents()`
    * or `epub.writeXhtmlItemContents()`
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-pkg-manifest
    */
   async updateManifestItem(id: string, newItem: Omit<ManifestItem, "id">) {
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
 
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: Found no package element in package document",
       )
 
-    const manifest = findByName("manifest", getChildren(packageElement))
+    const manifest = Epub.findXmlChildByName(
+      "manifest",
+      Epub.getXmlChildren(packageElement),
+    )
 
     if (!manifest)
       throw new Error(
@@ -1336,7 +1664,7 @@ export class Epub {
       )
 
     const itemIndex = manifest["manifest"].findIndex(
-      (item) => !isTextNode(item) && item[":@"]?.["@_id"] === id,
+      (item) => !Epub.isXmlTextNode(item) && item[":@"]?.["@_id"] === id,
     )
 
     manifest["manifest"].splice(itemIndex, 1, {
@@ -1375,17 +1703,19 @@ export class Epub {
    * metadata entries. For more useful semantic representations
    * of metadata, use specific methods such as `setTitle()` and
    * `setLanguage()`.
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-pkg-metadata
    */
   async addMetadata(entry: MetadataEntry) {
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: found no package element in package document",
       )
 
-    const metadata = findByName("metadata", packageElement.package)
+    const metadata = Epub.findXmlChildByName("metadata", packageElement.package)
     if (!metadata)
       throw new Error(
         "Failed to parse EPUB: found no metadata element in package document",
@@ -1423,6 +1753,8 @@ export class Epub {
    * @param predicate Calls predicate once for each metadata entry,
    *  until it finds one where predicate returns true
    * @param entry The new entry to replace the found entry with
+   *
+   * @link https://www.w3.org/TR/epub-33/#sec-pkg-metadata
    */
   async replaceMetadata(
     predicate: (entry: MetadataEntry) => boolean,
@@ -1430,13 +1762,16 @@ export class Epub {
   ) {
     const packageDocument = await this.getPackageDocument()
 
-    const packageElement = findByName("package", packageDocument)
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
     if (!packageElement)
       throw new Error(
         "Failed to parse EPUB: found no package element in package document",
       )
 
-    const metadataElement = findByName("metadata", packageElement.package)
+    const metadataElement = Epub.findXmlChildByName(
+      "metadata",
+      packageElement.package,
+    )
     if (!metadataElement)
       throw new Error(
         "Failed to parse EPUB: found no metadata element in package document",

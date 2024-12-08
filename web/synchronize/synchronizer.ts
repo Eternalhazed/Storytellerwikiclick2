@@ -1,14 +1,7 @@
 import { readFile } from "node:fs/promises"
 import { basename, dirname, parse, relative } from "node:path/posix"
 import memoize from "memoize"
-import {
-  Epub,
-  ManifestItem,
-  ParsedXml,
-  addLink,
-  formatDuration,
-  getBody,
-} from "@smoores/epub"
+import { Epub, ManifestItem, ParsedXml } from "@smoores/epub"
 import { getTrackDuration } from "@/audio"
 import {
   SentenceRange,
@@ -205,7 +198,7 @@ export class Synchronizer {
   private async getChapterSentences(chapterId: string) {
     const chapterXml = await this.epub.readXhtmlItemContents(chapterId)
 
-    const sentences = getXHtmlSentences(getBody(chapterXml))
+    const sentences = getXHtmlSentences(Epub.getXhtmlBody(chapterXml))
     const cleanSentences = sentences.map((sentence) =>
       sentence.replaceAll(/\s+/g, " "),
     )
@@ -275,7 +268,7 @@ export class Synchronizer {
         property: "media:duration",
         refines: `#${mediaOverlayId}`,
       },
-      value: formatDuration(chapterDuration),
+      value: Epub.formatSmilDuration(chapterDuration),
     })
   }
 
@@ -315,7 +308,7 @@ export class Synchronizer {
       "Styles/storyteller-readaloud.css",
     )
 
-    addLink(tagged, {
+    Epub.addLinkToXhtmlHead(tagged, {
       rel: "stylesheet",
       href: storytellerStylesheetUrl,
       type: "text/css",
@@ -412,7 +405,7 @@ export class Synchronizer {
     await this.epub.addMetadata({
       type: "meta",
       properties: { property: "media:duration" },
-      value: formatDuration(this.totalDuration),
+      value: Epub.formatSmilDuration(this.totalDuration),
     })
     await this.epub.addMetadata({
       type: "meta",

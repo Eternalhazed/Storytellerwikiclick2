@@ -1,0 +1,10 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "entryPoints": ["./index.ts"],
+  "plugin": ["typedoc-plugin-markdown"],
+  "readme": "./readme-stub.md",
+  "mergeReadme": true,
+  "gitRevision": "main",
+  "outputFileStrategy": "modules",
+  "out": "./"
+}

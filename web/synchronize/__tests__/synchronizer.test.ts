@@ -1,5 +1,5 @@
 import { describe, it } from "node:test"
-import { Epub, getChildren, XmlElement } from "@smoores/epub"
+import { Epub, XmlElement } from "@smoores/epub"
 import { join } from "node:path"
 import { Synchronizer } from "../synchronizer"
 import transcription from "../../__fixtures__/mobydick_001_002_melville.json"
@@ -40,18 +40,18 @@ void describe("Synchronizer", () => {
     )
 
     const smil = mediaOverlay[0] as XmlElement<"smil">
-    const body = getChildren(smil)[1] as XmlElement<"body">
-    const seq = getChildren(body)[1] as XmlElement<"seq">
+    const body = Epub.getXmlChildren(smil)[1] as XmlElement<"body">
+    const seq = Epub.getXmlChildren(body)[1] as XmlElement<"seq">
     // This gets us to sentence 570, which is the first sentence that's actually
     // a part of the book and in the audiobook
-    const firstPar = getChildren(seq)[1171] as XmlElement<"par">
+    const firstPar = Epub.getXmlChildren(seq)[1171] as XmlElement<"par">
     assert.strictEqual(firstPar[":@"]?.["@_id"], "pg-header-sentence585")
-    const text = getChildren(firstPar)[1] as XmlElement<"text">
+    const text = Epub.getXmlChildren(firstPar)[1] as XmlElement<"text">
     assert.strictEqual(
       text[":@"]?.["@_src"],
       "../3484760691463238453_2701-h-0.htm.xhtml#pg-header-sentence585",
     )
-    const audio = getChildren(firstPar)[3] as XmlElement<"audio">
+    const audio = Epub.getXmlChildren(firstPar)[3] as XmlElement<"audio">
     assert.strictEqual(
       audio[":@"]?.["@_src"],
       "../Audio/mobydick_001_002_melville.mp3",
