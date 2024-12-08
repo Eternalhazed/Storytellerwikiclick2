@@ -55,7 +55,7 @@
     "@types/js-levenshtein": "^1",
     "@types/jsonwebtoken": "^9",
     "@types/mime-types": "^2",
-    "@types/node": "^20.11.30",
+    "@types/node": "^22.10.1",
     "@types/nodemailer": "^6",
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",

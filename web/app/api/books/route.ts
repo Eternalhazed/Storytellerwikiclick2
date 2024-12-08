@@ -65,13 +65,18 @@ export const POST = withHasPermission("book_create")(async (request) => {
     try {
       const epub = await Epub.from(epubPath)
       const title = await epub.getTitle()
-      const authors = await epub.getAuthors()
+      const authors = await epub.getCreators()
       const language = await epub.getLanguage()
 
       const book = createBook(
         title ?? basename(epubPath).replace(".epub", ""),
         language?.toString() ?? null,
-        authors.map((author) => ({ ...author, uuid: "" })),
+        authors.map((author) => ({
+          name: author.name,
+          role: author.role ?? null,
+          fileAs: author.fileAs ?? author.name,
+          uuid: "",
+        })),
       )
       await linkEpub(book.uuid, epubPath)
       await linkAudio(book.uuid, audioPaths)
@@ -140,13 +145,18 @@ export const POST = withHasPermission("book_create")(async (request) => {
   const epub = await Epub.from(paths.epubFile)
 
   const title = await epub.getTitle()
-  const authors = await epub.getAuthors()
+  const authors = await epub.getCreators()
   const language = await epub.getLanguage()
 
   const book = createBook(
     title ?? basename(paths.epubFile).replace(".epub", ""),
     language?.toString() ?? null,
-    authors.map((author) => ({ ...author, uuid: "" })),
+    authors.map((author) => ({
+      name: author.name,
+      role: author.role ?? null,
+      fileAs: author.fileAs ?? author.name,
+      uuid: "",
+    })),
   )
   await persistEpub(book.uuid, paths.epubFile)
   await persistAudio(book.uuid, paths.audioFiles)

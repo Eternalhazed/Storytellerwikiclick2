@@ -10,6 +10,22 @@ import memoize, { memoizeClear } from "memoize"
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path/posix"
 import { streamFile } from "@smoores/fs"
+import { randomUUID } from "node:crypto"
+
+/*
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/getTextInfo
+ * Node.js and Deno both have a non-standard implementation of
+ * the Intl.Locale spec's getTextInfo(), providing the textInfo
+ * accessor instead.
+ */
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Intl {
+    interface Locale {
+      textInfo: { direction: "rtl" | "ltr" }
+    }
+  }
+}
 
 export type ElementName =
   `${"a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"}${string}`
@@ -158,13 +174,42 @@ export class EpubEntry {
 }
 
 export type MetadataEntry = {
-  id: string | undefined
+  id?: string | undefined
   type: ElementName
   properties: Record<string, string>
   value: string | undefined
 }
 
 export type EpubMetadata = MetadataEntry[]
+
+export interface DcSubject {
+  value: string
+  authority: string
+  term: string
+}
+
+export interface AlternateScript {
+  name: string
+  locale: Intl.Locale
+}
+
+export interface DcCreator {
+  name: string
+  role?: string
+  fileAs?: string
+  alternateScripts?: AlternateScript[]
+}
+
+export interface DublinCore {
+  title: string
+  language: Intl.Locale
+  identifier: string
+  date?: Date
+  subjects?: Array<string | DcSubject>
+  creators?: DcCreator[]
+  contributors?: DcCreator[]
+  type?: string
+}
 
 /**
  * A single EPUB instance.
@@ -193,6 +238,7 @@ export class Epub {
     allowBooleanAttributes: true,
     preserveOrder: true,
     ignoreAttributes: false,
+    parseTagValue: false,
   })
 
   static xhtmlParser = new XMLParser({
@@ -277,10 +323,22 @@ export class Epub {
    * Construct an Epub instance, optionally beginning
    * with the provided metadata.
    *
-   * @param metadata An array of metadata entries, representing the
+   * @param additionalMetadata An array of metadata entries, representing the
    *  initial metadata for the Epub
    */
-  static async create(metadata: EpubMetadata = []): Promise<Epub> {
+  static async create(
+    {
+      title,
+      language,
+      identifier,
+      date,
+      subjects,
+      type,
+      creators,
+      contributors,
+    }: DublinCore,
+    additionalMetadata: EpubMetadata = [],
+  ): Promise<Epub> {
     const entries = []
     const encoder = new TextEncoder()
     const container = encoder.encode(`<?xml version="1.0"?>
@@ -295,7 +353,7 @@ export class Epub {
     )
 
     const packageDocument = encoder.encode(`<?xml version="1.0"?>
-<package>
+<package unique-identifier="pub-id" dir="${language.textInfo.direction}" xml:lang=${language.toString()} version="3.0">
   <metadata>
   </metadata>
   <manifest>
@@ -309,15 +367,35 @@ export class Epub {
     )
 
     const epub = new Epub(entries)
-    await Promise.all(
-      metadata.map((entry) =>
-        epub.addMetadata(
-          entry.type,
-          { ...entry.properties, ...(entry.id && { id: entry.id }) },
-          entry.value,
-        ),
-      ),
-    )
+    const metadata: MetadataEntry[] = [
+      {
+        id: "pub-id",
+        type: "dc:identifier",
+        properties: {},
+        value: identifier,
+      },
+      ...additionalMetadata,
+    ]
+
+    await Promise.all(metadata.map((entry) => epub.addMetadata(entry)))
+
+    await epub.setTitle(title)
+    await epub.setLanguage(language)
+
+    if (date) await epub.setPublicationDate(date)
+    if (type) await epub.setType(type)
+    if (subjects) {
+      await Promise.all(subjects.map((subject) => epub.addSubject(subject)))
+    }
+    if (creators) {
+      await Promise.all(creators.map((creator) => epub.addCreator(creator)))
+    }
+    if (contributors) {
+      await Promise.all(
+        contributors.map((contributor) => epub.addCreator(contributor)),
+      )
+    }
+
     return epub
   }
 
@@ -606,6 +684,111 @@ export class Epub {
   }
 
   /**
+   * Retrieve the publication date from the dc:date element
+   * in the EPUB metadata as a Date object.
+   *
+   * If there is no dc:date element, returns null.
+   */
+  async getPublicationDate() {
+    const metadata = await this.getMetadata()
+    const entry = metadata.find(({ type }) => type === "dc:date")
+    if (!entry?.value) return null
+    return new Date(entry.value)
+  }
+
+  /**
+   * Set the dc:date metadata element with the provided date.
+   *
+   * Updates the existing dc:date element if one exists.
+   * Otherwise creates a new element
+   */
+  async setPublicationDate(date: Date) {
+    await this.replaceMetadata(({ type }) => type === "dc:date", {
+      type: "dc:date",
+      properties: {},
+      value: date.toISOString(),
+    })
+  }
+
+  async setType(type: string) {
+    await this.replaceMetadata(({ type }) => type === "dc:type", {
+      type: "dc:type",
+      properties: {},
+      value: type,
+    })
+  }
+
+  async getType() {
+    const metadata = await this.getMetadata()
+    return metadata.find(({ type }) => type === "dc:type") ?? null
+  }
+
+  async addSubject(subject: string | DcSubject) {
+    const subjectEntry =
+      typeof subject === "string"
+        ? {
+            value: subject,
+          }
+        : subject
+    const subjectId = randomUUID()
+    await this.addMetadata({
+      id: subjectId,
+      type: "dc:subject",
+      properties: {},
+      value: subjectEntry.value,
+    })
+
+    if ("authority" in subjectEntry) {
+      await this.addMetadata({
+        type: "meta",
+        properties: { refines: `#${subjectId}`, property: "authority" },
+        value: subjectEntry.authority,
+      })
+      await this.addMetadata({
+        type: "meta",
+        properties: { refines: `#${subjectId}`, property: "term" },
+        value: subjectEntry.term,
+      })
+    }
+  }
+
+  async getSubjects() {
+    const metadata = await this.getMetadata()
+
+    const subjectEntries = metadata.filter(({ type }) => type === "dc:subject")
+    const subjects: Array<string | DcSubject> = subjectEntries
+      .map(({ value }) => value)
+      .filter((value): value is string => !!value)
+
+    metadata.forEach((entry) => {
+      if (
+        entry.type !== "meta" ||
+        (entry.properties["property"] !== "term" &&
+          entry.properties["property"] !== "authority")
+      ) {
+        return
+      }
+      const subjectIdref = entry.properties["refines"]
+      if (!subjectIdref) return
+
+      const subjectId = subjectIdref.slice(1)
+      const index = subjectEntries.findIndex((entry) => entry.id === subjectId)
+      if (index === -1) return
+
+      const subject =
+        typeof subjects[index] === "string"
+          ? { value: subjects[index], authority: undefined, term: undefined }
+          : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            subjects[index]!
+
+      subject[entry.properties["property"]] = entry.value
+      subjects.splice(index, 1, subject as DcSubject)
+    })
+
+    return subjects
+  }
+
+  /**
    * Retrieve the Epub's language as specified in its
    * package document metadata.
    *
@@ -631,40 +814,16 @@ export class Epub {
 
   /**
    * Update the Epub's language metadata entry.
+   *
+   * Updates the existing dc:language element if one exists.
+   * Otherwise creates a new element
    */
-  // TODO: Should this take a Locale instead of a string?
-  async setLanguage(languageCode: string) {
-    const packageDocument = await this.getPackageDocument()
-
-    const packageElement = findByName("package", packageDocument)
-    if (!packageElement)
-      throw new Error(
-        "Failed to parse EPUB: found no package element in package document",
-      )
-
-    const metadata = findByName("metadata", packageElement.package)
-    if (!metadata)
-      throw new Error(
-        "Failed to parse EPUB: found no metadata element in package document",
-      )
-
-    const languageElement = findByName("dc:language", metadata.metadata)
-
-    if (!languageElement) {
-      metadata.metadata.push({
-        "dc:language": [{ "#text": languageCode } as XmlNode],
-      })
-    } else {
-      languageElement["dc:language"] = [{ "#text": languageCode } as XmlNode]
-    }
-
-    const updatedPackageDocument = (await Epub.xmlBuilder.build(
-      packageDocument,
-    )) as string
-
-    const rootfile = await this.getRootfile()
-
-    this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
+  async setLanguage(locale: Intl.Locale) {
+    await this.replaceMetadata(({ type }) => type === "dc:language", {
+      type: "dc:language",
+      properties: {},
+      value: locale.toString(),
+    })
   }
 
   /**
@@ -782,56 +941,107 @@ export class Epub {
   }
 
   /**
-   * Retrieve the list of authors.
-   *
-   * Each author object will contain a name, an optional role,
-   * and a "fileAs" (which defaults to the author's name, if none
-   * is specified).
+   * Retrieve the list of creators.
    */
-  async getAuthors(): Promise<
-    {
-      name: string
-      role: string | null
-      fileAs: string
-    }[]
-  > {
+  async getCreators(type: "creator" | "contributor" = "creator") {
     const metadata = await this.getMetadata()
+
     const creatorEntries = metadata.filter(
-      (entry) => entry.type === "dc:creator" && entry.value,
+      (entry) => entry.type === `dc:${type}`,
     )
-    const creatorRefinements = metadata.filter(
-      (entry) =>
-        entry.type === "meta" &&
-        entry.properties["refines"] &&
-        (entry.properties["property"] === "role" ||
-          entry.properties["property"] === "file-as"),
-    )
+    const creators: Array<DcCreator> = creatorEntries
+      .map(({ value }) => value)
+      .filter((value): value is string => !!value)
+      .map((value) => ({ name: value }))
 
-    return creatorEntries
-      .filter((creatorEntry) => !!creatorEntry.value)
-      .map((creatorEntry) => {
-        // We've already filtered out all of the entries that don't have values
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const name = creatorEntry.value!
-        if (!creatorEntry.id) return { name, fileAs: name, role: null }
+    metadata.forEach((entry) => {
+      if (
+        entry.type !== "meta" ||
+        (entry.properties["property"] !== "file-as" &&
+          entry.properties["property"] !== "role" &&
+          entry.properties["property"] !== "alternate-script") ||
+        !entry.value
+      ) {
+        return
+      }
+      const creatorIdref = entry.properties["refines"]
+      if (!creatorIdref) return
 
-        const roleEntry = creatorRefinements.find(
-          (entry) =>
-            entry.properties["property"] === "role" &&
-            entry.properties["refines"]?.slice(1) === creatorEntry.id,
-        )
-        const fileAsEntry = creatorRefinements.find(
-          (entry) =>
-            entry.properties["property"] === "file-as" &&
-            entry.properties["refines"]?.slice(1) === creatorEntry.id,
-        )
+      const creatorId = creatorIdref.slice(1)
+      const index = creatorEntries.findIndex((entry) => entry.id === creatorId)
+      if (index === -1) return
 
-        return {
-          name: name,
-          role: roleEntry?.value ?? null,
-          fileAs: fileAsEntry?.value ?? name,
-        }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const creator = creators[index]!
+
+      if (entry.properties["alternate-script"]) {
+        if (!entry.properties["xml:lang"]) return
+        creator.alternateScripts ??= []
+        creator.alternateScripts.push({
+          name: entry.value,
+          locale: new Intl.Locale(entry.properties["xml:lang"]),
+        })
+        return
+      }
+
+      const prop =
+        entry.properties["property"] === "file-as" ? "fileAs" : "role"
+
+      creator[prop] = entry.value
+    })
+
+    return creators
+  }
+
+  getContributors() {
+    return this.getCreators("contributor")
+  }
+
+  async addCreator(
+    author: DcCreator,
+    type: "creator" | "contributor" = "creator",
+  ) {
+    const creatorId = randomUUID()
+    await this.addMetadata({
+      id: creatorId,
+      type: `dc:${type}`,
+      properties: {},
+      value: author.name,
+    })
+
+    if (author.role) {
+      await this.addMetadata({
+        type: "meta",
+        properties: { refines: `#${creatorId}`, property: "role" },
+        value: author.role,
       })
+    }
+
+    if (author.fileAs) {
+      await this.addMetadata({
+        type: "meta",
+        properties: { refines: `#${creatorId}`, property: "file-as" },
+        value: author.fileAs,
+      })
+    }
+
+    if (author.alternateScripts) {
+      for (const alternate of author.alternateScripts) {
+        await this.addMetadata({
+          type: "meta",
+          properties: {
+            refines: `#${creatorId}`,
+            property: "alternate-script",
+            "xml:lang": alternate.locale.toString(),
+          },
+          value: alternate.name,
+        })
+      }
+    }
+  }
+
+  addContributor(contributor: DcCreator) {
+    return this.addCreator(contributor, "contributor")
   }
 
   private async getSpine() {
@@ -1165,16 +1375,8 @@ export class Epub {
    * metadata entries. For more useful semantic representations
    * of metadata, use specific methods such as `setTitle()` and
    * `setLanguage()`.
-   *
-   * @param name The name of the element, usually "meta"
-   * @param attributes
-   * @param value Optional
    */
-  async addMetadata<Name extends ElementName>(
-    name: Name,
-    attributes: Record<string, string>,
-    value?: string,
-  ) {
+  async addMetadata(entry: MetadataEntry) {
     const packageDocument = await this.getPackageDocument()
 
     const packageElement = findByName("package", packageDocument)
@@ -1190,14 +1392,74 @@ export class Epub {
       )
 
     metadata.metadata.push({
+      ":@": {
+        ...(entry.id && { "@_id": entry.id }),
+        ...Object.fromEntries(
+          Object.entries(entry.properties).map(([property, value]) => [
+            `@_${property}`,
+            value,
+          ]),
+        ),
+      },
+      [entry.type]: entry.value !== undefined ? [{ "#text": entry.value }] : [],
+    } as XmlElement)
+
+    const updatedPackageDocument = (await Epub.xmlBuilder.build(
+      packageDocument,
+    )) as string
+
+    const rootfile = await this.getRootfile()
+
+    this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
+  }
+
+  /**
+   * Replace a metadata entry with a new one.
+   *
+   * The `predicate` argument will be used to determine which entry
+   * to replace. The first metadata entry that matches the
+   * predicate will be replaced.
+   *
+   * @param predicate Calls predicate once for each metadata entry,
+   *  until it finds one where predicate returns true
+   * @param entry The new entry to replace the found entry with
+   */
+  async replaceMetadata(
+    predicate: (entry: MetadataEntry) => boolean,
+    entry: MetadataEntry,
+  ) {
+    const packageDocument = await this.getPackageDocument()
+
+    const packageElement = findByName("package", packageDocument)
+    if (!packageElement)
+      throw new Error(
+        "Failed to parse EPUB: found no package element in package document",
+      )
+
+    const metadataElement = findByName("metadata", packageElement.package)
+    if (!metadataElement)
+      throw new Error(
+        "Failed to parse EPUB: found no metadata element in package document",
+      )
+    await this.getMetadata()
+    const metadata = await this.getMetadata()
+    const oldEntryIndex = metadata.findIndex(predicate)
+
+    const newElement = {
       ":@": Object.fromEntries(
-        Object.entries(attributes).map(([property, value]) => [
+        Object.entries(entry.properties).map(([property, value]) => [
           `@_${property}`,
           value,
         ]),
       ),
-      [name]: value !== undefined ? [{ "#text": value }] : [],
-    } as XmlElement)
+      [entry.type]: entry.value !== undefined ? [{ "#text": entry.value }] : [],
+    } as XmlElement
+
+    if (oldEntryIndex === -1) {
+      metadataElement.metadata.push(newElement)
+    } else {
+      metadataElement.metadata.splice(oldEntryIndex, 1, newElement)
+    }
 
     const updatedPackageDocument = (await Epub.xmlBuilder.build(
       packageDocument,
@@ -1216,11 +1478,24 @@ export class Epub {
    * be modified after it has been written to disk. Use
    * `epub.close()` to close the Epub.
    *
+   * When this method is called, the "dcterms:modified"
+   * meta tag is automatically updated to the current UTC
+   * timestamp.
+   *
    * @param path The file path to write the new archive to. The
    *  parent directory does not need te exist -- the path will be
    *  recursively created.
    */
   async writeToFile(path: string) {
+    await this.replaceMetadata(
+      (entry) => entry.properties["property"] === "dcterms:modified",
+      {
+        type: "meta",
+        properties: { property: "dcterms:modified" },
+        value: new Date().toISOString(),
+      },
+    )
+
     let mimetypeEntry = this.getEntry("mimetype")
     if (!mimetypeEntry) {
       this.writeEntryContents("mimetype", "application/epub+zip", "utf-8")

@@ -25,32 +25,33 @@ void describe("xhtml parsing", () => {
 
 void describe("Epub", () => {
   void it("can be created from scratch", async () => {
-    const epub = await Epub.create([
-      { id: undefined, type: "dc:title", properties: {}, value: "Title" },
-    ])
+    const epub = await Epub.create({
+      title: "Title",
+      language: new Intl.Locale("en-US"),
+      identifier: "1",
+    })
     const title = await epub.getTitle()
     assert.equal(title, "Title")
     await epub.close()
   })
 
   void it("strips leading and trailing whitespace from metadata values", async () => {
-    const epub = await Epub.create([
-      { id: undefined, type: "dc:title", properties: {}, value: "\n  Title\n" },
-    ])
+    const epub = await Epub.create({
+      title: "\n  Title\n",
+      language: new Intl.Locale("en-US"),
+      identifier: "1",
+    })
     const title = await epub.getTitle()
     assert.equal(title, "Title")
     await epub.close()
   })
 
   void it("collapses internal whitespace from metadata values", async () => {
-    const epub = await Epub.create([
-      {
-        id: undefined,
-        type: "dc:title",
-        properties: {},
-        value: "Test  \tTitle",
-      },
-    ])
+    const epub = await Epub.create({
+      title: "Test  \tTitle",
+      language: new Intl.Locale("en-US"),
+      identifier: "1",
+    })
     const title = await epub.getTitle()
     assert.equal(title, "Test Title")
     await epub.close()

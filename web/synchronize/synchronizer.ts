@@ -269,14 +269,14 @@ export class Synchronizer {
 
     const chapterDuration = getChapterDuration(sentenceRanges)
 
-    await this.epub.addMetadata(
-      "meta",
-      {
+    await this.epub.addMetadata({
+      type: "meta",
+      properties: {
         property: "media:duration",
         refines: `#${mediaOverlayId}`,
       },
-      formatDuration(chapterDuration),
-    )
+      value: formatDuration(chapterDuration),
+    })
   }
 
   private async syncChapter(
@@ -409,16 +409,16 @@ export class Synchronizer {
       await this.writeSyncedChapter(syncedChapter)
     }
 
-    await this.epub.addMetadata(
-      "meta",
-      { property: "media:duration" },
-      formatDuration(this.totalDuration),
-    )
-    await this.epub.addMetadata(
-      "meta",
-      { property: "media:active-class" },
-      "-epub-media-overlay-active",
-    )
+    await this.epub.addMetadata({
+      type: "meta",
+      properties: { property: "media:duration" },
+      value: formatDuration(this.totalDuration),
+    })
+    await this.epub.addMetadata({
+      type: "meta",
+      properties: { property: "media:active-class" },
+      value: "-epub-media-overlay-active",
+    })
     await this.epub.addManifestItem(
       {
         id: "storyteller_readaloud_styles",

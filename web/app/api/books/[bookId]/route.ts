@@ -68,7 +68,7 @@ export const PUT = withHasPermission<Params>("book_update")(async (
     const epub = await Epub.from(syncedEpubPath)
     await epub.setTitle(updated.title)
     if (updated.language) {
-      await epub.setLanguage(updated.language)
+      await epub.setLanguage(new Intl.Locale(updated.language))
     }
     await epub.writeToFile(syncedEpubPath)
   }
