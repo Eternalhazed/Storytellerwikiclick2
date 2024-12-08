@@ -6,5 +6,6 @@
   "mergeReadme": true,
   "gitRevision": "main",
   "outputFileStrategy": "modules",
-  "out": "./"
+  "out": "./",
+  "cleanOutputDir": false
 }

@@ -10,6 +10,8 @@
   },
   "scripts": {
     "build": "yarn swc ./index.ts -o ./index.js",
+    "readme:toc": "markdown-toc --bullets='-' -i README.md",
+    "readme:api": "typedoc",
     "test": "tsx --test",
     "test:watch": "tsx --test --watch"
   },
@@ -18,7 +20,10 @@
     "@swc/core": "^1.10.0",
     "@tsconfig/strictest": "^2.0.5",
     "@types/node": "^22.10.1",
-    "tsx": "^4.19.2"
+    "markdown-toc": "^1.2.0",
+    "tsx": "^4.19.2",
+    "typedoc": "^0.27.3",
+    "typedoc-plugin-markdown": "^4.3.2"
   },
   "dependencies": {
     "@smoores/fs": "workspace:^",
