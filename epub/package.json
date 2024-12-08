@@ -10,8 +10,9 @@
   },
   "scripts": {
     "build": "yarn swc ./index.ts -o ./index.js",
-    "readme:toc": "markdown-toc --bullets='-' -i README.md",
+    "readme:toc": "markdown-toc --maxdepth=5 --bullets='-' -i README.md",
     "readme:api": "typedoc",
+    "readme": "yarn readme:api && yarn readme:toc",
     "test": "tsx --test",
     "test:watch": "tsx --test --watch"
   },

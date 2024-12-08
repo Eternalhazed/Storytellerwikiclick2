@@ -7,5 +7,6 @@
   "gitRevision": "main",
   "outputFileStrategy": "modules",
   "out": "./",
-  "cleanOutputDir": false
+  "cleanOutputDir": false,
+  "hidePageHeader": true
 }

@@ -4,11 +4,6 @@ A Node.js library for inspecting, modifying, and creating EPUB 3 publications.
 
 <!-- toc -->
 
-- [Installation](#installation)
-- [About](#about)
-  - [EPUB Basics](#epub-basics)
-  - [What this library does](#what-this-library-does)
-
 <!-- tocstop -->
 
 ## Installation
@@ -71,3 +66,54 @@ Because EPUB publications rely heavily on the XML document format, this library
 also provides utility methods for parsing, manipulating, and building XML
 documents. The underlying XML operations are based on
 [fast-xml-parser](https://www.npmjs.com/package/fast-xml-parser).
+
+## Usage
+
+The entrypoint to the library is through the [`Epub`](#epub) class. An `Epub`
+can either be read from an existing EPUB publication file, or created from
+scratch.
+
+### Reading from a file
+
+```ts
+import { Epub } from "@smoores/epub"
+
+const epub = await Epub.from("path/to/book.epub")
+console.log(await epub.getTitle())
+```
+
+### Creating from scratch
+
+When creating an `Epub` from scratch, the `title`, `language`, and `identifier`
+_must_ be provided, as these are required for all publications by the EPUB 3
+specification.
+
+Other [Dublin Core](https://www.w3.org/TR/epub-33/#sec-opf-dcmes-hd) and
+non-core metadata may also be provided at creation time, or may be added
+incrementally after creation.
+
+```ts
+import { randomUUID } from "node:crypto"
+
+import { Epub } from "@smoores/epub"
+
+const epub = await Epub.create({
+  title: "S'mores For Everyone",
+  // This should be the primary language of the publication.
+  // Individual content resources may specify their own languages.
+  language: Intl.Locale("en-US"),
+  // This can be any unique identifier, including UUIDs, ISBNs, etc
+  identifier: randomUUID(),
+})
+```
+
+For more details about using the API, see the [API documentation](#epub).
+
+## Development
+
+This package lives in the
+[Storyteller monorepo](https://gitlab.com/smoores/storyteller), and is developed
+alongside the [Storyteller platform](https://smoores.gitlab.io/storyteller).
+
+To get started with developing in the Storyteller monorepo, check out the
+[development guides in the docs](https://smoores.gitlab.io/storyteller/docs/category/development).

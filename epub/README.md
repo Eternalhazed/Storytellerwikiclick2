@@ -1,7 +1,3 @@
-**@smoores/epub**
-
----
-
 # @smoores/epub
 
 A Node.js library for inspecting, modifying, and creating EPUB 3 publications.
@@ -12,6 +8,120 @@ A Node.js library for inspecting, modifying, and creating EPUB 3 publications.
 - [About](#about)
   - [EPUB Basics](#epub-basics)
   - [What this library does](#what-this-library-does)
+- [Usage](#usage)
+  - [Reading from a file](#reading-from-a-file)
+  - [Creating from scratch](#creating-from-scratch)
+- [Development](#development)
+- [Classes](#classes)
+  - [Epub](#epub)
+    - [Link](#link)
+    - [Properties](#properties)
+      - [xhtmlBuilder](#xhtmlbuilder)
+      - [xhtmlParser](#xhtmlparser)
+      - [xmlBuilder](#xmlbuilder)
+      - [xmlParser](#xmlparser)
+    - [Methods](#methods)
+      - [addContributor()](#addcontributor)
+      - [addCreator()](#addcreator)
+      - [addManifestItem()](#addmanifestitem)
+      - [addMetadata()](#addmetadata)
+      - [addSpineItem()](#addspineitem)
+      - [addSubject()](#addsubject)
+      - [close()](#close)
+      - [getContributors()](#getcontributors)
+      - [getCoverImage()](#getcoverimage)
+      - [getCoverImageItem()](#getcoverimageitem)
+      - [getCreators()](#getcreators)
+      - [getLanguage()](#getlanguage)
+      - [getManifest()](#getmanifest)
+      - [getMetadata()](#getmetadata)
+      - [getPublicationDate()](#getpublicationdate)
+      - [getSpineItems()](#getspineitems)
+      - [getSubjects()](#getsubjects)
+      - [getTitle()](#gettitle)
+      - [getType()](#gettype)
+      - [readItemContents()](#readitemcontents)
+      - [readXhtmlItemContents()](#readxhtmlitemcontents)
+      - [removeSpineItem()](#removespineitem)
+      - [replaceMetadata()](#replacemetadata)
+      - [setLanguage()](#setlanguage)
+      - [setPublicationDate()](#setpublicationdate)
+      - [setTitle()](#settitle)
+      - [setType()](#settype)
+      - [updateManifestItem()](#updatemanifestitem)
+      - [writeItemContents()](#writeitemcontents)
+      - [writeToFile()](#writetofile)
+      - [writeXhtmlItemContents()](#writexhtmlitemcontents)
+      - [addLinkToXhtmlHead()](#addlinktoxhtmlhead)
+      - [create()](#create)
+      - [findXmlChildByName()](#findxmlchildbyname)
+      - [formatSmilDuration()](#formatsmilduration)
+      - [from()](#from)
+      - [getXhtmlBody()](#getxhtmlbody)
+      - [getXhtmlTextContent()](#getxhtmltextcontent)
+      - [getXmlChildren()](#getxmlchildren)
+      - [getXmlElementName()](#getxmlelementname)
+      - [isXmlTextNode()](#isxmltextnode)
+- [Interfaces](#interfaces)
+  - [AlternateScript](#alternatescript)
+    - [Properties](#properties-1)
+      - [locale](#locale-1)
+      - [name](#name-1)
+  - [DcCreator](#dccreator)
+    - [Properties](#properties-2)
+      - [alternateScripts?](#alternatescripts)
+      - [fileAs?](#fileas)
+      - [name](#name-2)
+      - [role?](#role)
+  - [DcSubject](#dcsubject)
+    - [Properties](#properties-3)
+      - [authority](#authority)
+      - [term](#term)
+      - [value](#value)
+  - [DublinCore](#dublincore)
+    - [Properties](#properties-4)
+      - [contributors?](#contributors)
+      - [creators?](#creators)
+      - [date?](#date)
+      - [identifier](#identifier)
+      - [language](#language)
+      - [subjects?](#subjects)
+      - [title](#title-1)
+      - [type?](#type-1)
+- [Type Aliases](#type-aliases)
+  - [ElementName](#elementname)
+    - [Defined in](#defined-in-67)
+  - [EpubMetadata](#epubmetadata)
+    - [Defined in](#defined-in-68)
+  - [ManifestItem](#manifestitem)
+    - [Type declaration](#type-declaration)
+      - [fallback?](#fallback)
+      - [href](#href-1)
+      - [id](#id-8)
+      - [mediaOverlay?](#mediaoverlay)
+      - [mediaType](#mediatype)
+      - [properties?](#properties)
+    - [Defined in](#defined-in-69)
+  - [MetadataEntry](#metadataentry)
+    - [Type declaration](#type-declaration-1)
+      - [id?](#id)
+      - [properties](#properties)
+      - [type](#type-3)
+      - [value](#value-1)
+    - [Defined in](#defined-in-70)
+  - [ParsedXml](#parsedxml)
+    - [Defined in](#defined-in-71)
+  - [XmlElement\](#xmlelement)
+    - [Type declaration](#type-declaration-2)
+      - [:@?](#)
+    - [Type Parameters](#type-parameters-3)
+    - [Defined in](#defined-in-72)
+  - [XmlNode](#xmlnode)
+    - [Defined in](#defined-in-73)
+  - [XmlTextNode](#xmltextnode)
+    - [Type declaration](#type-declaration-3)
+      - [#text](#%23text)
+    - [Defined in](#defined-in-74)
 
 <!-- tocstop -->
 
@@ -76,6 +186,57 @@ also provides utility methods for parsing, manipulating, and building XML
 documents. The underlying XML operations are based on
 [fast-xml-parser](https://www.npmjs.com/package/fast-xml-parser).
 
+## Usage
+
+The entrypoint to the library is through the [`Epub`](#epub) class. An `Epub`
+can either be read from an existing EPUB publication file, or created from
+scratch.
+
+### Reading from a file
+
+```ts
+import { Epub } from "@smoores/epub"
+
+const epub = await Epub.from("path/to/book.epub")
+console.log(await epub.getTitle())
+```
+
+### Creating from scratch
+
+When creating an `Epub` from scratch, the `title`, `language`, and `identifier`
+_must_ be provided, as these are required for all publications by the EPUB 3
+specification.
+
+Other [Dublin Core](https://www.w3.org/TR/epub-33/#sec-opf-dcmes-hd) and
+non-core metadata may also be provided at creation time, or may be added
+incrementally after creation.
+
+```ts
+import { randomUUID } from "node:crypto"
+
+import { Epub } from "@smoores/epub"
+
+const epub = await Epub.create({
+  title: "S'mores For Everyone",
+  // This should be the primary language of the publication.
+  // Individual content resources may specify their own languages.
+  language: Intl.Locale("en-US"),
+  // This can be any unique identifier, including UUIDs, ISBNs, etc
+  identifier: randomUUID(),
+})
+```
+
+For more details about using the API, see the [API documentation](#epub).
+
+## Development
+
+This package lives in the
+[Storyteller monorepo](https://gitlab.com/smoores/storyteller), and is developed
+alongside the [Storyteller platform](https://smoores.gitlab.io/storyteller).
+
+To get started with developing in the Storyteller monorepo, check out the
+[development guides in the docs](https://smoores.gitlab.io/storyteller/docs/category/development).
+
 ## Classes
 
 ### Epub
@@ -116,7 +277,7 @@ https://www.w3.org/TR/epub-33/
 
 ###### Defined in
 
-[index.ts:200](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L200)
+[index.ts:225](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L225)
 
 ##### xhtmlParser
 
@@ -124,7 +285,7 @@ https://www.w3.org/TR/epub-33/
 
 ###### Defined in
 
-[index.ts:168](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L168)
+[index.ts:193](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L193)
 
 ##### xmlBuilder
 
@@ -132,7 +293,7 @@ https://www.w3.org/TR/epub-33/
 
 ###### Defined in
 
-[index.ts:193](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L193)
+[index.ts:218](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L218)
 
 ##### xmlParser
 
@@ -140,7 +301,7 @@ https://www.w3.org/TR/epub-33/
 
 ###### Defined in
 
-[index.ts:161](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L161)
+[index.ts:186](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L186)
 
 #### Methods
 
@@ -176,7 +337,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dccreator
 
 ###### Defined in
 
-[index.ts:1229](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1229)
+[index.ts:1254](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1254)
 
 ##### addCreator()
 
@@ -211,7 +372,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dccreator
 
 ###### Defined in
 
-[index.ts:1132](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1132)
+[index.ts:1157](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1157)
 
 ##### addManifestItem()
 
@@ -255,7 +416,7 @@ https://www.w3.org/TR/epub-33/#sec-contentdocs
 
 ###### Defined in
 
-[index.ts:1536](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1536)
+[index.ts:1561](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1561)
 
 ###### Call Signature
 
@@ -297,7 +458,7 @@ https://www.w3.org/TR/epub-33/#sec-contentdocs
 
 ###### Defined in
 
-[index.ts:1541](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1541)
+[index.ts:1566](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1566)
 
 ###### Call Signature
 
@@ -332,7 +493,7 @@ https://www.w3.org/TR/epub-33/#sec-contentdocs
 
 ###### Defined in
 
-[index.ts:1546](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1546)
+[index.ts:1571](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1571)
 
 ##### addMetadata()
 
@@ -360,7 +521,7 @@ https://www.w3.org/TR/epub-33/#sec-pkg-metadata
 
 ###### Defined in
 
-[index.ts:1684](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1684)
+[index.ts:1709](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1709)
 
 ##### addSpineItem()
 
@@ -394,7 +555,7 @@ https://www.w3.org/TR/epub-33/#sec-spine-elem
 
 ###### Defined in
 
-[index.ts:1287](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1287)
+[index.ts:1312](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1312)
 
 ##### addSubject()
 
@@ -421,7 +582,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dcsubject
 
 ###### Defined in
 
-[index.ts:821](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L821)
+[index.ts:846](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L846)
 
 ##### close()
 
@@ -436,7 +597,7 @@ collected.
 
 ###### Defined in
 
-[index.ts:361](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L361)
+[index.ts:386](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L386)
 
 ##### getContributors()
 
@@ -456,7 +617,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dccontributor
 
 ###### Defined in
 
-[index.ts:1119](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1119)
+[index.ts:1144](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1144)
 
 ##### getCoverImage()
 
@@ -477,7 +638,7 @@ https://www.w3.org/TR/epub-33/#sec-cover-image
 
 ###### Defined in
 
-[index.ts:746](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L746)
+[index.ts:771](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L771)
 
 ##### getCoverImageItem()
 
@@ -499,7 +660,7 @@ https://www.w3.org/TR/epub-33/#sec-cover-image
 
 ###### Defined in
 
-[index.ts:727](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L727)
+[index.ts:752](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L752)
 
 ##### getCreators()
 
@@ -523,7 +684,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dccreator
 
 ###### Defined in
 
-[index.ts:1061](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1061)
+[index.ts:1086](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1086)
 
 ##### getLanguage()
 
@@ -544,7 +705,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dclanguage
 
 ###### Defined in
 
-[index.ts:905](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L905)
+[index.ts:930](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L930)
 
 ##### getManifest()
 
@@ -566,7 +727,7 @@ https://www.w3.org/TR/epub-33/#sec-pkg-manifest
 
 ###### Defined in
 
-[index.ts:562](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L562)
+[index.ts:587](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L587)
 
 ##### getMetadata()
 
@@ -590,7 +751,7 @@ https://www.w3.org/TR/epub-33/#sec-pkg-metadata
 
 ###### Defined in
 
-[index.ts:624](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L624)
+[index.ts:649](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L649)
 
 ##### getPublicationDate()
 
@@ -611,7 +772,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dcdate
 
 ###### Defined in
 
-[index.ts:761](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L761)
+[index.ts:786](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L786)
 
 ##### getSpineItems()
 
@@ -632,7 +793,7 @@ https://www.w3.org/TR/epub-33/#sec-spine-elem
 
 ###### Defined in
 
-[index.ts:1268](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1268)
+[index.ts:1293](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1293)
 
 ##### getSubjects()
 
@@ -655,7 +816,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dcsubject
 
 ###### Defined in
 
-[index.ts:860](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L860)
+[index.ts:885](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L885)
 
 ##### getTitle()
 
@@ -682,7 +843,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dctitle
 
 ###### Defined in
 
-[index.ts:947](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L947)
+[index.ts:972](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L972)
 
 ##### getType()
 
@@ -703,7 +864,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dctype
 
 ###### Defined in
 
-[index.ts:808](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L808)
+[index.ts:833](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L833)
 
 ##### readItemContents()
 
@@ -731,7 +892,7 @@ https://www.w3.org/TR/epub-33/#sec-contentdocs
 
 ###### Defined in
 
-[index.ts:1393](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1393)
+[index.ts:1418](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1418)
 
 ###### Call Signature
 
@@ -765,7 +926,7 @@ https://www.w3.org/TR/epub-33/#sec-contentdocs
 
 ###### Defined in
 
-[index.ts:1394](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1394)
+[index.ts:1419](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1419)
 
 ##### readXhtmlItemContents()
 
@@ -801,7 +962,7 @@ https://www.w3.org/TR/epub-33/#sec-xhtml
 
 ###### Defined in
 
-[index.ts:1422](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1422)
+[index.ts:1447](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1447)
 
 ###### Call Signature
 
@@ -834,7 +995,7 @@ https://www.w3.org/TR/epub-33/#sec-xhtml
 
 ###### Defined in
 
-[index.ts:1423](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1423)
+[index.ts:1448](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1448)
 
 ##### removeSpineItem()
 
@@ -858,7 +1019,7 @@ https://www.w3.org/TR/epub-33/#sec-spine-elem
 
 ###### Defined in
 
-[index.ts:1340](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1340)
+[index.ts:1365](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1365)
 
 ##### replaceMetadata()
 
@@ -894,7 +1055,7 @@ https://www.w3.org/TR/epub-33/#sec-pkg-metadata
 
 ###### Defined in
 
-[index.ts:1734](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1734)
+[index.ts:1759](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1759)
 
 ##### setLanguage()
 
@@ -921,7 +1082,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dclanguage
 
 ###### Defined in
 
-[index.ts:930](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L930)
+[index.ts:955](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L955)
 
 ##### setPublicationDate()
 
@@ -948,7 +1109,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dcdate
 
 ###### Defined in
 
-[index.ts:776](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L776)
+[index.ts:801](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L801)
 
 ##### setTitle()
 
@@ -977,7 +1138,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dctitle
 
 ###### Defined in
 
-[index.ts:1022](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1022)
+[index.ts:1047](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1047)
 
 ##### setType()
 
@@ -1004,7 +1165,7 @@ https://www.w3.org/TR/epub-33/#sec-opf-dctype
 
 ###### Defined in
 
-[index.ts:792](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L792)
+[index.ts:817](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L817)
 
 ##### updateManifestItem()
 
@@ -1035,7 +1196,7 @@ https://www.w3.org/TR/epub-33/#sec-pkg-manifest
 
 ###### Defined in
 
-[index.ts:1621](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1621)
+[index.ts:1646](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1646)
 
 ##### writeItemContents()
 
@@ -1073,7 +1234,7 @@ https://www.w3.org/TR/epub-33/#sec-contentdocs
 
 ###### Defined in
 
-[index.ts:1475](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1475)
+[index.ts:1500](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1500)
 
 ###### Call Signature
 
@@ -1116,7 +1277,7 @@ https://www.w3.org/TR/epub-33/#sec-contentdocs
 
 ###### Defined in
 
-[index.ts:1476](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1476)
+[index.ts:1501](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1501)
 
 ##### writeToFile()
 
@@ -1145,7 +1306,7 @@ exist -- the path will be recursively created.
 
 ###### Defined in
 
-[index.ts:1799](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1799)
+[index.ts:1824](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1824)
 
 ##### writeXhtmlItemContents()
 
@@ -1180,7 +1341,7 @@ https://www.w3.org/TR/epub-33/#sec-xhtml
 
 ###### Defined in
 
-[index.ts:1515](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1515)
+[index.ts:1540](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1540)
 
 ##### addLinkToXhtmlHead()
 
@@ -1217,7 +1378,7 @@ This method modifies the provided XML structure.
 
 ###### Defined in
 
-[index.ts:230](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L230)
+[index.ts:255](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L255)
 
 ##### create()
 
@@ -1246,7 +1407,7 @@ An array of additional metadata entries
 
 ###### Defined in
 
-[index.ts:377](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L377)
+[index.ts:402](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L402)
 
 ##### findXmlChildByName()
 
@@ -1293,7 +1454,7 @@ optional filter.
 
 ###### Defined in
 
-[index.ts:314](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L314)
+[index.ts:339](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L339)
 
 ##### formatSmilDuration()
 
@@ -1318,7 +1479,7 @@ https://www.w3.org/TR/epub-33/#sec-duration
 
 ###### Defined in
 
-[index.ts:213](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L213)
+[index.ts:238](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L238)
 
 ##### from()
 
@@ -1340,7 +1501,7 @@ Must be a valid filepath to an EPUB archive
 
 ###### Defined in
 
-[index.ts:456](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L456)
+[index.ts:481](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L481)
 
 ##### getXhtmlBody()
 
@@ -1361,7 +1522,7 @@ sub-structure representing the children of the document's body element.
 
 ###### Defined in
 
-[index.ts:255](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L255)
+[index.ts:280](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L280)
 
 ##### getXhtmlTextContent()
 
@@ -1382,7 +1543,7 @@ representing the concatenation of all text nodes in the document.
 
 ###### Defined in
 
-[index.ts:270](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L270)
+[index.ts:295](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L295)
 
 ##### getXmlChildren()
 
@@ -1420,7 +1581,7 @@ Given an XMLElement, return a list of its children
 
 ###### Defined in
 
-[index.ts:302](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L302)
+[index.ts:327](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L327)
 
 ##### getXmlElementName()
 
@@ -1457,7 +1618,7 @@ Given an XMLElement, return its tag name.
 
 ###### Defined in
 
-[index.ts:287](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L287)
+[index.ts:312](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L312)
 
 ##### isXmlTextNode()
 
@@ -1477,7 +1638,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:327](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L327)
+[index.ts:352](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L352)
 
 ## Interfaces
 
@@ -1491,7 +1652,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:112](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L112)
+[index.ts:137](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L137)
 
 ##### name
 
@@ -1499,7 +1660,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:111](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L111)
+[index.ts:136](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L136)
 
 ---
 
@@ -1514,7 +1675,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:119](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L119)
+[index.ts:144](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L144)
 
 ##### fileAs?
 
@@ -1522,7 +1683,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:118](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L118)
+[index.ts:143](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L143)
 
 ##### name
 
@@ -1530,7 +1691,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:116](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L116)
+[index.ts:141](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L141)
 
 ##### role?
 
@@ -1538,7 +1699,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:117](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L117)
+[index.ts:142](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L142)
 
 ---
 
@@ -1552,7 +1713,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:106](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L106)
+[index.ts:131](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L131)
 
 ##### term
 
@@ -1560,7 +1721,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:107](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L107)
+[index.ts:132](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L132)
 
 ##### value
 
@@ -1568,7 +1729,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:105](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L105)
+[index.ts:130](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L130)
 
 ---
 
@@ -1582,7 +1743,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:129](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L129)
+[index.ts:154](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L154)
 
 ##### creators?
 
@@ -1590,7 +1751,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:128](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L128)
+[index.ts:153](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L153)
 
 ##### date?
 
@@ -1598,7 +1759,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:126](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L126)
+[index.ts:151](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L151)
 
 ##### identifier
 
@@ -1606,7 +1767,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:125](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L125)
+[index.ts:150](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L150)
 
 ##### language
 
@@ -1614,7 +1775,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:124](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L124)
+[index.ts:149](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L149)
 
 ##### subjects?
 
@@ -1622,7 +1783,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:127](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L127)
+[index.ts:152](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L152)
 
 ##### title
 
@@ -1630,7 +1791,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:123](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L123)
+[index.ts:148](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L148)
 
 ##### type?
 
@@ -1638,7 +1799,7 @@ Given an XMLNode, determine whether it represents a text node or an XML element.
 
 ###### Defined in
 
-[index.ts:130](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L130)
+[index.ts:155](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L155)
 
 ## Type Aliases
 
@@ -1650,7 +1811,7 @@ A valid name for an XML element (must start with a letter)
 
 #### Defined in
 
-[index.ts:33](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L33)
+[index.ts:59](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L59)
 
 ---
 
@@ -1660,7 +1821,7 @@ A valid name for an XML element (must start with a letter)
 
 #### Defined in
 
-[index.ts:102](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L102)
+[index.ts:127](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L127)
 
 ---
 
@@ -1696,7 +1857,7 @@ A valid name for an XML element (must start with a letter)
 
 #### Defined in
 
-[index.ts:52](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L52)
+[index.ts:77](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L77)
 
 ---
 
@@ -1724,7 +1885,7 @@ A valid name for an XML element (must start with a letter)
 
 #### Defined in
 
-[index.ts:95](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L95)
+[index.ts:120](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L120)
 
 ---
 
@@ -1736,7 +1897,7 @@ An XML structure
 
 #### Defined in
 
-[index.ts:50](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L50)
+[index.ts:75](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L75)
 
 ---
 
@@ -1759,7 +1920,7 @@ An XML element, e.g. <meta>
 
 #### Defined in
 
-[index.ts:37](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L37)
+[index.ts:62](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L62)
 
 ---
 
@@ -1772,7 +1933,7 @@ A valid XML node. May be either an element or a text node.
 
 #### Defined in
 
-[index.ts:47](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L47)
+[index.ts:72](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L72)
 
 ---
 
@@ -1790,4 +1951,4 @@ A text node in an XML document
 
 #### Defined in
 
-[index.ts:44](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L44)
+[index.ts:69](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L69)
