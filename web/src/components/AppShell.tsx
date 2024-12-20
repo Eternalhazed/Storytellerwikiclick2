@@ -1,5 +1,7 @@
 "use client"
 
+import Image from "next/image"
+
 import NextLink from "next/link"
 import {
   MantineProvider,
@@ -34,6 +36,10 @@ const stOrange: MantineColorsTuple = [
 
 const theme = createTheme({
   primaryColor: "st-orange",
+  fontFamily: "var(--font-inter)",
+  headings: {
+    fontFamily: "var(--font-young-serif)",
+  },
   colors: {
     "st-orange": stOrange,
   },
@@ -74,7 +80,14 @@ export function AppShell({ children }: Props) {
               size="sm"
             />
             <Anchor component={NextLink} href="/" className="block">
-              <Title size="h3" className="font-heading text-black">
+              <Image
+                height={80}
+                width={80}
+                src="/Storyteller_Logo.png"
+                alt=""
+                aria-hidden
+              />
+              <Title size="h1" className="text-black">
                 Storyteller
               </Title>
             </Anchor>

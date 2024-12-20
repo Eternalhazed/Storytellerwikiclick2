@@ -54,7 +54,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={inter.className + " " + youngSerif.className}
+      className={inter.variable + " " + youngSerif.variable}
     >
       <head>
         <ColorSchemeScript />
