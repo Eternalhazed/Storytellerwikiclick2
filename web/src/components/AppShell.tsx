@@ -17,6 +17,12 @@ import {
   Anchor,
   Group,
 } from "@mantine/core"
+import {
+  IconBook2,
+  IconUser,
+  IconSettings,
+  IconLogout,
+} from "@tabler/icons-react"
 import { ReactNode } from "react"
 import { useDisclosure } from "@mantine/hooks"
 import { usePathname } from "next/navigation"
@@ -43,6 +49,24 @@ const theme = createTheme({
   colors: {
     "st-orange": stOrange,
   },
+  components: {
+    NavLink: NavLink.extend({
+      classNames: {
+        label: "[span&]:text-xl",
+        root: "[a&]:p-4 rounded-md",
+      },
+    }),
+    AppShellHeader: AppShellHeader.extend({
+      defaultProps: {
+        className: "text-st-orange-50 p-4",
+      },
+    }),
+    Burger: Burger.extend({
+      defaultProps: {
+        className: "pb-[0.625rem]",
+      },
+    }),
+  },
 })
 
 interface Props {
@@ -58,68 +82,69 @@ export function AppShell({ children }: Props) {
     <MantineProvider theme={theme} defaultColorScheme="light">
       <MantineAppShell
         withBorder={false}
-        header={{ height: 60 }}
-        {...(pathname === "/"
-          ? undefined
-          : {
-              navbar: {
-                width: 240,
-                breakpoint: "sm",
-                collapsed: { mobile: !opened },
-              },
-            })}
+        header={{ height: 110 }}
+        navbar={{
+          width: 340,
+          breakpoint: "sm",
+          collapsed: { mobile: !opened },
+        }}
       >
-        <AppShellHeader className="text-st-orange-50 p-4">
+        <AppShellHeader>
           <Group align="center">
             <Burger
-              className="pb-[0.625rem]"
               opened={opened}
-              color="white"
+              color="st-orange"
               onClick={toggle}
               hiddenFrom="sm"
-              size="sm"
+              size="lg"
             />
-            <Anchor component={NextLink} href="/" className="block">
-              <Image
-                height={80}
-                width={80}
-                src="/Storyteller_Logo.png"
-                alt=""
-                aria-hidden
-              />
-              <Title size="h1" className="text-black">
-                Storyteller
-              </Title>
+            <Anchor component={NextLink} href="/">
+              <Group>
+                <Image
+                  height={80}
+                  width={80}
+                  src="/Storyteller_Logo.png"
+                  alt=""
+                  aria-hidden
+                />
+                <Title size="h1" className="text-black">
+                  Storyteller
+                </Title>
+              </Group>
             </Anchor>
           </Group>
         </AppShellHeader>
-        <AppShellNavbar className="mt-8">
+        <AppShellNavbar>
           <NavLink
             component={NextLink}
             href="/"
+            leftSection={<IconBook2 />}
             label="Books"
             active={pathname === "/"}
           />
           <NavLink
             component={NextLink}
             href="/users"
+            leftSection={<IconUser />}
             label="Users"
             active={pathname === "/users"}
           />
           <NavLink
             component={NextLink}
             href="/settings"
+            leftSection={<IconSettings />}
             label="Settings"
             active={pathname === "/settings"}
           />
           <NavLink
             component="a"
             href="/logout"
+            leftSection={<IconLogout />}
             label="Logout"
             active={pathname === "/logout"}
           />
         </AppShellNavbar>
-        <AppShellMain className="mt-8">{children}</AppShellMain>
+        <AppShellMain>{children}</AppShellMain>
       </MantineAppShell>
     </MantineProvider>
   )
