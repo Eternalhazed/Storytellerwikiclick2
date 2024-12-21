@@ -29,6 +29,7 @@ import {
 import { ReactNode } from "react"
 import { useDisclosure } from "@mantine/hooks"
 import { usePathname } from "next/navigation"
+import { usePermissions } from "@/contexts/UserPermissions"
 
 const stOrange: MantineColorsTuple = [
   "#fff1e7",
@@ -107,6 +108,7 @@ interface Props {
 export function AppShell({ children }: Props) {
   const [opened, { toggle }] = useDisclosure(false)
   const pathname = usePathname()
+  const permissions = usePermissions()
 
   return (
     <MantineProvider theme={theme} defaultColorScheme="light">
@@ -146,27 +148,33 @@ export function AppShell({ children }: Props) {
           </Group>
         </AppShellHeader>
         <AppShellNavbar>
-          <NavLink
-            component={NextLink}
-            href="/"
-            leftSection={<IconBook2 />}
-            label="Books"
-            active={pathname === "/"}
-          />
-          <NavLink
-            component={NextLink}
-            href="/users"
-            leftSection={<IconUser />}
-            label="Users"
-            active={pathname === "/users"}
-          />
-          <NavLink
-            component={NextLink}
-            href="/settings"
-            leftSection={<IconSettings />}
-            label="Settings"
-            active={pathname === "/settings"}
-          />
+          {(permissions.book_create || permissions.book_list) && (
+            <NavLink
+              component={NextLink}
+              href="/"
+              leftSection={<IconBook2 />}
+              label="Books"
+              active={pathname === "/"}
+            />
+          )}
+          {(permissions.user_create || permissions.user_list) && (
+            <NavLink
+              component={NextLink}
+              href="/users"
+              leftSection={<IconUser />}
+              label="Users"
+              active={pathname === "/users"}
+            />
+          )}
+          {permissions.settings_update && (
+            <NavLink
+              component={NextLink}
+              href="/settings"
+              leftSection={<IconSettings />}
+              label="Settings"
+              active={pathname === "/settings"}
+            />
+          )}
           <NavLink
             component="a"
             href="/logout"

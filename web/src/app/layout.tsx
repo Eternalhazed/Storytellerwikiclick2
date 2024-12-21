@@ -8,10 +8,7 @@ import {
   EMPTY_PERMISSIONS as EMPTY_PERMISSIONS,
   UserPermissionsProvider,
 } from "@/contexts/UserPermissions"
-import { createAuthedApiClient } from "@/authedApiClient"
-import { User } from "@/apiModels"
-import { ApiClientError } from "@/apiClient"
-import { logger } from "@/logging"
+import { getCurrentUser } from "@/authedApiClient"
 import { AppShell } from "@/components/AppShell"
 import { ColorSchemeScript } from "@mantine/core"
 import "@mantine/core/styles.css"
@@ -42,13 +39,7 @@ export default async function RootLayout({
   const versionString = process.env["CI_COMMIT_TAG"]
   const version = versionString?.match(/^web-v(.*)$/)?.[1] ?? "development"
 
-  let currentUser: User | undefined = undefined
-  try {
-    const client = await createAuthedApiClient()
-    currentUser = await client.getCurrentUser()
-  } catch (e) {
-    if (e instanceof ApiClientError && e.statusCode >= 500) logger.error(e)
-  }
+  const currentUser = await getCurrentUser()
 
   return (
     <html

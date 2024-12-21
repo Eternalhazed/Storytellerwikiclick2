@@ -328,7 +328,7 @@ export function createUser(
 export function userHasPermission(username: string, permission: Permission) {
   const db = getDatabase()
 
-  const { [permission]: hasPermission } = db
+  const result = db
     .prepare<{ username: string }>(
       `
     SELECT ${permission}
@@ -340,9 +340,15 @@ export function userHasPermission(username: string, permission: Permission) {
     )
     .get({
       username: username.toLowerCase(),
-    }) as {
-    [K in Permission]: 0 | 1
-  }
+    }) as
+    | {
+        [K in Permission]: 0 | 1
+      }
+    | null
+
+  if (!result) return false
+
+  const { [permission]: hasPermission } = result
 
   return hasPermission === 1
 }

@@ -373,12 +373,12 @@ export class ApiClient {
   async createBook(epubFile: string, audioFiles: string[]): Promise<BookDetail>
   async createBook(
     epubFile: File,
-    audioFiles: FileList,
+    audioFiles: File[],
     onUploadProgress: (progressEvent: AxiosProgressEvent) => void,
   ): Promise<BookDetail>
   async createBook(
     epubFile: File | string,
-    audioFiles: FileList | string[],
+    audioFiles: File[] | string[],
     onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
   ): Promise<BookDetail> {
     const url = new URL(`${this.rootPath}/books/`, this.origin)
