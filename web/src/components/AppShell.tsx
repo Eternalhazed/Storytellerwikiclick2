@@ -16,6 +16,9 @@ import {
   Title,
   Anchor,
   Group,
+  Fieldset,
+  TextInput,
+  NativeSelect,
 } from "@mantine/core"
 import {
   IconBook2,
@@ -61,9 +64,36 @@ const theme = createTheme({
         className: "text-st-orange-50 p-4",
       },
     }),
+    AppShellMain: AppShellMain.extend({
+      defaultProps: {
+        className: "p-8",
+      },
+    }),
     Burger: Burger.extend({
       defaultProps: {
         className: "pb-[0.625rem]",
+      },
+    }),
+    Fieldset: Fieldset.extend({
+      defaultProps: {
+        className: "m-8",
+        variant: "filled",
+        classNames: {
+          legend: "[legend&]:text-2xl",
+        },
+      },
+    }),
+    TextInput: TextInput.extend({
+      defaultProps: {
+        className: "my-4",
+      },
+      classNames: {
+        description: "text-sm",
+      },
+    }),
+    NativeSelect: NativeSelect.extend({
+      classNames: {
+        description: "[p&]:text-sm",
       },
     }),
   },
@@ -83,6 +113,7 @@ export function AppShell({ children }: Props) {
       <MantineAppShell
         withBorder={false}
         header={{ height: 110 }}
+        padding="md"
         navbar={{
           width: 340,
           breakpoint: "sm",
