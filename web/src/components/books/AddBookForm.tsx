@@ -1,18 +1,18 @@
 "use client"
 
 import { useCallback, useState, MouseEvent, FormEvent, Fragment } from "react"
-import styles from "./addbookform.module.css"
 import { useApiClient } from "@/hooks/useApiClient"
-import { ProgressBar } from "./ProgressBar"
 import { usePermission } from "@/contexts/UserPermissions"
 import { ServerFilePicker } from "./ServerFilePicker"
 import {
+  Box,
   Button,
   ButtonGroup,
   Fieldset,
   FileButton,
   Group,
   Modal,
+  Progress,
   Stack,
   Text,
 } from "@mantine/core"
@@ -95,40 +95,7 @@ export function AddBookForm() {
   if (!canAddBook) return null
 
   return (
-    <Stack className="max-w-[600px] rounded-md bg-gray-200 py-8">
-      {/* <Dialog
-        className={styles["server-files-dialog"]}
-        open={fileSource === "server" && openDialog !== null}
-        unmountOnHide
-        hideOnEscape
-        hideOnInteractOutside
-        onClose={() => {
-          setOpenDialog(null)
-        }}
-      >
-        <DialogDismiss className={styles["dialog-dismiss"]} />
-        <DialogHeading>
-          Choose {openDialog === "epub" ? "file" : "files"} from server
-        </DialogHeading>
-        {openDialog === "audio" ? (
-          <ServerFilePicker
-            allowedExtensions={[".mp4", ".mp3", ".zip", ".m4b", ".m4a"]}
-            multiple
-            onChange={(files) => {
-              setAudioPaths(files)
-              setOpenDialog(null)
-            }}
-          />
-        ) : (
-          <ServerFilePicker
-            allowedExtensions={[".epub"]}
-            onChange={(file) => {
-              setEpubPath(file)
-              setOpenDialog(null)
-            }}
-          />
-        )}
-      </Dialog> */}
+    <Stack className="mt-8 max-w-[600px] rounded-md bg-gray-200 py-8">
       <Modal
         opened={fileSource === "server" && openDialog !== null}
         onClose={() => {
@@ -369,32 +336,34 @@ export function AddBookForm() {
             </Stack>
           </Fieldset>
           {uploadState === UploadState.SUCCESS ? (
-            <>
-              <span>Done!</span>
+            <Group justify="space-between" px="lg" align="center">
+              <Text size="lg" c="st-orange" fw="bold">
+                Done!
+              </Text>
               <Button type="reset" onClick={resetState}>
                 Add another book
               </Button>
-            </>
+            </Group>
           ) : uploadState === UploadState.ERROR ? (
-            <>
-              <span>Failed - check your server logs for more details</span>
+            <Group justify="space-between" px="lg">
+              <Text>Failed - check your server logs for more details</Text>
               <Button type="reset" onClick={resetState}>
                 Try again
               </Button>
-            </>
+            </Group>
           ) : (
             <>
               {uploadState === UploadState.UPLOADING &&
                 uploadProgress !== null && (
-                  <div className={styles["progress-container"]}>
-                    <span>
+                  <Box className="p-6">
+                    <Text>
                       {currentUploadIndex === null
                         ? epubFile?.name
                         : audioFiles?.[currentUploadIndex]?.name ??
                           "Processing..."}
-                    </span>
-                    <ProgressBar progress={uploadProgress * 100} />
-                  </div>
+                    </Text>
+                    <Progress value={uploadProgress * 100} />
+                  </Box>
                 )}
               <Group justify="space-between" px="lg">
                 <Button type="reset" variant="white" onClick={resetState}>
