@@ -1,6 +1,5 @@
 "use client"
 
-import { Dialog, DialogDismiss, DialogHeading } from "@ariakit/react"
 import { useCallback, useState, MouseEvent, FormEvent, Fragment } from "react"
 import styles from "./addbookform.module.css"
 import { useApiClient } from "@/hooks/useApiClient"
@@ -13,24 +12,13 @@ import {
   Fieldset,
   FileButton,
   Group,
+  Modal,
   Stack,
   Text,
 } from "@mantine/core"
 import { IconX } from "@tabler/icons-react"
-
-function round(n: number, r: number) {
-  return Math.round(n * Math.pow(10, r)) / Math.pow(10, r)
-}
-
-function formatBytes(bytes: number) {
-  const kilobytes = round(bytes / 1000, 2)
-  if (kilobytes < 1) return `${bytes} B`
-  const megabytes = round(kilobytes / 1000, 2)
-  if (megabytes < 1) return `${kilobytes} KB`
-  const gigabytes = round(megabytes / 1000, 2)
-  if (gigabytes < 1) return `${megabytes} MB`
-  return `${gigabytes.toFixed(2)} GB`
-}
+import { formatBytes } from "@/strings"
+import { DirectoryFileEntry } from "@/actions/listDirectoryAction"
 
 enum UploadState {
   CLEAN = "CLEAN",
@@ -45,8 +33,10 @@ export function AddBookForm() {
   const [showForm, setShowForm] = useState(false)
   const [epubFile, setEpubFile] = useState<File | null>(null)
   const [audioFiles, setAudioFiles] = useState<File[] | null>(null)
-  const [epubPath, setEpubPath] = useState<string | null>(null)
-  const [audioPaths, setAudioPaths] = useState<string[] | null>(null)
+  const [epubPath, setEpubPath] = useState<DirectoryFileEntry | null>(null)
+  const [audioPaths, setAudioPaths] = useState<DirectoryFileEntry[] | null>(
+    null,
+  )
   const [currentUploadIndex, setCurrentUploadIndex] = useState<number | null>(
     null,
   )
@@ -87,7 +77,10 @@ export function AddBookForm() {
     } else {
       try {
         if (epubPath === null || audioPaths === null) return
-        await client.createBook(epubPath, audioPaths)
+        await client.createBook(
+          epubPath.path,
+          audioPaths.map((entry) => entry.path),
+        )
       } catch (_) {
         setUploadState(UploadState.ERROR)
         return
@@ -103,7 +96,7 @@ export function AddBookForm() {
 
   return (
     <Stack className="max-w-[600px] rounded-md bg-gray-200 py-8">
-      <Dialog
+      {/* <Dialog
         className={styles["server-files-dialog"]}
         open={fileSource === "server" && openDialog !== null}
         unmountOnHide
@@ -135,7 +128,35 @@ export function AddBookForm() {
             }}
           />
         )}
-      </Dialog>
+      </Dialog> */}
+      <Modal
+        opened={fileSource === "server" && openDialog !== null}
+        onClose={() => {
+          setOpenDialog(null)
+        }}
+        title="Select files"
+        centered
+        size="xl"
+      >
+        {openDialog === "audio" ? (
+          <ServerFilePicker
+            allowedExtensions={[".mp4", ".mp3", ".zip", ".m4b", ".m4a"]}
+            multiple
+            onChange={(files) => {
+              setAudioPaths(files)
+              setOpenDialog(null)
+            }}
+          />
+        ) : (
+          <ServerFilePicker
+            allowedExtensions={[".epub"]}
+            onChange={(file) => {
+              setEpubPath(file)
+              setOpenDialog(null)
+            }}
+          />
+        )}
+      </Modal>
       {showForm ? (
         <form onSubmit={onSubmit}>
           <Group justify="center">
@@ -144,6 +165,8 @@ export function AddBookForm() {
                 className="[button&]:rounded-r-none"
                 variant={fileSource === "upload" ? "filled" : "white"}
                 onClick={() => {
+                  setEpubPath(null)
+                  setAudioPaths(null)
                   setFileSource("upload")
                 }}
               >
@@ -153,6 +176,8 @@ export function AddBookForm() {
                 className="[button&]:rounded-l-none"
                 variant={fileSource === "server" ? "filled" : "white"}
                 onClick={() => {
+                  setEpubFile(null)
+                  setAudioFiles(null)
                   setFileSource("server")
                 }}
               >
@@ -203,7 +228,8 @@ export function AddBookForm() {
                 )}
                 {epubPath !== null && (
                   <Group>
-                    <Text>{epubPath}</Text>
+                    <Text>{epubPath.name}</Text>
+                    <Text>{formatBytes(epubPath.size)}</Text>
                     <Button
                       variant="subtle"
                       size="compact-xs"
@@ -253,6 +279,15 @@ export function AddBookForm() {
                           ),
                         )}
                       </Text>
+                      <Button
+                        variant="subtle"
+                        size="compact-xs"
+                        onClick={() => {
+                          setAudioFiles(null)
+                        }}
+                      >
+                        Clear
+                      </Button>
                     </Group>
                     <Stack gap={0}>
                       {audioFiles.map((file) => (
@@ -281,8 +316,55 @@ export function AddBookForm() {
                     </Stack>
                   </>
                 )}
-
-                {audioPaths !== null && `${audioPaths.length} files`}
+                {audioPaths !== null && (
+                  <>
+                    <Group>
+                      <Text>Total: </Text>
+                      <Text>
+                        {formatBytes(
+                          Array.from(audioPaths).reduce(
+                            (acc, f) => acc + f.size,
+                            0,
+                          ),
+                        )}
+                      </Text>
+                      <Button
+                        variant="subtle"
+                        size="compact-xs"
+                        onClick={() => {
+                          setAudioPaths(null)
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    </Group>
+                    <Stack gap={0}>
+                      {audioPaths.map((file) => (
+                        <Fragment key={file.name}>
+                          <Group justify="stretch">
+                            <Group justify="space-between" className="grow">
+                              <Text>{file.name}</Text>
+                              <Text>{formatBytes(file.size)}</Text>
+                            </Group>
+                            <Button
+                              variant="subtle"
+                              size="compact-xs"
+                              onClick={() => {
+                                setAudioPaths(
+                                  (prev) =>
+                                    prev?.filter((value) => value !== file) ??
+                                    null,
+                                )
+                              }}
+                            >
+                              <IconX />
+                            </Button>
+                          </Group>
+                        </Fragment>
+                      ))}
+                    </Stack>
+                  </>
+                )}
               </Stack>
             </Stack>
           </Fieldset>
