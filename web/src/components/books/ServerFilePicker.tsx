@@ -261,7 +261,7 @@ function ServerSingleFilePicker({
       >
         <Combobox.EventsTarget>
           <TextInput
-            classNames={{ input: "[input&]:text-lg [input&]:md:text-base" }}
+            classNames={{ input: "text-lg md:text-base" }}
             placeholder="Pick value"
             value={currentSearchDirectory}
             onChange={(event) => {

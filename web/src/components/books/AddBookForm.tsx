@@ -129,7 +129,6 @@ export function AddBookForm() {
           <Group justify="center">
             <ButtonGroup>
               <Button
-                className="[button&]:rounded-r-none"
                 variant={fileSource === "upload" ? "filled" : "white"}
                 onClick={() => {
                   setEpubPath(null)
@@ -140,7 +139,6 @@ export function AddBookForm() {
                 Upload files
               </Button>
               <Button
-                className="[button&]:rounded-l-none"
                 variant={fileSource === "server" ? "filled" : "white"}
                 onClick={() => {
                   setEpubFile(null)

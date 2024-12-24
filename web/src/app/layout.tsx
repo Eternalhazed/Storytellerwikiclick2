@@ -1,7 +1,6 @@
 import { Inter, Young_Serif } from "next/font/google"
 
 import { ApiHostContextProvider } from "@/contexts/ApiHostContext"
-import "./globals.css"
 import { proxyRootPath } from "./apiHost"
 // import { Header } from "@/components/layout/Header"
 import {
@@ -11,7 +10,8 @@ import {
 import { getCurrentUser } from "@/authedApiClient"
 import { AppShell } from "@/components/AppShell"
 import { ColorSchemeScript } from "@mantine/core"
-import "@mantine/core/styles.css"
+
+import "./globals.css"
 
 const inter = Inter({
   subsets: ["latin"],

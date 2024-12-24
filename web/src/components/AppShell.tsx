@@ -56,18 +56,13 @@ const theme = createTheme({
   components: {
     NavLink: NavLink.extend({
       classNames: {
-        label: "[span&]:text-xl",
-        root: "[a&]:p-4 rounded-md",
+        label: "text-lg",
+        root: "p-4 rounded-md",
       },
     }),
     AppShellHeader: AppShellHeader.extend({
       defaultProps: {
         className: "text-st-orange-50 p-4",
-      },
-    }),
-    AppShellMain: AppShellMain.extend({
-      defaultProps: {
-        className: "p-8",
       },
     }),
     Burger: Burger.extend({
@@ -80,7 +75,7 @@ const theme = createTheme({
         className: "m-8",
         variant: "filled",
         classNames: {
-          legend: "[legend&]:text-2xl",
+          legend: "text-xl",
         },
       },
     }),
@@ -94,7 +89,7 @@ const theme = createTheme({
     }),
     NativeSelect: NativeSelect.extend({
       classNames: {
-        description: "[p&]:text-sm",
+        description: "text-sm",
       },
     }),
   },

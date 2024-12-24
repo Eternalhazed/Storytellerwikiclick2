@@ -166,7 +166,7 @@ export function SettingsForm({ settings }: Props) {
             &quot;transcription engine&quot; setting below.
           </p>
           <p>The available paid transcription services are:</p>
-          <List listStyleType="disc" className="[ul&]:text-sm">
+          <List listStyleType="disc" className="text-sm">
             <List.Item>
               <a href="https://cloud.google.com/text-to-speech">Google Cloud</a>
             </List.Item>

@@ -1,20 +1,10 @@
-import styles from "./bookoptions.module.css"
 import { BookDetail } from "@/apiModels"
 import { useApiClient } from "@/hooks/useApiClient"
-import {
-  MenuItem,
-  MenuProvider,
-  Menubar,
-  Tooltip,
-  TooltipAnchor,
-  TooltipProvider,
-} from "@ariakit/react"
-import cx from "classnames"
-import { EditIcon } from "../icons/EditIcon"
-import { DeleteIcon } from "../icons/DeleteIcon"
 import { useRouter } from "next/navigation"
 import { usePermissions } from "@/contexts/UserPermissions"
 import { ProcessingItems } from "./ProcessingItems"
+import { ActionIcon, Stack, Tooltip } from "@mantine/core"
+import { IconPencil, IconTrash } from "@tabler/icons-react"
 
 type Props = {
   book: BookDetail
@@ -28,44 +18,38 @@ export function BookOptions({ book, synchronized }: Props) {
   const permissions = usePermissions()
 
   return (
-    <Menubar className={styles["menu"]}>
-      <MenuProvider>
-        {permissions.book_update && (
-          <MenuItem
-            className={styles["menu-item"]}
-            onClick={() => {
-              router.push(`/books/${book.uuid}`)
-            }}
-          >
-            <TooltipProvider placement="right">
-              <TooltipAnchor>
-                <EditIcon ariaLabel="Edit" />
-              </TooltipAnchor>
-              <Tooltip>Edit</Tooltip>
-            </TooltipProvider>
-          </MenuItem>
+    <Stack>
+      {permissions.book_update && (
+        <ActionIcon
+          variant="subtle"
+          color="black"
+          onClick={() => {
+            router.push(`/books/${book.uuid}`)
+          }}
+        >
+          <Tooltip position="right" label="Edit">
+            <IconPencil aria-label="Edit" />
+          </Tooltip>
+        </ActionIcon>
+      )}
+      {permissions.book_process &&
+        book.processing_status &&
+        book.original_files_exist && (
+          <ProcessingItems synchronized={synchronized} book={book} />
         )}
-        {permissions.book_process &&
-          book.processing_status &&
-          book.original_files_exist && (
-            <ProcessingItems synchronized={synchronized} book={book} />
-          )}
-        {permissions.book_delete && (
-          <MenuItem
-            className={cx(styles["menu-item"], styles["delete"])}
-            onClick={() => {
-              void client.deleteBook(book.uuid)
-            }}
-          >
-            <TooltipProvider placement="right">
-              <TooltipAnchor>
-                <DeleteIcon ariaLabel="Delete" />
-              </TooltipAnchor>
-              <Tooltip>Delete book</Tooltip>
-            </TooltipProvider>
-          </MenuItem>
-        )}
-      </MenuProvider>
-    </Menubar>
+      {permissions.book_delete && (
+        <ActionIcon
+          variant="subtle"
+          color="red"
+          onClick={() => {
+            void client.deleteBook(book.uuid)
+          }}
+        >
+          <Tooltip position="right" label="Delete book">
+            <IconTrash aria-label="Delete" />
+          </Tooltip>{" "}
+        </ActionIcon>
+      )}
+    </Stack>
   )
 }
