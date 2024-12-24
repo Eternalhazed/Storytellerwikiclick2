@@ -1,10 +1,10 @@
 import { BookDetail } from "@/apiModels"
 import { useApiClient } from "@/hooks/useApiClient"
-import { useRouter } from "next/navigation"
 import { usePermissions } from "@/contexts/UserPermissions"
 import { ProcessingItems } from "./ProcessingItems"
 import { ActionIcon, Stack, Tooltip } from "@mantine/core"
 import { IconPencil, IconTrash } from "@tabler/icons-react"
+import NextLink from "next/link"
 
 type Props = {
   book: BookDetail
@@ -13,7 +13,6 @@ type Props = {
 
 export function BookOptions({ book, synchronized }: Props) {
   const client = useApiClient()
-  const router = useRouter()
 
   const permissions = usePermissions()
 
@@ -21,11 +20,10 @@ export function BookOptions({ book, synchronized }: Props) {
     <Stack>
       {permissions.book_update && (
         <ActionIcon
+          component={NextLink}
           variant="subtle"
           color="black"
-          onClick={() => {
-            router.push(`/books/${book.uuid}`)
-          }}
+          href={`/books/${book.uuid}`}
         >
           <Tooltip position="right" label="Edit">
             <IconPencil aria-label="Edit" />

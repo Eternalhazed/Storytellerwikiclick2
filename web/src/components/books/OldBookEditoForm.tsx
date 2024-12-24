@@ -8,8 +8,6 @@ import Image from "next/image"
 import { BookDetail } from "@/apiModels"
 import { useApiClient } from "@/hooks/useApiClient"
 import { useState } from "react"
-import { useForm } from "@mantine/form"
-import { Tabs } from "@mantine/core"
 
 type Props = {
   book: BookDetail
@@ -23,17 +21,11 @@ enum SaveState {
 }
 
 export function BookEditForm({ book }: Props) {
-  const form = useForm({
-    initialValues: {
-      title: book.title,
-      language: book.language,
-      authors: book.authors,
-      textCover: null as File | null,
-      audioCover: null as File | null,
-    },
-  })
-
-  const { textCover, audioCover } = form.getValues()
+  const [title, setTitle] = useState(book.title)
+  const [language, setLanguage] = useState(book.language)
+  const [authors, setAuthors] = useState(book.authors)
+  const [textCover, setTextCover] = useState<File | null>(null)
+  const [audioCover, setAudioCover] = useState<File | null>(null)
 
   const [savedState, setSavedState] = useState<SaveState>(SaveState.CLEAN)
 
@@ -46,29 +38,15 @@ export function BookEditForm({ book }: Props) {
         <p>Failed to update. Check your server logs for details.</p>
       )}
       <form
-        onSubmit={form.onSubmit(async (values) => {
-          setSavedState(SaveState.LOADING)
-          try {
-            await client.updateBook(
-              book.uuid,
-              values.title,
-              values.language,
-              values.authors,
-              values.textCover,
-              values.audioCover,
-            )
-          } catch (_) {
-            setSavedState(SaveState.ERROR)
-            return
-          }
-
-          setSavedState(SaveState.SAVED)
-        })}
+        id="book-details"
+        className={styles["form"]}
+        action="/api/files/"
+        method="POST"
       >
         <div>
           <div className={styles["cover-art-wrapper"]}>
-            <Tabs defaultValue="text-cover-tab">
-              <Tabs.List>
+            <TabProvider defaultSelectedId="text-cover-tab">
+              <TabList className={styles["cover-art-tab-list"]}>
                 <Tab
                   className={styles["text-cover-art-tab"]}
                   id="text-cover-tab"

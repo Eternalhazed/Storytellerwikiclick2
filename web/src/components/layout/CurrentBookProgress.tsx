@@ -42,12 +42,8 @@ export function CurrentBookProgress() {
             size={40}
             thickness={4}
             roundCaps
+            rootColor="gray"
             sections={[
-              {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                value: (1 - currentBook.processing_status!.progress) * 100,
-                color: "gray",
-              },
               {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 value: currentBook.processing_status!.progress * 100,
