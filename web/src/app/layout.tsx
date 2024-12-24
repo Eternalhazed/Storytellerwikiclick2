@@ -7,11 +7,12 @@ import {
   EMPTY_PERMISSIONS as EMPTY_PERMISSIONS,
   UserPermissionsProvider,
 } from "@/contexts/UserPermissions"
-import { getCurrentUser } from "@/authedApiClient"
+import { createAuthedApiClient, getCurrentUser } from "@/authedApiClient"
 import { AppShell } from "@/components/AppShell"
 import { ColorSchemeScript } from "@mantine/core"
 
 import "./globals.css"
+import { BookDetail } from "@/apiModels"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,6 +41,15 @@ export default async function RootLayout({
   const version = versionString?.match(/^web-v(.*)$/)?.[1] ?? "development"
 
   const currentUser = await getCurrentUser()
+  const client = await createAuthedApiClient()
+
+  let books: BookDetail[] = []
+
+  try {
+    books = await client.listBooks()
+  } catch {
+    // pass
+  }
 
   return (
     <html
@@ -55,7 +65,9 @@ export default async function RootLayout({
           <UserPermissionsProvider
             value={currentUser?.permissions ?? EMPTY_PERMISSIONS}
           >
-            <AppShell version={version}>{children}</AppShell>
+            <AppShell version={version} books={books}>
+              {children}
+            </AppShell>
           </UserPermissionsProvider>
         </ApiHostContextProvider>
       </body>
