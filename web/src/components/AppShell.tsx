@@ -65,6 +65,11 @@ const theme = createTheme({
         root: "p-4 rounded-md",
       },
     }),
+    AppShellMain: AppShellMain.extend({
+      defaultProps: {
+        className: "max-w-[1200px]",
+      },
+    }),
     AppShellHeader: AppShellHeader.extend({
       defaultProps: {
         className: "text-st-orange-50 py-4",
@@ -77,7 +82,7 @@ const theme = createTheme({
     }),
     Fieldset: Fieldset.extend({
       defaultProps: {
-        className: "m-8",
+        className: "my-8",
         variant: "filled",
         classNames: {
           legend: "text-xl",

@@ -1,7 +1,6 @@
 import { ApiClientError } from "@/apiClient"
 import { BookDetail } from "@/apiModels"
 import { redirect } from "next/navigation"
-import styles from "./page.module.css"
 import { createAuthedApiClient } from "@/authedApiClient"
 import { BookEditForm } from "@/components/books/BookEditForm"
 import { logger } from "@/logging"
