@@ -253,20 +253,21 @@ export default async function processBook({
 
         // Get the app version, as seen in app/layout.tsx
         const versionString = process.env["CI_COMMIT_TAG"]
-        const version = versionString?.match(/^web-v(.*)$/)?.[1] ?? "development"
+        const version =
+          versionString?.match(/^web-v(.*)$/)?.[1] ?? "development"
 
         // Get current day-time, format as seen in epub.writeToFile() for dcterms:modified
         const dateTimeString = new Date().toISOString()
 
-        // Add the metadata 
+        // Add the metadata
         const storytellerMetaName = "storyteller:media-overlay-production-info"
         const storytellerMetaValue = `appVersion=${version};createdAt=${dateTimeString}`
         await epub.addMetadata({
-            type: "meta",
-            properties: { property: storytellerMetaName },
-            value: storytellerMetaValue,
+          type: "meta",
+          properties: { property: storytellerMetaName },
+          value: storytellerMetaValue,
         })
-        
+
         await epub.writeToFile(getEpubSyncedFilepath(bookUuid))
         await epub.close()
       }
