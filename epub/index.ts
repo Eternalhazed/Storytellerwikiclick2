@@ -1284,6 +1284,89 @@ export class Epub {
     }
   }
 
+  async removeCreator(
+    index: number,
+    type: "creator" | "contributor" = "creator",
+  ) {
+    // Order matters for creators and contributors,
+    // so we can't just append these to the end of the
+    // metadata element's children using `addMetadata`.
+    // We have to manually find the correct insertion point
+    // based on the provided index
+    const packageDocument = await this.getPackageDocument()
+
+    const packageElement = Epub.findXmlChildByName("package", packageDocument)
+    if (!packageElement)
+      throw new Error(
+        "Failed to parse EPUB: found no package element in package document",
+      )
+
+    const metadata = Epub.findXmlChildByName("metadata", packageElement.package)
+    if (!metadata)
+      throw new Error(
+        "Failed to parse EPUB: found no metadata element in package document",
+      )
+
+    let creatorCount = 0
+    let metadataIndex = 0
+    for (const meta of Epub.getXmlChildren(metadata)) {
+      if (creatorCount === index) break
+      metadataIndex++
+      if (Epub.isXmlTextNode(meta)) continue
+      if (Epub.getXmlElementName(meta) !== `dc:${type}`) continue
+      creatorCount++
+    }
+
+    Epub.getXmlChildren(metadata).splice(
+      metadataIndex,
+      0,
+      Epub.createXmlElement(`dc:${type}`, { id: creatorId }, [
+        Epub.createXmlTextNode(creator.name),
+      ]),
+    )
+
+    const updatedPackageDocument = (await Epub.xmlBuilder.build(
+      packageDocument,
+    )) as string
+
+    const rootfile = await this.getRootfile()
+
+    this.writeEntryContents(rootfile, updatedPackageDocument, "utf-8")
+
+    // These can all just go at the end; order is only
+    // important for the `dc:creator`/`dc:contributor`
+    // elements
+    if (creator.role) {
+      await this.addMetadata({
+        type: "meta",
+        properties: { refines: `#${creatorId}`, property: "role" },
+        value: creator.role,
+      })
+    }
+
+    if (creator.fileAs) {
+      await this.addMetadata({
+        type: "meta",
+        properties: { refines: `#${creatorId}`, property: "file-as" },
+        value: creator.fileAs,
+      })
+    }
+
+    if (creator.alternateScripts) {
+      for (const alternate of creator.alternateScripts) {
+        await this.addMetadata({
+          type: "meta",
+          properties: {
+            refines: `#${creatorId}`,
+            property: "alternate-script",
+            "xml:lang": alternate.locale.toString(),
+          },
+          value: alternate.name,
+        })
+      }
+    }
+  }
+
   /**
    * Add a contributor to the EPUB metadata.
    *
