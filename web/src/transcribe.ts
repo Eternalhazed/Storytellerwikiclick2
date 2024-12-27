@@ -219,7 +219,7 @@ export async function transcribeTrack(
 
     const { transcript, wordTimeline } = await recognize(trackPath, {
       engine: "google-cloud",
-      language: locale.toString(),
+      language: "en-US",
       googleCloud: {
         apiKey: settings.googleCloudApiKey,
       },
