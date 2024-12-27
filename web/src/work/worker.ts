@@ -160,7 +160,7 @@ export default async function processBook({
   const epubTitle = await epub.getTitle()
 
   logger.info(
-    `Found ${remainingTasks.length} remaining tasks for book ${bookUuid} ("${epubTitle}")`
+    `Found ${remainingTasks.length} remaining tasks for book ${bookUuid} ("${epubTitle}")`,
   )
 
   for (const task of remainingTasks) {
