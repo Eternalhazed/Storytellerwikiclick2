@@ -155,9 +155,14 @@ export default async function processBook({
   // const currentTasks = await getProcessingTasksForBook(bookUuid)
   const remainingTasks = determineRemainingTasks(bookUuid, currentTasks)
 
+  // get epubTitle for logs
+  const epub = await readEpub(bookUuid)
+  const epubTitle = await epub.getTitle()
+
   logger.info(
-    `Found ${remainingTasks.length} remaining tasks for book ${bookUuid}`,
+    `Found ${remainingTasks.length} remaining tasks for book ${bookUuid} ("${epubTitle}")`
   )
+
   for (const task of remainingTasks) {
     port.postMessage({
       type: "taskTypeUpdated",
@@ -270,6 +275,6 @@ export default async function processBook({
       return
     }
   }
-  logger.info(`Completed synchronizing book ${bookUuid}`)
+  logger.info(`Completed synchronizing book ${bookUuid} ("${epubTitle}")`)
   port.postMessage({ type: "processingCompleted", bookUuid })
 }
