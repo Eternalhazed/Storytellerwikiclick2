@@ -81,7 +81,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       package: IS_DEV
         ? "dev.smoores.Storyteller.dev"
         : "dev.smoores.Storyteller",
-      versionCode: 27,
       adaptiveIcon: {
         foregroundImage: "./assets/Storyteller_Logo.png",
         backgroundColor: "#ffffff",
