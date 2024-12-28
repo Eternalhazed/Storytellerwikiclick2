@@ -44,7 +44,7 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
 
     var bookService: BookService? = null
     var bookId: Long? = null
-    var initialLocator? = null
+    var initialLocator: Locator? = null
     var locator: Locator? = null
     var isPlaying: Boolean = false
     var navigator: EpubNavigatorFragment? = null
@@ -289,8 +289,8 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
         if (locator.href !== this.locator?.href) {
             val bookId = this.bookId ?: return
 
-            val locator = this.locator ?: this.navigator?.currentLocator?.value ?: return this
-            val fragments = bookService?.getFragments(bookId, locator) ?: return this
+            val locator = this.locator ?: this.navigator?.currentLocator?.value ?: return
+            val fragments = bookService?.getFragments(bookId, locator) ?: return
     
             val joinedFragments = fragments.joinToString { "\"${it.fragment}\"" }
             val jsFragmentsArray = "[${joinedFragments}]"
