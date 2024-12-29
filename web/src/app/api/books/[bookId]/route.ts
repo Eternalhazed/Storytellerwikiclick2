@@ -91,19 +91,15 @@ export const PUT = withHasPermission<Params>("book_update")(async (
       await epub.setLanguage(new Intl.Locale(updated.language))
     }
     const epubAuthors = await epub.getCreators()
+    for (let i = 0; i < epubAuthors.length; i++) {
+      await epub.removeCreator(i)
+    }
     for (const author of updated.authors) {
-      const epubAuthorIndex = epubAuthors.findIndex(
-        (a) => a.fileAs === author.fileAs || a.name === author.name,
-      )
-      if (epubAuthorIndex === -1) {
-        await epub.addCreator({
-          name: author.name,
-          fileAs: author.fileAs ?? author.name,
-          role: author.role ?? "aut",
-        })
-        continue
-      }
-      await epub.creator
+      await epub.addCreator({
+        name: author.name,
+        fileAs: author.fileAs ?? author.name,
+        role: author.role ?? "aut",
+      })
     }
     const epubCover = await getCustomEpubCover(bookUuid)
     const epubFilename = await getEpubCoverFilename(bookUuid)

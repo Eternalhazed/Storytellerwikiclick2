@@ -235,4 +235,45 @@ void describe("Epub", () => {
     )
     await epub.close()
   })
+
+  void it("can remove a creator", async () => {
+    const epub = await Epub.create(
+      {
+        title: "Title",
+        language: new Intl.Locale("en-US"),
+        identifier: "1",
+      },
+      [
+        {
+          id: "creator-1",
+          type: "dc:creator",
+          properties: {},
+          value: "Creator 1",
+        },
+        {
+          id: "creator-2",
+          type: "dc:creator",
+          properties: {},
+          value: "Creator 2",
+        },
+        {
+          id: "creator-3",
+          type: "dc:creator",
+          properties: {},
+          value: "Creator 3",
+        },
+      ],
+    )
+
+    await epub.removeCreator(1)
+
+    const creators = await epub.getCreators()
+    assert.equal(creators.length, 2)
+    assert.deepStrictEqual(creators[0], {
+      name: "Creator 1",
+    })
+    assert.deepStrictEqual(creators[1], {
+      name: "Creator 3",
+    })
+  })
 })
