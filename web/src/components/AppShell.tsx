@@ -61,8 +61,8 @@ const theme = createTheme({
   components: {
     NavLink: NavLink.extend({
       classNames: {
-        label: "text-lg",
-        root: "p-4 rounded-md",
+        label: "text-base",
+        root: "p-2 rounded-md",
       },
     }),
     AppShellMain: AppShellMain.extend({
@@ -124,7 +124,7 @@ export function AppShell({ children, version, books }: Props) {
           header={{ height: 100 }}
           padding="md"
           navbar={{
-            width: 340,
+            width: 300,
             breakpoint: "sm",
             collapsed: { mobile: !opened },
           }}

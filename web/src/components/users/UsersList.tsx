@@ -43,7 +43,7 @@ export function UsersList({
           <CreateInviteForm onUpdate={refreshInvites} />
           <List type="ordered" listStyleType="none">
             {invites.map((invite) => (
-              <List.Item key={invite.key}>
+              <List.Item key={invite.key} classNames={{ itemWrapper: "block" }}>
                 <InviteStatus invite={invite} onUpdate={refreshInvites} />
               </List.Item>
             ))}
@@ -55,7 +55,7 @@ export function UsersList({
           <Title order={3}>Users</Title>
           <List type="ordered" listStyleType="none">
             {users.map((user) => (
-              <List.Item key={user.uuid}>
+              <List.Item key={user.uuid} classNames={{ itemWrapper: "block" }}>
                 <UserStatus user={user} onUpdate={refreshUsers} />
               </List.Item>
             ))}

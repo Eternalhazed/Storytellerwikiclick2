@@ -9,6 +9,7 @@ import {
   Settings,
   Token,
   User,
+  UserPermissions,
   UserRequest,
 } from "./apiModels"
 
@@ -245,6 +246,21 @@ export class ApiClient {
       method: "DELETE",
       headers: this.getHeaders(),
       credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+  }
+
+  async updateUser(uuid: string, permissions: UserPermissions): Promise<void> {
+    const url = new URL(`${this.rootPath}/users/${uuid}`, this.origin)
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: this.getHeaders(),
+      credentials: "include",
+      body: JSON.stringify({ permissions }),
     })
 
     if (!response.ok) {

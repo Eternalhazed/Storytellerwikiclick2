@@ -23,6 +23,7 @@ export type InviteRequest = {
   user_list?: boolean
   user_read?: boolean
   user_delete?: boolean
+  user_update?: boolean
   settings_update?: boolean
 }
 
@@ -45,6 +46,7 @@ export const POST = withHasPermission("user_create")(async (request) => {
     userList: permissionsInput.user_list ?? false,
     userRead: permissionsInput.user_read ?? false,
     userDelete: permissionsInput.user_delete ?? false,
+    userUpdate: permissionsInput.user_update ?? false,
     settingsUpdate: permissionsInput.settings_update ?? false,
   }
 

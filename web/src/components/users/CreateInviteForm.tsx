@@ -13,7 +13,7 @@ import {
   Group,
 } from "@mantine/core"
 
-const ADMIN_PERMISSIONS: Array<keyof UserPermissions> = [
+export const ADMIN_PERMISSIONS: Array<keyof UserPermissions> = [
   "book_create",
   "book_read",
   "book_process",
@@ -27,16 +27,17 @@ const ADMIN_PERMISSIONS: Array<keyof UserPermissions> = [
   "user_list",
   "user_read",
   "user_delete",
+  "user_update",
   "settings_update",
 ]
 
-const BASIC_PERMISSIONS: Array<keyof UserPermissions> = [
+export const BASIC_PERMISSIONS: Array<keyof UserPermissions> = [
   "book_read",
   "book_download",
   "book_list",
 ]
 
-const PERMISSIONS_VALUES: Array<{
+export const PERMISSIONS_VALUES: Array<{
   value: keyof UserPermissions
   label: string
 }> = [
@@ -53,6 +54,7 @@ const PERMISSIONS_VALUES: Array<{
   { value: "user_list", label: "List all users" },
   { value: "user_read", label: "See other users' info" },
   { value: "user_delete", label: "Delete users" },
+  { value: "user_update", label: "Update other users' permissions" },
   { value: "settings_update", label: "Change server settings" },
 ]
 

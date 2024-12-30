@@ -2,7 +2,6 @@
 
 import NextImage from "next/image"
 import { BookDetail } from "@/apiModels"
-import styles from "./bookstatus.module.css"
 import { useApiClient } from "@/hooks/useApiClient"
 import { BookOptions } from "./BookOptions"
 import { ProcessingFailedMessage } from "./ProcessingFailedMessage"
@@ -73,9 +72,12 @@ export function BookStatus({ book }: Props) {
           </Box>
           {synchronized ? (
             permissions.book_download && (
-              <div className={styles["download-wrapper"]}>
-                <a href={client.getSyncedDownloadUrl(book.uuid)}>Download</a>
-              </div>
+              <a
+                href={client.getSyncedDownloadUrl(book.uuid)}
+                className="text-st-orange-600 underline"
+              >
+                Download
+              </a>
             )
           ) : book.processing_status ? (
             book.processing_status.is_queued ? (
@@ -101,7 +103,7 @@ export function BookStatus({ book }: Props) {
               Start processing
             </Button>
           ) : (
-            <div className={styles["status"]}>Unprocessed</div>
+            <Text>Unprocessed</Text>
           )}
         </Stack>
         <BookOptions synchronized={synchronized} book={book} />

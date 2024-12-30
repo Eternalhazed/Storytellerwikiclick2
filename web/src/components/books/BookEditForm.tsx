@@ -164,7 +164,11 @@ export function BookEditForm({ book }: Props) {
             <TextInput label="Title" {...form.getInputProps("title")} />
             <TextInput label="Language" {...form.getInputProps("language")} />
             {authors.map((author, i) => (
-              <Fieldset key={author.name} legend="Author" className="relative">
+              <Fieldset
+                key={author.uuid || i}
+                legend="Author"
+                className="relative"
+              >
                 <TextInput
                   label="Name"
                   {...form.getInputProps(`authors.${i}.name`)}
