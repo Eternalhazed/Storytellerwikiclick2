@@ -249,39 +249,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ariakit/core@npm:0.4.14":
-  version: 0.4.14
-  resolution: "@ariakit/core@npm:0.4.14"
-  checksum: 10c0/7faf79069d25b9a869143fc8d25f87ce02be3fbc87183055a5cb93abf6a7989281155493cf1fe18b5d8144f6fab5a60063699d6d53b7e3d3de253e8afd0c33c2
-  languageName: node
-  linkType: hard
-
-"@ariakit/react-core@npm:0.4.15":
-  version: 0.4.15
-  resolution: "@ariakit/react-core@npm:0.4.15"
-  dependencies:
-    "@ariakit/core": "npm:0.4.14"
-    "@floating-ui/dom": "npm:^1.0.0"
-    use-sync-external-store: "npm:^1.2.0"
-  peerDependencies:
-    react: ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/8da567eadee423b38b54ea4c58ec19a84e329da141bf0277906a8a69b428ea6326e31e28a7f0fc67c4c8b1c420500137b6bee04e8c12253f2b7b290fb2173439
-  languageName: node
-  linkType: hard
-
-"@ariakit/react@npm:^0.4.15":
-  version: 0.4.15
-  resolution: "@ariakit/react@npm:0.4.15"
-  dependencies:
-    "@ariakit/react-core": "npm:0.4.15"
-  peerDependencies:
-    react: ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/e89ccb1e56df17cf372b6f6df3217f2e2258bad920ac21044303948f59de4a61ae42142162d12c05b65e4ff63f08a450fa7429aafbb74a9817a65f36607ff980
-  languageName: node
-  linkType: hard
-
 "@aws-crypto/crc32@npm:5.2.0":
   version: 5.2.0
   resolution: "@aws-crypto/crc32@npm:5.2.0"
@@ -7988,7 +7955,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@storyteller/web@workspace:web"
   dependencies:
-    "@ariakit/react": "npm:^0.4.15"
     "@echogarden/espeak-ng-emscripten": "npm:^0.3.3"
     "@mantine/core": "npm:^7.15.1"
     "@mantine/form": "npm:^7.15.1"

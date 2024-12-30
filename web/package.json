@@ -16,7 +16,6 @@
     "start": "./start.sh"
   },
   "dependencies": {
-    "@ariakit/react": "^0.4.15",
     "@echogarden/espeak-ng-emscripten": "^0.3.3",
     "@mantine/core": "^7.15.1",
     "@mantine/form": "^7.15.1",
