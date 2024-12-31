@@ -19,6 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     scheme: "storyteller",
     plugins: [
       "expo-router",
+      "expo-secure-store",
       [
         "expo-build-properties",
         {
