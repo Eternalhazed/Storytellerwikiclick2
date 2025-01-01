@@ -25,8 +25,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           ios: { deploymentTarget: "15.5" },
           android: {
-            compileSdkVersion: 34,
-            buildToolsVersion: "34.0.0",
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
+            buildToolsVersion: "35.0.0",
             usesCleartextTraffic: true,
             kotlinVersion: "1.9.24",
           },
