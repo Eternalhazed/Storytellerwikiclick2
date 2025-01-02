@@ -6970,9 +6970,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-clipboard/clipboard@npm:^1.14.2":
-  version: 1.14.2
-  resolution: "@react-native-clipboard/clipboard@npm:1.14.2"
+"@react-native-clipboard/clipboard@npm:^1.15.0":
+  version: 1.15.0
+  resolution: "@react-native-clipboard/clipboard@npm:1.15.0"
   peerDependencies:
     react: ">= 16.9.0"
     react-native: ">= 0.61.5"
@@ -6983,7 +6983,7 @@ __metadata:
       optional: true
     react-native-windows:
       optional: true
-  checksum: 10c0/32d3bd4c68a1292700b61fba479aeb8defd41ee115b4baf1965e43a67a2cfcc0b2ee9730eb0a6cbca01861a1b6d7f01cb32235fd6842eb337957781da1d3a1da
+  checksum: 10c0/88322a11d5cadb23571e5ede444fd585649255d48b6fdd9e0932f077e597368a9daaf91b50eaed103104e0be37f51ce1e76461d183f80ab356bef410356bd391
   languageName: node
   linkType: hard
 
@@ -8229,7 +8229,7 @@ __metadata:
     "@babel/plugin-transform-template-literals": "npm:^7.23.3"
     "@expo/config-plugins": "npm:~9.0.0"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
-    "@react-native-clipboard/clipboard": "npm:^1.14.2"
+    "@react-native-clipboard/clipboard": "npm:^1.15.0"
     "@react-native-community/slider": "npm:4.5.5"
     "@react-native-picker/picker": "npm:2.9.0"
     "@react-navigation/native": "npm:^7.0.14"
@@ -8279,7 +8279,7 @@ __metadata:
     react-native-safe-area-context: "npm:4.12.0"
     react-native-screens: "npm:~4.4.0"
     react-native-svg: "npm:15.8.0"
-    react-native-track-player: "npm:^4.0.0"
+    react-native-track-player: "github:puckey/react-native-track-player#feature/update-react-native"
     react-native-uuid: "npm:^2.0.2"
     react-native-webview: "npm:13.12.5"
     react-redux: "npm:^8.1.2"
@@ -24050,9 +24050,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-track-player@npm:^4.0.0":
+"react-native-track-player@github:puckey/react-native-track-player#feature/update-react-native":
   version: 4.1.1
-  resolution: "react-native-track-player@npm:4.1.1"
+  resolution: "react-native-track-player@https://github.com/puckey/react-native-track-player.git#commit=9b8db7f1b2179383dd285d7eb3141aa918f6d904"
   peerDependencies:
     react: ">=16.8.6"
     react-native: ">=0.60.0-rc.2"
@@ -24063,7 +24063,7 @@ __metadata:
       optional: true
     shaka-player:
       optional: true
-  checksum: 10c0/ffaaee7582603f4930e163d0fbe2d6e5c268470b92c86d8fd3bb42ca50fd72e49686c5ae897721ef3129d49579b508281cf4f3409fbd25ebc33f2dbb21a93c5a
+  checksum: 10c0/66043bb4f3bab59804f3977e6d26a9dc6b48851f340b3e7f183b01052904a8914e0e2c9b232e905c18991fa3d9717f59b01e5bb7f158eda416cc36851344611b
   languageName: node
   linkType: hard
 

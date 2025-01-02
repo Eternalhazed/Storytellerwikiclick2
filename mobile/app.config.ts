@@ -17,6 +17,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: "./assets/Storyteller_Logo.png",
     userInterfaceStyle: "automatic",
     scheme: "storyteller",
+    newArchEnabled: true,
     plugins: [
       "expo-router",
       "expo-secure-store",

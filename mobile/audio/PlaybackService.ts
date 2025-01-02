@@ -23,15 +23,23 @@ export async function PlaybackService() {
     await TrackPlayer.play()
   })
 
-  TrackPlayer.addEventListener(Event.RemoteJumpBackward, async (event) => {
-    const { position: currentPosition } = await TrackPlayer.getProgress()
-    await TrackPlayer.seekTo(currentPosition - event.interval)
-    store.dispatch(playerPositionUpdated())
-  })
+  TrackPlayer.addEventListener(
+    Event.RemoteJumpBackward,
+    // HACK: using an unmerged fork of RNTP, and depending on
+    // it via GitHub results in losing the type info
+    async (event: { interval: number }) => {
+      const { position: currentPosition } = await TrackPlayer.getProgress()
+      await TrackPlayer.seekTo(currentPosition - event.interval)
+      store.dispatch(playerPositionUpdated())
+    },
+  )
 
-  TrackPlayer.addEventListener(Event.RemoteJumpForward, async (event) => {
-    const { position: currentPosition } = await TrackPlayer.getProgress()
-    await TrackPlayer.seekTo(currentPosition + event.interval)
-    store.dispatch(playerPositionUpdated())
-  })
+  TrackPlayer.addEventListener(
+    Event.RemoteJumpForward,
+    async (event: { interval: number }) => {
+      const { position: currentPosition } = await TrackPlayer.getProgress()
+      await TrackPlayer.seekTo(currentPosition + event.interval)
+      store.dispatch(playerPositionUpdated())
+    },
+  )
 }

@@ -52,10 +52,7 @@ import {
   writeHighlight,
   writeLocator,
 } from "../persistence/books"
-import TrackPlayer, {
-  AddTrack,
-  PitchAlgorithm,
-} from "react-native-track-player"
+import TrackPlayer, { PitchAlgorithm } from "react-native-track-player"
 import {
   getBookshelfBook,
   getBookshelfBookIds,
@@ -869,15 +866,21 @@ export function* relocateToTrackPositionSaga() {
   yield takeLeadingWithQueue(
     [playerPositionUpdated, playerPaused],
     function* () {
-      const currentTrack = (yield call(TrackPlayer.getActiveTrack)) as Awaited<
-        ReturnType<typeof TrackPlayer.getActiveTrack>
-      > as BookshelfTrack | undefined
+      // HACK: using an unmerged fork of RNTP, and depending on
+      // it via GitHub results in losing the type info
+      // const currentTrack = (yield call(TrackPlayer.getActiveTrack)) as Awaited<
+      //   ReturnType<typeof TrackPlayer.getActiveTrack>
+      // > as BookshelfTrack | undefined
+      const currentTrack = (yield call(TrackPlayer.getActiveTrack)) as
+        | BookshelfTrack
+        | undefined
 
       if (!currentTrack) return
 
-      const position = (yield call(TrackPlayer.getPosition)) as Awaited<
-        ReturnType<typeof TrackPlayer.getPosition>
-      >
+      // const position = (yield call(TrackPlayer.getPosition)) as Awaited<
+      //   ReturnType<typeof TrackPlayer.getPosition>
+      // >
+      const position = (yield call(TrackPlayer.getPosition)) as number
 
       const currentBook = (yield select(getCurrentlyPlayingBook)) as ReturnType<
         typeof getCurrentlyPlayingBook
