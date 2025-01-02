@@ -1,5 +1,5 @@
 {
   "compilerOptions": {},
   "extends": ["expo/tsconfig.base", "@tsconfig/strictest"],
-  "exclude": ["babel.config.js", "ios", "android"]
+  "exclude": ["babel.config.js", "ios", "android", "node_modules"]
 }

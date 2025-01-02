@@ -49,17 +49,22 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           iCloudContainerEnvironment: IS_DEV ? "Development" : "Production",
         },
       ],
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/Storyteller_Logo.png",
+          resizeMode: "contain",
+          backgroundColor: "#ffffff",
+          dark: {
+            image: "./assets/Storyteller_Logo.png",
+            backgroundColor: "#000000",
+            resizeMode: "contain",
+          },
+        },
+      ],
     ],
-    updates: {
-      url: "https://u.expo.dev/3cc95011-19af-4637-a666-e1bec160c0f8",
-    },
     runtimeVersion: {
       policy: "appVersion",
-    },
-    splash: {
-      image: "./assets/Storyteller_Logo.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff",
     },
     assetBundlePatterns: ["**/*"],
     ios: {

@@ -2,7 +2,8 @@ import { ReactNode, useEffect } from "react"
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native"
 import { getStartupStatus } from "../store/selectors/startupSelectors"
 import { StartupStatus } from "../store/slices/startupSlice"
-import { SplashScreen, useRouter } from "expo-router"
+import { useRouter } from "expo-router"
+import * as SplashScreen from "expo-splash-screen"
 import { useAppSelector } from "../store/appState"
 import { useColorTheme } from "../hooks/useColorTheme"
 import { activeBackgroundColor } from "../design"
@@ -17,7 +18,7 @@ export function StorytellerProvider({ children }: { children: ReactNode }) {
       startupStatus === StartupStatus.HYDRATED ||
       startupStatus === StartupStatus.IN_ERROR
     ) {
-      SplashScreen.hideAsync()
+      SplashScreen.hide()
     }
   }, [router, startupStatus])
 

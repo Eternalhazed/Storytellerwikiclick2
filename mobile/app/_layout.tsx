@@ -1,4 +1,5 @@
-import { Slot, SplashScreen } from "expo-router"
+import { Slot } from "expo-router"
+import * as SplashScreen from "expo-splash-screen"
 import {
   SafeAreaProvider,
   initialWindowMetrics,
@@ -63,6 +64,11 @@ async function initializePlayer() {
 initializePlayer()
 
 SplashScreen.preventAutoHideAsync()
+
+SplashScreen.setOptions({
+  duration: 250,
+  fade: true,
+})
 
 export default function Layout() {
   useEffect(() => {
