@@ -19,6 +19,8 @@
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
     "@reduxjs/toolkit": "^1.9.5",
+    "@tamagui/config": "^1.121.5",
+    "@tamagui/lucide-icons": "^1.121.5",
     "dequal": "^2.0.3",
     "expo": "^52.0.0",
     "expo-av": "~15.0.1",
@@ -53,7 +55,8 @@
     "react-native-webview": "13.12.5",
     "react-redux": "^8.1.2",
     "redux-logger": "^3.0.6",
-    "redux-saga": "^1.2.3"
+    "redux-saga": "^1.2.3",
+    "tamagui": "^1.121.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
