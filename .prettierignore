@@ -4,6 +4,8 @@ storyteller
 
 /assets
 /cache
+/dev-data
+/data
 
 /web/.next
 node_modules
