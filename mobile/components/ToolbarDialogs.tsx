@@ -4,7 +4,7 @@ import { getCurrentlyPlayingBook } from "../store/selectors/bookshelfSelectors"
 import { getOpenDialog } from "../store/selectors/toolbarSelectors"
 import { ToolbarDialog, toolbarSlice } from "../store/slices/toolbarSlice"
 import { BookNavigation } from "./BookNavigation"
-import { BookSettingsMenu } from "./BookSettingsMenu"
+// import { BookSettingsMenu } from "./BookSettingsMenu"
 
 interface Props {
   topInset?: number | undefined
@@ -37,10 +37,6 @@ export function ToolbarDialogs({ topInset }: Props) {
             dispatch(toolbarSlice.actions.dialogClosed())
           }}
         />
-      )}
-
-      {openDialog === ToolbarDialog.SETTINGS && (
-        <BookSettingsMenu bookId={book.id} />
       )}
     </>
   )

@@ -100,7 +100,7 @@ export default function PlayerScreen() {
 
   return (
     <YStack paddingHorizontal={24}>
-      <XStack justifyContent="space-between">
+      <XStack justifyContent="space-between" marginVertical={8}>
         {isPresented ? (
           <Button
             size="$4"

@@ -1,11 +1,11 @@
 import { View, Pressable } from "react-native"
-import { ScrollView } from "react-native-gesture-handler"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { getCurrentlyPlayingBook } from "../store/selectors/bookshelfSelectors"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
 import { UIText } from "./UIText"
 import { highlightTints } from "../colors"
 import { useColorTheme } from "../hooks/useColorTheme"
+import { Popover } from "tamagui"
 
 export function Highlights() {
   const book = useAppSelector(getCurrentlyPlayingBook)
@@ -15,7 +15,7 @@ export function Highlights() {
   if (!book) return null
 
   return (
-    <ScrollView>
+    <Popover.ScrollView>
       {book.highlights.map((highlight) => (
         <View key={highlight.id} style={{ paddingHorizontal: 8 }}>
           <Pressable
@@ -70,6 +70,6 @@ export function Highlights() {
           </Pressable>
         </View>
       ))}
-    </ScrollView>
+    </Popover.ScrollView>
   )
 }

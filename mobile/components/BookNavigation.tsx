@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native"
+import { Pressable, StyleSheet, View } from "react-native"
 import { TableOfContents } from "./TableOfContents"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useState } from "react"
@@ -8,7 +8,6 @@ import { Highlights } from "./Highlights"
 import { useColorTheme } from "../hooks/useColorTheme"
 
 type Props = {
-  onOutsideTap: () => void
   topInset?: number | undefined
 }
 
@@ -18,14 +17,13 @@ enum BookNavTab {
   HIGHLIGHTS = "HIGHLIGHTS",
 }
 
-export function BookNavigation({ topInset, onOutsideTap }: Props) {
+export function BookNavigation({ topInset }: Props) {
   const { background, foreground } = useColorTheme()
   const [selectedTab, setSelectedTab] = useState(BookNavTab.TABLE_OF_CONTENTS)
   const insets = useSafeAreaInsets()
 
   return (
     <>
-      <TouchableOpacity style={styles.backdrop} onPress={onOutsideTap} />
       <View
         style={[
           styles.dialog,

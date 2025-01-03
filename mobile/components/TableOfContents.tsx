@@ -11,6 +11,7 @@ import {
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
 import { isSameChapter } from "../links"
 import { activeBackgroundColor } from "../design"
+import { Popover } from "tamagui"
 
 export function TableOfContents() {
   const ref = useRef<null | ScrollView>(null)
@@ -27,7 +28,7 @@ export function TableOfContents() {
   if (!book?.manifest.toc) return
 
   return (
-    <ScrollView
+    <Popover.ScrollView
       ref={ref}
       onLayout={() => {
         if (!ref.current) return
@@ -119,6 +120,6 @@ export function TableOfContents() {
           ))}
         </View>
       ))}
-    </ScrollView>
+    </Popover.ScrollView>
   )
 }

@@ -1,9 +1,9 @@
 import { View, Pressable } from "react-native"
-import { ScrollView } from "react-native-gesture-handler"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { getCurrentlyPlayingBook } from "../store/selectors/bookshelfSelectors"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
 import { UIText } from "./UIText"
+import { Popover } from "tamagui"
 
 export function Bookmarks() {
   const book = useAppSelector(getCurrentlyPlayingBook)
@@ -12,7 +12,7 @@ export function Bookmarks() {
   if (!book) return null
 
   return (
-    <ScrollView>
+    <Popover.ScrollView>
       {book.bookmarks.map((bookmark) => (
         <View key={JSON.stringify(bookmark)} style={{ paddingHorizontal: 8 }}>
           <Pressable
@@ -52,6 +52,6 @@ export function Bookmarks() {
           </Pressable>
         </View>
       ))}
-    </ScrollView>
+    </Popover.ScrollView>
   )
 }
