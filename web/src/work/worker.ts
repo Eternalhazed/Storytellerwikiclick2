@@ -3,7 +3,11 @@ import {
   ProcessingTaskType,
 } from "@/apiModels/models/ProcessingStatus"
 import { deleteProcessed } from "@/assets/assets"
-import { getProcessedAudioFiles } from "@/assets/covers"
+import {
+  getCustomEpubCover,
+  getEpubCoverFilename,
+  getProcessedAudioFiles,
+} from "@/assets/covers"
 import {
   getTranscriptionsFilepath,
   getProcessedAudioFilepath,
@@ -156,9 +160,16 @@ export default async function processBook({
   // const currentTasks = await getProcessingTasksForBook(bookUuid)
   const remainingTasks = determineRemainingTasks(bookUuid, currentTasks)
 
+  // get book info from db
+  const [book] = getBooks([bookUuid])
+  if (!book) throw new Error(`Failed to retrieve book with uuid ${bookUuid}`)
+  // book reference to use in log
+  const bookRefForLog = `"${book.title}" (uuid: ${bookUuid})`
+
   logger.info(
-    `Found ${remainingTasks.length} remaining tasks for book ${bookUuid}`,
+    `Found ${remainingTasks.length} remaining tasks for book ${bookRefForLog}`,
   )
+
   for (const task of remainingTasks) {
     port.postMessage({
       type: "taskTypeUpdated",
@@ -249,7 +260,15 @@ export default async function processBook({
         if (book.language) {
           await epub.setLanguage(new Intl.Locale(book.language))
         }
-
+        const epubCover = await getCustomEpubCover(bookUuid)
+        const epubFilename = await getEpubCoverFilename(bookUuid)
+        if (epubCover) {
+          const prevCoverItem = await epub.getCoverImageItem()
+          await epub.setCoverImage(
+            prevCoverItem?.href ?? `images/${epubFilename}`,
+            epubCover,
+          )
+        }
         /* Add metadata : app version */
         const appVersion = getCurrentVersion()
         await epub.addMetadata({
@@ -264,7 +283,7 @@ export default async function processBook({
           properties: { property: "storyteller:media-overlays-modified" },
           value: dateTimeString,
         })
-        /* Write metadata to aligned epub */
+
         await epub.writeToFile(getEpubSyncedFilepath(bookUuid))
         await epub.close()
       }
@@ -287,6 +306,6 @@ export default async function processBook({
       return
     }
   }
-  logger.info(`Completed synchronizing book ${bookUuid}`)
+  logger.info(`Completed synchronizing book ${bookRefForLog})`)
   port.postMessage({ type: "processingCompleted", bookUuid })
 }

@@ -1,6 +1,6 @@
 import path from "node:path"
 import fs from "node:fs"
-import { withDangerousMod } from "@expo/config-plugins"
+import { withDangerousMod, withGradleProperties } from "@expo/config-plugins"
 import type { ExpoConfig, ConfigContext } from "expo/config"
 import { mergeContents } from "@expo/config-plugins/build/utils/generateCode"
 import packageInfo from "./package.json"
@@ -19,13 +19,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     scheme: "storyteller",
     plugins: [
       "expo-router",
+      "expo-secure-store",
       [
         "expo-build-properties",
         {
           ios: { deploymentTarget: "15.5" },
           android: {
-            compileSdkVersion: 34,
-            buildToolsVersion: "34.0.0",
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
+            buildToolsVersion: "35.0.0",
             usesCleartextTraffic: true,
             kotlinVersion: "1.9.24",
           },
@@ -47,7 +49,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           iCloudContainerEnvironment: IS_DEV ? "Development" : "Production",
         },
       ],
-      "@bam.tech/react-native-keyevent-expo-config-plugin",
     ],
     updates: {
       url: "https://u.expo.dev/3cc95011-19af-4637-a666-e1bec160c0f8",
@@ -62,7 +63,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     assetBundlePatterns: ["**/*"],
     ios: {
-      supportsTablet: false,
+      supportsTablet: true,
       bundleIdentifier: IS_DEV
         ? "dev.smoores.Storyteller.dev"
         : "dev.smoores.Storyteller",
@@ -82,7 +83,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       package: IS_DEV
         ? "dev.smoores.Storyteller.dev"
         : "dev.smoores.Storyteller",
-      versionCode: 27,
       adaptiveIcon: {
         foregroundImage: "./assets/Storyteller_Logo.png",
         backgroundColor: "#ffffff",
@@ -95,7 +95,25 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
   }
 
-  return withDangerousMod(initialConfig, [
+  // Automatically convert support library dependencies to
+  // androidx. I think this was the default before sdk 51,
+  // and I don't know why I suddenly need to add it manually
+  // now. Without this configuration, the android build fails
+  // with duplicate class errors (as classes are provided by
+  // both support libraries and androidx).
+  const configWithGradleProps = withGradleProperties(
+    initialConfig,
+    (config) => {
+      config.modResults.push({
+        type: "property",
+        key: "android.enableJetifier",
+        value: "true",
+      })
+      return config
+    },
+  )
+
+  return withDangerousMod(configWithGradleProps, [
     "ios",
     async (config) => {
       const filePath = path.join(
@@ -107,13 +125,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         tag: "react-native-readium",
         src: contents,
         newSrc: `  pod 'Minizip', modular_headers: true
-  pod 'R2Shared', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.6.1/Support/CocoaPods/ReadiumShared.podspec'
-  pod 'R2Streamer', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.6.1/Support/CocoaPods/ReadiumStreamer.podspec'
-  pod 'R2Navigator', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.6.1/Support/CocoaPods/ReadiumNavigator.podspec'
-  pod 'ReadiumAdapterGCDWebServer', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.6.1/Support/CocoaPods/ReadiumAdapterGCDWebServer.podspec'
-  pod 'ReadiumOPDS', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.6.1/Support/CocoaPods/ReadiumOPDS.podspec'
-  pod 'ReadiumInternal', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.6.1/Support/CocoaPods/ReadiumInternal.podspec'
-  pod 'GCDWebServer', podspec: 'https://raw.githubusercontent.com/readium/GCDWebServer/3.7.4/GCDWebServer.podspec', modular_headers: true
+  pod 'ZIPFoundation', '~> 0.9'
+  pod 'R2Shared', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.7.4/Support/CocoaPods/ReadiumShared.podspec'
+  pod 'R2Streamer', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.7.4/Support/CocoaPods/ReadiumStreamer.podspec'
+  pod 'R2Navigator', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.7.4/Support/CocoaPods/ReadiumNavigator.podspec'
+  pod 'ReadiumAdapterGCDWebServer', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.7.4/Support/CocoaPods/ReadiumAdapterGCDWebServer.podspec'
+  pod 'ReadiumOPDS', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.7.4/Support/CocoaPods/ReadiumOPDS.podspec'
+  pod 'ReadiumInternal', podspec: 'https://raw.githubusercontent.com/readium/swift-toolkit/2.7.4/Support/CocoaPods/ReadiumInternal.podspec'
+  pod 'Fuzi', podspec: 'https://raw.githubusercontent.com/readium/Fuzi/refs/heads/master/Fuzi.podspec'
+  pod 'ReadiumGCDWebServer', podspec: 'https://raw.githubusercontent.com/readium/GCDWebServer/4.0.0/GCDWebServer.podspec', modular_headers: true
 `,
         anchor: /use_native_modules/,
         offset: 0,

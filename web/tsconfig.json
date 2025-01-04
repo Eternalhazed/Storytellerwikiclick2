@@ -50,9 +50,10 @@
     "src/**/*.json",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "postcss.config.js"
   ],
-  "exclude": ["node_modules", ".next", "tsbuild", "work-dist"],
+  "exclude": ["migrations/node_modules", ".next", "tsbuild", "work-dist"],
   "references": [
     {
       "path": "../epub"

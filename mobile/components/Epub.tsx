@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import KeyEvent from "react-native-keyevent"
 
 import { Link, Tabs } from "expo-router"
 import { useKeepAwake } from "expo-keep-awake"
@@ -25,10 +24,7 @@ import { ToolbarDialogs } from "./ToolbarDialogs"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { SelectionMenu } from "./SelectionMenu"
 import { useColorTheme } from "../hooks/useColorTheme"
-import {
-  getFilledBookPreferences,
-  getVolumeButtonsTurnPages,
-} from "../store/selectors/preferencesSelectors"
+import { getFilledBookPreferences } from "../store/selectors/preferencesSelectors"
 
 type Props = {
   book: BookshelfBook
@@ -37,13 +33,14 @@ type Props = {
 
 export function Epub({ book, locator }: Props) {
   useKeepAwake()
+
+  const hasLoadedRef = useRef(false)
   const { foreground, background } = useColorTheme()
   const [activeBookmarks, setActiveBookmarks] = useState<ReadiumLocator[]>([])
   const [activeHighlight, setActiveHighlight] = useState<Highlight | null>(null)
   const preferences = useAppSelector((state) =>
     getFilledBookPreferences(state, book.id),
   )
-  const volumeButtonsTurnPages = useAppSelector(getVolumeButtonsTurnPages)
 
   const [selection, setSelection] = useState<{
     x: number
@@ -67,25 +64,6 @@ export function Epub({ book, locator }: Props) {
     startPosition,
     endPosition,
   } = useAudioBook()
-
-  useEffect(() => {
-    if (!volumeButtonsTurnPages) return
-
-    KeyEvent.onKeyDownListener(
-      (event: { action: number; keyCode: number; pressedKey: string }) => {
-        if (event.keyCode === 92) {
-          epubViewRef.current?.goBackward()
-        }
-        if (event.keyCode === 93) {
-          epubViewRef.current?.goForward()
-        }
-      },
-    )
-
-    return () => {
-      KeyEvent.removeKeyDownListener()
-    }
-  }, [volumeButtonsTurnPages])
 
   return (
     <View
@@ -149,14 +127,30 @@ export function Epub({ book, locator }: Props) {
           onBookmarksActivate={(event) => {
             setActiveBookmarks(event.nativeEvent.activeBookmarks)
           }}
-          onLocatorChange={(event) =>
+          onLocatorChange={(event) => {
+            // If this is the very first time we're mounting this
+            // component, we actually want to ignore the "locator changed"
+            // event, which will just be trying to reset to the beginning
+            // of the currently rendered page
+            if (!hasLoadedRef.current) {
+              hasLoadedRef.current = true
+              // Sometimes we need to pay attention to the first locator changed,
+              // if we rely on it to figure out the fragments for the initial
+              // locator
+              if (
+                !event.nativeEvent.locations?.fragments ||
+                locator.locations?.fragments
+              ) {
+                return
+              }
+            }
             dispatch(
               bookshelfSlice.actions.bookRelocated({
                 bookId: book.id,
                 locator: { locator: event.nativeEvent, timestamp: Date.now() },
               }),
             )
-          }
+          }}
           onMiddleTouch={() => {
             setShowInterface((p) => !p)
           }}
