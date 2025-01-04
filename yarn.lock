@@ -8599,6 +8599,7 @@ __metadata:
     "@react-navigation/native": "npm:^7.0.14"
     "@react-navigation/stack": "npm:^7.1.1"
     "@reduxjs/toolkit": "npm:^1.9.5"
+    "@tamagui/colors": "npm:^1.121.5"
     "@tamagui/config": "npm:^1.121.5"
     "@tamagui/lucide-icons": "npm:^1.121.5"
     "@tsconfig/strictest": "npm:^2.0.1"
@@ -9320,7 +9321,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tamagui/colors@npm:1.121.5":
+"@tamagui/colors@npm:1.121.5, @tamagui/colors@npm:^1.121.5":
   version: 1.121.5
   resolution: "@tamagui/colors@npm:1.121.5"
   checksum: 10c0/be5ac07f2babf7c082a97ce07ac00718b11dc55050e0661a04652674fb236ea2431864cd6bedf06b1c01fd7f7550c93698ce57579de98096ddddfd597b7f127e

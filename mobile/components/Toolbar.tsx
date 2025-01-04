@@ -68,7 +68,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
       {mode === "text" && (
         <Popover>
           <Popover.Trigger asChild>
-            <Button size="$3" circular chromeless>
+            <Button size="$4" circular chromeless>
               <ALargeSmall />
             </Button>
           </Popover.Trigger>
@@ -101,7 +101,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
             ]}
           >
             <Popover.Close asChild>
-              <Button size="$3" chromeless alignSelf="flex-end">
+              <Button size="$4" chromeless alignSelf="flex-end">
                 Done
               </Button>
             </Popover.Close>
@@ -119,7 +119,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
 
       <Popover>
         <Popover.Trigger asChild>
-          <Button size="$3" circular chromeless>
+          <Button size="$4" circular chromeless>
             <SpedometerIcon />
           </Button>
         </Popover.Trigger>
@@ -197,7 +197,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
                 <Button
                   key={speed}
                   circular
-                  size="$3"
+                  size="$4"
                   onPress={() => {
                     dispatch(
                       preferencesSlice.actions.playerSpeedChanged({
@@ -216,7 +216,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
       </Popover>
 
       <Button
-        size="$3"
+        size="$4"
         circular
         disabled={!currentLocator}
         chromeless
@@ -243,7 +243,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
 
       <Popover>
         <Popover.Trigger asChild>
-          <Button size="$3" circular chromeless>
+          <Button size="$4" circular chromeless>
             {/* <ListOrdered /> */}
             <ToC />
           </Button>
@@ -294,7 +294,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
 
       {mode === "audio" ? (
         <Button
-          size="$3"
+          size="$4"
           circular
           chromeless
           onPress={() => {
@@ -305,7 +305,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
         </Button>
       ) : (
         <Button
-          size="$3"
+          size="$4"
           circular
           chromeless
           onPress={() => {

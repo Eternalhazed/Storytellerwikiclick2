@@ -20,7 +20,16 @@ import {
 } from "../../store/selectors/bookshelfSelectors"
 import { areLocatorsEqual } from "../../modules/readium"
 import { isSameChapter } from "../../links"
-import { Button, H3, Image, Slider, Text, XStack, YStack } from "tamagui"
+import {
+  Button,
+  H3,
+  Image,
+  Slider,
+  Text,
+  useTheme,
+  XStack,
+  YStack,
+} from "tamagui"
 import { Toolbar } from "../../components/Toolbar"
 import { ScrollView } from "react-native-gesture-handler"
 import { LoadingView } from "../../components/LoadingView"
@@ -31,6 +40,7 @@ import { JumpForwardFifteenIcon } from "../../icons/JumpForwardFifteenIcon"
 const events = [Event.PlaybackState, Event.PlaybackTrackChanged]
 
 export default function PlayerScreen() {
+  const { color } = useTheme()
   const dimensions = useWindowDimensions()
   const book = useAppSelector(getCurrentlyPlayingBook)
   const timestampedLocator = useAppSelector(
@@ -100,18 +110,18 @@ export default function PlayerScreen() {
 
   return (
     <YStack paddingHorizontal={24}>
-      <XStack justifyContent="space-between" marginVertical={8}>
+      <XStack justifyContent="space-between" marginVertical="$2">
         {isPresented ? (
           <Button
             size="$4"
-            marginLeft={-12}
+            marginLeft={-8}
             circular
             chromeless
             onPress={() => {
               router.back()
             }}
           >
-            <ChevronDown />
+            <ChevronDown size="$3" />
           </Button>
         ) : (
           <Link href="/">
@@ -125,7 +135,7 @@ export default function PlayerScreen() {
         {isLoading && <LoadingView />}
         <Image
           aspectRatio={1}
-          borderRadius={4}
+          borderRadius="$1"
           source={{
             uri: getLocalAudioBookCoverUrl(book.id),
             width: dimensions.width - 24 * 2,
@@ -152,10 +162,16 @@ export default function PlayerScreen() {
             TrackPlayer.seekTo(newProgress ?? 0)
           }
         >
-          <Slider.Track>
-            <Slider.TrackActive />
+          <Slider.Track backgroundColor="$backgroundStrong">
+            <Slider.TrackActive backgroundColor="$stOrange" />
           </Slider.Track>
-          <Slider.Thumb index={0} size="$1" circular />
+          <Slider.Thumb
+            index={0}
+            size="$2"
+            borderColor="$orange6"
+            backgroundColor="$stOrange"
+            circular
+          />
         </Slider>
         <XStack alignSelf="stretch" justifyContent="space-between">
           <Text>{progressTime}</Text>
@@ -175,7 +191,7 @@ export default function PlayerScreen() {
               TrackPlayer.skipToPrevious()
             }}
           >
-            <SkipBack />
+            <SkipBack fill={color.val} stroke={color.val} />
           </Button>
           <Button
             circular
@@ -202,7 +218,11 @@ export default function PlayerScreen() {
                   }
             }
           >
-            {isPlaying ? <Pause /> : <Play />}
+            {isPlaying ? (
+              <Pause size="$6" fill={color.val} stroke={color.val} />
+            ) : (
+              <Play size="$6" fill={color.val} stroke={color.val} />
+            )}
           </Button>
           <Button
             circular
@@ -223,7 +243,7 @@ export default function PlayerScreen() {
               TrackPlayer.skipToNext()
             }}
           >
-            <SkipForward />
+            <SkipForward fill={color.val} stroke={color.val} />
           </Button>
         </XStack>
       </ScrollView>
