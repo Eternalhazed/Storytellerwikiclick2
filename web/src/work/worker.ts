@@ -27,6 +27,7 @@ import { getSyncCache } from "@/synchronize/syncCache"
 import { Synchronizer } from "@/synchronize/synchronizer"
 import { transcribeTrack } from "@/transcribe"
 import { UUID } from "@/uuid"
+import { getCurrentVersion } from "@/versions"
 import type { RecognitionResult } from "echogarden/dist/api/Recognition"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { MessagePort } from "node:worker_threads"
@@ -249,25 +250,21 @@ export default async function processBook({
           await epub.setLanguage(new Intl.Locale(book.language))
         }
 
-        /* Add as metadata : Storyteller app version, aligned epub creation timestamp */
-
-        // Get the app version, as seen in app/layout.tsx
-        const versionString = process.env["CI_COMMIT_TAG"]
-        const version =
-          versionString?.match(/^web-v(.*)$/)?.[1] ?? "development"
-
-        // Get current day-time, format as seen in epub.writeToFile() for dcterms:modified
-        const dateTimeString = new Date().toISOString()
-
-        // Add the metadata
-        const storytellerMetaName = "storyteller:media-overlay-production-info"
-        const storytellerMetaValue = `appVersion=${version};createdAt=${dateTimeString}`
+        /* Add metadata : app version */
+        const appVersion = getCurrentVersion()
         await epub.addMetadata({
           type: "meta",
-          properties: { property: storytellerMetaName },
-          value: storytellerMetaValue,
+          properties: { property: "storyteller:version" },
+          value: appVersion,
         })
-
+        /* Add metadata : aligned epub creation datetime */
+        const dateTimeString = new Date().toISOString()
+        await epub.addMetadata({
+          type: "meta",
+          properties: { property: "storyteller:media-overlays-modified" },
+          value: dateTimeString,
+        })
+        /* Write metadata to aligned epub */
         await epub.writeToFile(getEpubSyncedFilepath(bookUuid))
         await epub.close()
       }

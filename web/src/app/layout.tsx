@@ -13,6 +13,7 @@ import { User } from "@/apiModels"
 import { Header } from "@/components/layout/Header"
 import { ApiClientError } from "@/apiClient"
 import { logger } from "@/logging"
+import { getCurrentVersion } from "@/versions"
 
 export const metadata = {
   title: "Storyteller",
@@ -24,8 +25,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const versionString = process.env["CI_COMMIT_TAG"]
-  const version = versionString?.match(/^web-v(.*)$/)?.[1] ?? "development"
+  const version = getCurrentVersion()
 
   let currentUser: User | undefined = undefined
   try {
