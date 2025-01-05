@@ -22,7 +22,7 @@ import defaultConfig from "@tamagui/config/v3"
 import { createFont, createTamagui } from "tamagui"
 
 const colorTokens = {
-  light: {
+  paperWhite: {
     blue,
     gray,
     green,
@@ -32,7 +32,7 @@ const colorTokens = {
     red,
     yellow,
   },
-  dark: {
+  nightBlack: {
     blue: blueDark,
     gray: grayDark,
     green: greenDark,
@@ -50,25 +50,25 @@ const darkShadowColor = "rgba(0,0,0,0.2)"
 const darkShadowColorStrong = "rgba(0,0,0,0.3)"
 
 const darkColors = {
-  ...colorTokens.dark.blue,
-  ...colorTokens.dark.gray,
-  ...colorTokens.dark.green,
-  ...colorTokens.dark.orange,
-  ...colorTokens.dark.pink,
-  ...colorTokens.dark.purple,
-  ...colorTokens.dark.red,
-  ...colorTokens.dark.yellow,
+  ...colorTokens.nightBlack.blue,
+  ...colorTokens.nightBlack.gray,
+  ...colorTokens.nightBlack.green,
+  ...colorTokens.nightBlack.orange,
+  ...colorTokens.nightBlack.pink,
+  ...colorTokens.nightBlack.purple,
+  ...colorTokens.nightBlack.red,
+  ...colorTokens.nightBlack.yellow,
 }
 
 const lightColors = {
-  ...colorTokens.light.blue,
-  ...colorTokens.light.gray,
-  ...colorTokens.light.green,
-  ...colorTokens.light.orange,
-  ...colorTokens.light.pink,
-  ...colorTokens.light.purple,
-  ...colorTokens.light.red,
-  ...colorTokens.light.yellow,
+  ...colorTokens.paperWhite.blue,
+  ...colorTokens.paperWhite.gray,
+  ...colorTokens.paperWhite.green,
+  ...colorTokens.paperWhite.orange,
+  ...colorTokens.paperWhite.pink,
+  ...colorTokens.paperWhite.purple,
+  ...colorTokens.paperWhite.red,
+  ...colorTokens.paperWhite.yellow,
 }
 
 const color = {
@@ -154,12 +154,12 @@ export const defaultPalettes = (() => {
   }
 
   const brandColor = {
-    light: color.brand9,
-    dark: color.brand9,
+    paperWhite: color.brand9,
+    nightBlack: color.brand9,
   }
 
   const lightPalette = [
-    brandColor.light,
+    brandColor.paperWhite,
     color.white0,
     color.white025,
     color.white05,
@@ -180,11 +180,11 @@ export const defaultPalettes = (() => {
     color.black05,
     color.black025,
     color.black0,
-    brandColor.dark,
+    brandColor.nightBlack,
   ]
 
   const darkPalette = [
-    brandColor.dark,
+    brandColor.nightBlack,
     color.black0,
     color.black025,
     color.black05,
@@ -205,18 +205,18 @@ export const defaultPalettes = (() => {
     color.white05,
     color.white025,
     color.white0,
-    brandColor.light,
+    brandColor.paperWhite,
   ]
 
-  const lightColorNames = objectKeys(colorTokens.light)
+  const lightColorNames = objectKeys(colorTokens.paperWhite)
   const lightPalettes = objectFromEntries(
     lightColorNames.map(
       (key, index) =>
         [
-          `light_${key}`,
+          `paperWhite_${key}`,
           getColorPalette(
-            colorTokens.light[key],
-            colorTokens.light[
+            colorTokens.paperWhite[key],
+            colorTokens.paperWhite[
               lightColorNames[(index + 1) % lightColorNames.length]!
             ],
           ),
@@ -224,15 +224,15 @@ export const defaultPalettes = (() => {
     ),
   )
 
-  const darkColorNames = objectKeys(colorTokens.dark)
+  const darkColorNames = objectKeys(colorTokens.nightBlack)
   const darkPalettes = objectFromEntries(
     darkColorNames.map(
       (key, index) =>
         [
-          `dark_${key}`,
+          `nightBlack_${key}`,
           getColorPalette(
-            colorTokens.dark[key],
-            colorTokens.light[
+            colorTokens.nightBlack[key],
+            colorTokens.paperWhite[
               darkColorNames[(index + 1) % darkColorNames.length]!
             ],
           ),
@@ -246,15 +246,15 @@ export const defaultPalettes = (() => {
   }
 
   return {
-    light: lightPalette,
-    dark: darkPalette,
+    paperWhite: lightPalette,
+    nightBlack: darkPalette,
     ...colorPalettes,
   }
 })()
 
 const getTemplates = () => {
-  const getBaseTemplates = (scheme: "dark" | "light") => {
-    const isLight = scheme === "light"
+  const getBaseTemplates = (scheme: "nightBlack" | "paperWhite") => {
+    const isLight = scheme === "paperWhite"
 
     // our palettes have 4 things padding each end until you get to bg/color:
     // [accentBg, transparent1, transparent2, transparent3, transparent4, background, ...]
@@ -308,6 +308,7 @@ const getTemplates = () => {
       colorTransparent: -1,
       placeholderColor: -bgIndex - 3,
       outlineColor: -2,
+      brandColor: 21,
     }
 
     const surface1 = {
@@ -413,17 +414,17 @@ const getTemplates = () => {
     }
   }
 
-  const lightTemplates = getBaseTemplates("light")
-  const darkTemplates = getBaseTemplates("dark")
+  const lightTemplates = getBaseTemplates("paperWhite")
+  const darkTemplates = getBaseTemplates("nightBlack")
   const templates = {
     ...objectFromEntries(
       objectKeys(lightTemplates).map(
-        (name) => [`light_${name}`, lightTemplates[name]] as const,
+        (name) => [`paperWhite_${name}`, lightTemplates[name]] as const,
       ),
     ),
     ...objectFromEntries(
       objectKeys(darkTemplates).map(
-        (name) => [`dark_${name}`, darkTemplates[name]] as const,
+        (name) => [`nightBlack_${name}`, darkTemplates[name]] as const,
       ),
     ),
   }
@@ -433,13 +434,13 @@ const getTemplates = () => {
 export const defaultTemplates = getTemplates()
 
 const shadows = {
-  light: {
+  paperWhite: {
     shadowColor: lightShadowColorStrong,
     shadowColorHover: lightShadowColorStrong,
     shadowColorPress: lightShadowColor,
     shadowColorFocus: lightShadowColor,
   },
-  dark: {
+  nightBlack: {
     shadowColor: darkShadowColorStrong,
     shadowColorHover: darkShadowColorStrong,
     shadowColorPress: darkShadowColor,
@@ -448,25 +449,25 @@ const shadows = {
 }
 
 const nonInherited = {
-  light: {
+  paperWhite: {
     ...lightColors,
-    ...shadows.light,
+    ...shadows.paperWhite,
   },
-  dark: {
+  nightBlack: {
     ...darkColors,
-    ...shadows.dark,
+    ...shadows.nightBlack,
   },
 }
 
 const overlayThemeDefinitions = [
   {
-    parent: "light",
+    parent: "paperWhite",
     theme: {
       background: "rgba(0,0,0,0.5)",
     },
   },
   {
-    parent: "dark",
+    parent: "nightBlack",
     theme: {
       background: "rgba(0,0,0,0.8)",
     },
@@ -595,15 +596,15 @@ const themeBuilder = createThemeBuilder()
   .addPalettes(defaultPalettes)
   .addTemplates(defaultTemplates)
   .addThemes({
-    light: {
+    paperWhite: {
       template: "base",
-      palette: "light",
-      nonInheritedValues: nonInherited.light,
+      palette: "paperWhite",
+      nonInheritedValues: nonInherited.paperWhite,
     },
-    dark: {
+    nightBlack: {
       template: "base",
-      palette: "dark",
-      nonInheritedValues: nonInherited.dark,
+      palette: "nightBlack",
+      nonInheritedValues: nonInherited.nightBlack,
     },
   })
   .addChildThemes({
@@ -657,8 +658,8 @@ const themeBuilder = createThemeBuilder()
 const themesIn = themeBuilder.build()
 
 type ThemeKeys =
-  | keyof typeof defaultTemplates.light_base
-  | keyof typeof nonInherited.light
+  | keyof typeof defaultTemplates.paperWhite_base
+  | keyof typeof nonInherited.paperWhite
 
 export type Theme = Record<ThemeKeys, string>
 
@@ -668,48 +669,28 @@ export const themes = themesIn as unknown as ThemesOut
 
 // --- tokens ---
 
-// should roughly map to button/input etc height at each level
-// fonts should match that height/lineHeight at each stop
-// so these are really non-linear on purpose
-// why?
-//   - at sizes <1, used for fine grained things (borders, smallest paddingY)
-//     - so smallest padY should be roughly 1-4px so it can join with lineHeight
-//   - at sizes >=1, have to consider "pressability" (jumps up)
-//   - after that it should go upwards somewhat naturally
-//   - H1 / headings top out at 10 naturally, so after 10 we can go upwards faster
-//  but also one more wrinkle...
-//  space is used in conjunction with size
-//  i'm setting space to generally just a fixed fraction of size (~1/3-2/3 still fine tuning)
 export const size = {
   $0: 0,
-  "$0.25": 2,
   "$0.5": 4,
-  "$0.75": 8,
-  $1: 20,
-  "$1.5": 24,
-  $2: 28,
-  "$2.5": 32,
-  $3: 36,
-  "$3.5": 40,
-  $4: 44,
-  $true: 44,
-  "$4.5": 48,
-  $5: 52,
-  $6: 64,
-  $7: 74,
-  $8: 84,
-  $9: 94,
-  $10: 104,
-  $11: 124,
-  $12: 144,
-  $13: 164,
-  $14: 184,
-  $15: 204,
-  $16: 224,
-  $17: 224,
-  $18: 244,
-  $19: 264,
-  $20: 284,
+  $1: 8,
+  "$1.5": 12,
+  $2: 16,
+  "$2.5": 20,
+  $3: 24,
+  "$3.5": 28,
+  $4: 32,
+  $true: 32,
+  $5: 40,
+  $6: 48,
+  $7: 56,
+  $8: 64,
+  $9: 72,
+  $10: 80,
+  $11: 88,
+  $12: 96,
+  $14: 112,
+  $16: 128,
+  $20: 160,
 }
 
 type SizeKeysIn = keyof typeof size
@@ -719,7 +700,7 @@ type Sizes = {
 type SizeKeys = `${keyof Sizes extends `${infer K}` ? K : never}`
 
 export const spaces = Object.entries(size).map(([k, v]) => {
-  return [k, sizeToSpace(v)] as const
+  return [k, v / 2] as const
 })
 
 export const spacesNegative = spaces
@@ -782,16 +763,6 @@ export function postfixObjKeys<
   ) as {
     [Key in `${keyof A extends string ? keyof A : never}${B}`]: string
   }
-}
-
-// a bit odd but keeping backward compat for values >8 while fixing below
-export function sizeToSpace(v: number) {
-  if (v === 0) return 0
-  if (v === 2) return 0.5
-  if (v === 4) return 1
-  if (v === 8) return 1.5
-  if (v <= 16) return Math.round(v * 0.333)
-  return Math.floor(v * 0.7 - 12)
 }
 
 export function objectFromEntries<ARR_T extends EntriesType>(

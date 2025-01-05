@@ -163,13 +163,13 @@ export default function PlayerScreen() {
           }
         >
           <Slider.Track backgroundColor="$backgroundStrong">
-            <Slider.TrackActive backgroundColor="$stOrange" />
+            <Slider.TrackActive backgroundColor="$brandColor" />
           </Slider.Track>
           <Slider.Thumb
             index={0}
             size="$2"
-            borderColor="$orange6"
-            backgroundColor="$stOrange"
+            borderColor="$brand6"
+            backgroundColor="$brandColor"
             circular
           />
         </Slider>
@@ -191,7 +191,7 @@ export default function PlayerScreen() {
               TrackPlayer.skipToPrevious()
             }}
           >
-            <SkipBack fill={color.val} stroke={color.val} />
+            <SkipBack />
           </Button>
           <Button
             circular
@@ -243,7 +243,7 @@ export default function PlayerScreen() {
               TrackPlayer.skipToNext()
             }}
           >
-            <SkipForward fill={color.val} stroke={color.val} />
+            <SkipForward />
           </Button>
         </XStack>
       </ScrollView>
