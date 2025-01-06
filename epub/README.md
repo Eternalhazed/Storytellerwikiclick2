@@ -426,7 +426,7 @@ This is a convenience method for
 
 ##### Defined in
 
-[index.ts:1413](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1413)
+[index.ts:1414](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1414)
 
 #### addCreator()
 
@@ -455,7 +455,7 @@ creators. Otherwise, it will be added to the end of the list.
 
 ##### Defined in
 
-[index.ts:1252](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1252)
+[index.ts:1253](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1253)
 
 #### addManifestItem()
 
@@ -487,7 +487,7 @@ Create a new manifest item and write its contents to a new entry.
 
 ###### Defined in
 
-[index.ts:1768](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1768)
+[index.ts:1769](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1769)
 
 ##### Call Signature
 
@@ -517,7 +517,7 @@ Create a new manifest item and write its contents to a new entry.
 
 ###### Defined in
 
-[index.ts:1773](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1773)
+[index.ts:1774](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1774)
 
 ##### Call Signature
 
@@ -546,7 +546,7 @@ Create a new manifest item and write its contents to a new entry.
 
 ###### Defined in
 
-[index.ts:1778](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1778)
+[index.ts:1779](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1779)
 
 #### addMetadata()
 
@@ -574,7 +574,7 @@ useful semantic representations of metadata, use specific methods such as
 
 ##### Defined in
 
-[index.ts:1901](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1901)
+[index.ts:1902](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1902)
 
 #### addSpineItem()
 
@@ -605,7 +605,7 @@ throw an error.
 
 ##### Defined in
 
-[index.ts:1471](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1471)
+[index.ts:1472](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1472)
 
 #### addSubject()
 
@@ -629,7 +629,7 @@ Add a subject to the EPUB metadata.
 
 ##### Defined in
 
-[index.ts:941](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L941)
+[index.ts:942](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L942)
 
 #### close()
 
@@ -669,7 +669,7 @@ Create a new XHTML document with the given body and head.
 
 ##### Defined in
 
-[index.ts:1584](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1584)
+[index.ts:1585](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1585)
 
 #### getContributors()
 
@@ -689,7 +689,7 @@ This is a convenience method for `epub.getCreators('contributor')`.
 
 ##### Defined in
 
-[index.ts:1239](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1239)
+[index.ts:1240](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1240)
 
 #### getCoverImage()
 
@@ -710,7 +710,7 @@ retrieve the image manifest item, use epub.getCoverImageItem().
 
 ##### Defined in
 
-[index.ts:844](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L844)
+[index.ts:845](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L845)
 
 #### getCoverImageItem()
 
@@ -732,7 +732,7 @@ this item's id to epub.readItemContents, or use epub.getCoverImage() instead.
 
 ##### Defined in
 
-[index.ts:825](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L825)
+[index.ts:826](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L826)
 
 #### getCreators()
 
@@ -756,7 +756,7 @@ Retrieve the list of creators.
 
 ##### Defined in
 
-[index.ts:1181](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1181)
+[index.ts:1182](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1182)
 
 #### getLanguage()
 
@@ -777,7 +777,7 @@ Intl.Locale instance.
 
 ##### Defined in
 
-[index.ts:1025](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1025)
+[index.ts:1026](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1026)
 
 #### getManifest()
 
@@ -844,7 +844,7 @@ If there is no dc:date element, returns null.
 
 ##### Defined in
 
-[index.ts:881](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L881)
+[index.ts:882](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L882)
 
 #### getSpineItems()
 
@@ -865,7 +865,7 @@ to users by default.
 
 ##### Defined in
 
-[index.ts:1452](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1452)
+[index.ts:1453](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1453)
 
 #### getSubjects()
 
@@ -888,7 +888,7 @@ authority, and term.
 
 ##### Defined in
 
-[index.ts:980](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L980)
+[index.ts:981](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L981)
 
 #### getTitle()
 
@@ -912,7 +912,7 @@ Retrieve the title of the Epub.
 
 ##### Defined in
 
-[index.ts:1067](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1067)
+[index.ts:1068](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1068)
 
 #### getType()
 
@@ -933,7 +933,7 @@ If there is no dc:type element, returns null.
 
 ##### Defined in
 
-[index.ts:928](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L928)
+[index.ts:929](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L929)
 
 #### readItemContents()
 
@@ -959,7 +959,7 @@ Retrieve the contents of a manifest item, given its id.
 
 ###### Defined in
 
-[index.ts:1556](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1556)
+[index.ts:1557](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1557)
 
 ##### Call Signature
 
@@ -984,7 +984,7 @@ Retrieve the contents of a manifest item, given its id.
 
 ###### Defined in
 
-[index.ts:1557](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1557)
+[index.ts:1558](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1558)
 
 #### readXhtmlItemContents()
 
@@ -1012,7 +1012,7 @@ Retrieves the contents of an XHTML item, given its manifest id.
 
 ###### Defined in
 
-[index.ts:1617](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1617)
+[index.ts:1618](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1618)
 
 ##### Call Signature
 
@@ -1037,7 +1037,7 @@ Retrieves the contents of an XHTML item, given its manifest id.
 
 ###### Defined in
 
-[index.ts:1618](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1618)
+[index.ts:1619](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1619)
 
 #### removeContributor()
 
@@ -1066,7 +1066,7 @@ This is a convenience method for `epub.removeCreator(index, 'contributor')`.
 
 ##### Defined in
 
-[index.ts:1397](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1397)
+[index.ts:1398](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1398)
 
 #### removeCreator()
 
@@ -1094,7 +1094,7 @@ returned by `epub.getCreators()`.
 
 ##### Defined in
 
-[index.ts:1341](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1341)
+[index.ts:1342](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1342)
 
 #### removeManifestItem()
 
@@ -1112,7 +1112,7 @@ returned by `epub.getCreators()`.
 
 ##### Defined in
 
-[index.ts:1718](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1718)
+[index.ts:1719](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1719)
 
 #### removeSpineItem()
 
@@ -1136,7 +1136,7 @@ Remove the spine item at the specified index.
 
 ##### Defined in
 
-[index.ts:1511](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1511)
+[index.ts:1512](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1512)
 
 #### replaceMetadata()
 
@@ -1164,7 +1164,7 @@ first metadata entry that matches the predicate will be replaced.
 
 ##### Defined in
 
-[index.ts:1946](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1946)
+[index.ts:1947](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1947)
 
 #### setCoverImage()
 
@@ -1188,7 +1188,7 @@ then writes the provided image data to the provided href within the publication.
 
 ##### Defined in
 
-[index.ts:858](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L858)
+[index.ts:859](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L859)
 
 #### setLanguage()
 
@@ -1215,7 +1215,7 @@ element
 
 ##### Defined in
 
-[index.ts:1050](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1050)
+[index.ts:1051](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1051)
 
 #### setPublicationDate()
 
@@ -1242,7 +1242,7 @@ element
 
 ##### Defined in
 
-[index.ts:896](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L896)
+[index.ts:897](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L897)
 
 #### setTitle()
 
@@ -1271,7 +1271,7 @@ If no title currently exists, a single title metadata entry will be created.
 
 ##### Defined in
 
-[index.ts:1142](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1142)
+[index.ts:1143](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1143)
 
 #### setType()
 
@@ -1298,7 +1298,7 @@ element.
 
 ##### Defined in
 
-[index.ts:912](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L912)
+[index.ts:913](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L913)
 
 #### updateManifestItem()
 
@@ -1326,7 +1326,7 @@ To update the contents of an entry, use `epub.writeItemContents()` or
 
 ##### Defined in
 
-[index.ts:1845](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1845)
+[index.ts:1846](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1846)
 
 #### writeItemContents()
 
@@ -1356,7 +1356,7 @@ The id must reference an existing manifest item. If creating a new item, use
 
 ###### Defined in
 
-[index.ts:1670](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1670)
+[index.ts:1671](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1671)
 
 ##### Call Signature
 
@@ -1385,7 +1385,7 @@ The id must reference an existing manifest item. If creating a new item, use
 
 ###### Defined in
 
-[index.ts:1671](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1671)
+[index.ts:1672](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1672)
 
 #### writeToArray()
 
@@ -1405,7 +1405,7 @@ updated to the current UTC timestamp.
 
 ##### Defined in
 
-[index.ts:1998](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1998)
+[index.ts:1999](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1999)
 
 #### writeToFile()
 
@@ -1431,7 +1431,7 @@ updated to the current UTC timestamp.
 
 ##### Defined in
 
-[index.ts:2054](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L2054)
+[index.ts:2055](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L2055)
 
 #### writeXhtmlItemContents()
 
@@ -1459,7 +1459,7 @@ The id must reference an existing manifest item. If creating a new item, use
 
 ##### Defined in
 
-[index.ts:1710](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1710)
+[index.ts:1711](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L1711)
 
 #### addLinkToXhtmlHead()
 

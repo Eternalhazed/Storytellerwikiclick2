@@ -745,13 +745,15 @@ export class Epub {
         const id = item[":@"]?.["@_id"]
         const elementName = Epub.getXmlElementName(item)
         const textNode = Epub.getXmlChildren(item)[0]
-        if (!textNode || !Epub.isXmlTextNode(textNode)) return null
 
         // https://www.w3.org/TR/epub-33/#sec-metadata-values
         // Whitespace within these element values is not significant.
         // Sequences of one or more whitespace characters are collapsed
         // to a single space [infra] during processing .
-        const value = textNode["#text"].replaceAll(/\s+/g, " ")
+        const value =
+          !textNode || !Epub.isXmlTextNode(textNode)
+            ? undefined
+            : textNode["#text"].replaceAll(/\s+/g, " ")
         const attributes = item[":@"] ?? {}
         const properties = Object.fromEntries(
           Object.entries(attributes).map(([attrName, value]) => [
@@ -766,7 +768,6 @@ export class Epub {
           value,
         }
       })
-      .filter((element) => !!element)
 
     return metadata
   }
