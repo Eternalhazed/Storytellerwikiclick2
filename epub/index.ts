@@ -2002,7 +2002,8 @@ export class Epub {
       {
         type: "meta",
         properties: { property: "dcterms:modified" },
-        value: new Date().toISOString(),
+        // We need UTC with integer seconds, but toISOString gives UTC with ms
+        value: new Date().toISOString().replace(/\.\d+/, ""),
       },
     )
 

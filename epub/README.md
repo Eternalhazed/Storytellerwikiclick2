@@ -1431,7 +1431,7 @@ updated to the current UTC timestamp.
 
 ##### Defined in
 
-[index.ts:2055](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L2055)
+[index.ts:2056](https://gitlab.com/smoores/storyteller/-/blob/main/epub/index.ts#L2056)
 
 #### writeXhtmlItemContents()
 
