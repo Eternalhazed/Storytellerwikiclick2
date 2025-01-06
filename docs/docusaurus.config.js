@@ -150,7 +150,7 @@ const config = {
           //   ],
           // },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Shane Friedman. Built with Docusaurus.`,
+        copyright: `Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,

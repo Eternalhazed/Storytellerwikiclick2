@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "packageManager": "yarn@4.5.3",
+  "license": "CC0-1.0",
   "workspaces": [
     "web/",
     "docs/",
