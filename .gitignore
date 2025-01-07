@@ -25,6 +25,6 @@ tsconfig.tsbuildinfo
 tsbuild
 
 # direnv/devenv config and cache
-.envrc
+local.envrc
 .direnv
 .devenv
