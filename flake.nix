@@ -42,6 +42,7 @@
     {
       packages = nixpkgs.lib.genAttrs allSystems (system: {
         devenv-up = self.devShells.${system}.default.config.procfileScript;
+        devenv-test = self.devShells.${system}.default.config.test;
       });
 
       # Development environment output
@@ -60,7 +61,10 @@
                     pkgs.nodejs_22
                     (pkgs.yarn.override { nodejs = pkgs.nodejs_22; })
                     pkgs.sqlite
+                    pkgs.git-lfs
                   ];
+
+                  enterTest = "yarn check";
 
                   # processes.run.exec = "hello";
                 }
