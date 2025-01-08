@@ -742,7 +742,6 @@ export class Epub {
     const metadata: EpubMetadata = metadataElement.metadata
       .filter((node): node is XmlElement => !Epub.isXmlTextNode(node))
       .map((item) => {
-        const id = item[":@"]?.["@_id"]
         const elementName = Epub.getXmlElementName(item)
         const textNode = Epub.getXmlChildren(item)[0]
 
@@ -755,7 +754,7 @@ export class Epub {
             ? undefined
             : textNode["#text"].replaceAll(/\s+/g, " ")
         const attributes = item[":@"] ?? {}
-        const properties = Object.fromEntries(
+        const { id, ...properties } = Object.fromEntries(
           Object.entries(attributes).map(([attrName, value]) => [
             attrName.slice(2),
             value,
@@ -1920,7 +1919,7 @@ export class Epub {
         Epub.createXmlElement(
           entry.type,
           {
-            ...(entry.id && { "@_id": entry.id }),
+            ...(entry.id && { id: entry.id }),
             ...entry.properties,
           },
           entry.value !== undefined
@@ -1970,7 +1969,7 @@ export class Epub {
       const newElement = Epub.createXmlElement(
         entry.type,
         {
-          ...(entry.id && { "@_id": entry.id }),
+          ...(entry.id && { id: entry.id }),
           ...entry.properties,
         },
         entry.value !== undefined ? [Epub.createXmlTextNode(entry.value)] : [],

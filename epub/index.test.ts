@@ -1,6 +1,12 @@
 import { join } from "node:path"
 import { describe, it } from "node:test"
-import { Epub, ParsedXml, XmlElement, XmlTextNode } from "./index.js"
+import {
+  Epub,
+  MetadataEntry,
+  ParsedXml,
+  XmlElement,
+  XmlTextNode,
+} from "./index.js"
 import assert from "node:assert"
 import { stat } from "node:fs/promises"
 
@@ -125,6 +131,20 @@ void describe("Epub", () => {
     assert.ok(meta)
     assert.strictEqual(meta[":@"]?.["@_charset"], "utf-8")
     await epub.close()
+  })
+
+  void it("can add metadata", async () => {
+    const inputFilepath = join("__fixtures__", "moby-dick.epub")
+    const epub = await Epub.from(inputFilepath)
+
+    const newItem: MetadataEntry = {
+      properties: { property: "example" },
+      value: "metadata value",
+      type: "meta",
+      id: "test-metadata",
+    }
+    await epub.addMetadata(newItem)
+    assert.deepEqual(newItem, (await epub.getMetadata()).at(-1))
   })
 
   void it("can write the epub to a file", async () => {
