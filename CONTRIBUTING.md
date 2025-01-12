@@ -4,11 +4,11 @@ Thank you for your interest in contributing to Storyteller! To ensure a smooth
 collaboration, please review the guidelines below before submitting your
 contributions.
 
-## License for Contributions
+## Terms for Contributions
 
 By contributing to this project, you agree that:
 
-1. All contributions are licensed under the CC0 1.0 Universal (Public Domain
+1. All contributions are dedicated under the CC0 1.0 Universal (Public Domain
    Dedication). This means you dedicate your contributions to the public domain
    to the fullest extent permitted by law, and you waive any copyright or
    related rights you hold in the contribution.
