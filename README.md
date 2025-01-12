@@ -8,8 +8,9 @@
 
 This work is marked with
 <a href="https://creativecommons.org/publicdomain/zero/1.0/?ref=chooser-v1">CC0
-1.0
-Universal<img height="18" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img height="18" src="https://mirrors.creativecommons.org/presskit/icons/zero.svg?ref=chooser-v1" alt=""></a>
+1.0 Universal
+<img height="14" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt="">
+<img height="14" src="https://mirrors.creativecommons.org/presskit/icons/zero.svg?ref=chooser-v1" alt=""></a>
 
 <table>
   <tbody>
