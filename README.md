@@ -7,9 +7,9 @@
 [![Join our Discourse at https://storyteller.discourse.group/](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fstoryteller.discourse.group%2F&style=for-the-badge)](https://storyteller.discourse.group/)
 
 This work is marked with
-<a href="https://creativecommons.org/publicdomain/zero/1.0/?ref=chooser-v1" style="display:inline-block;">CC0
+<a href="https://creativecommons.org/publicdomain/zero/1.0/?ref=chooser-v1">CC0
 1.0
-Universal<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/zero.svg?ref=chooser-v1" alt=""></a>
+Universal<img height="18" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img height="18" src="https://mirrors.creativecommons.org/presskit/icons/zero.svg?ref=chooser-v1" alt=""></a>
 
 <table>
   <tbody>
