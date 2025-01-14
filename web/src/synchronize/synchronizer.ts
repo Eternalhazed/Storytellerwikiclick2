@@ -198,8 +198,9 @@ export class Synchronizer {
 
   private async getChapterSentences(chapterId: string) {
     const chapterXml = await this.epub.readXhtmlItemContents(chapterId)
+    const locale = (await this.epub.getLanguage()) ?? new Intl.Locale("en-US")
 
-    const sentences = getXHtmlSentences(Epub.getXhtmlBody(chapterXml))
+    const sentences = getXHtmlSentences(Epub.getXhtmlBody(chapterXml), locale)
     const cleanSentences = sentences.map((sentence) =>
       sentence.replaceAll(/\s+/g, " "),
     )
@@ -280,6 +281,7 @@ export class Synchronizer {
     lastSentenceRange: SentenceRange | null,
   ) {
     const manifest = await this.epub.getManifest()
+    const locale = (await this.epub.getLanguage()) ?? new Intl.Locale("en-US")
     const chapter = manifest[chapterId]
     if (!chapter)
       throw new Error(
@@ -295,6 +297,7 @@ export class Synchronizer {
         this.transcription,
         chapterSentences,
         transcriptionOffset,
+        locale,
         lastSentenceRange,
       )
     const interpolated = await interpolateSentenceRanges(
@@ -302,7 +305,7 @@ export class Synchronizer {
       lastSentenceRange,
     )
     const expanded = expandEmptySentenceRanges(interpolated)
-    const tagged = tagSentences(chapterId, chapterXml)
+    const tagged = tagSentences(chapterId, chapterXml, locale)
 
     const storytellerStylesheetUrl = relative(
       dirname(chapter.href),

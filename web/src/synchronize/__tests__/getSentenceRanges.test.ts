@@ -60,7 +60,10 @@ void describe("getSentenceRanges", () => {
       spine[1]!.id,
       "text",
     )
-    const sentences = tokenizeSentences(chapterOneText.slice(30888))
+    const sentences = tokenizeSentences(
+      chapterOneText.slice(30888),
+      new Intl.Locale("en-US"),
+    )
 
     const stTranscription: StorytellerTranscription = {
       transcript: mobyDickTranscription.transcript,
@@ -79,6 +82,7 @@ void describe("getSentenceRanges", () => {
       stTranscription,
       sentences,
       223,
+      new Intl.Locale("en-US"),
       null,
     )
 

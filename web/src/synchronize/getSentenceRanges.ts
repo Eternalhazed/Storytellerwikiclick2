@@ -20,8 +20,8 @@ export type SentenceRange = {
   audiofile: string
 }
 
-function getSentencesWithOffsets(text: string) {
-  const sentences = tokenizeSentences(text)
+function getSentencesWithOffsets(text: string, locale: Intl.Locale) {
+  const sentences = tokenizeSentences(text, locale)
   const sentencesWithOffsets: string[] = []
   let lastSentenceEnd = 0
   for (const sentence of sentences) {
@@ -86,14 +86,16 @@ export async function getSentenceRanges(
   transcription: StorytellerTranscription,
   sentences: string[],
   chapterOffset: number,
+  locale: Intl.Locale,
   lastSentenceRange: SentenceRange | null,
 ) {
   const sentenceRanges: SentenceRange[] = []
   const fullTranscriptionText = transcription.transcript
   const transcriptionText = fullTranscriptionText.slice(chapterOffset)
-  const transcriptionSentences = getSentencesWithOffsets(transcriptionText).map(
-    (sentence) => sentence.toLowerCase(),
-  )
+  const transcriptionSentences = getSentencesWithOffsets(
+    transcriptionText,
+    locale,
+  ).map((sentence) => sentence.toLowerCase())
 
   let startSentenceEntry = startSentence
 
