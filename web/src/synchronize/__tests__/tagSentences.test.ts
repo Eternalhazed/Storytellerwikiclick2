@@ -53,7 +53,7 @@ void describe("appendTextNode", () => {
 })
 
 void describe("tagSentences", () => {
-  void it("can tag sentences", () => {
+  void it("can tag sentences", async () => {
     const input = Epub.xhtmlParser.parse(/* xml */ `
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -88,7 +88,7 @@ void describe("tagSentences", () => {
 </html>
 `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.deepStrictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -125,7 +125,7 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can tag sentences with formatting marks", () => {
+  void it("can tag sentences with formatting marks", async () => {
     const input = Epub.xhtmlParser.parse(/* xml */ `
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -145,7 +145,7 @@ void describe("tagSentences", () => {
 </html>
 `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.deepStrictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -167,7 +167,7 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can tag sentences with formatting marks that overlap sentence boundaries", () => {
+  void it("can tag sentences with formatting marks that overlap sentence boundaries", async () => {
     const input = Epub.xhtmlParser.parse(/* xml */ `
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -187,7 +187,7 @@ void describe("tagSentences", () => {
 </html>
 `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.deepStrictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -209,7 +209,7 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can tag sentences with nested formatting marks", () => {
+  void it("can tag sentences with nested formatting marks", async () => {
     const input = Epub.xhtmlParser.parse(/* xml */ `
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -229,7 +229,7 @@ void describe("tagSentences", () => {
 </html>
 `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.deepStrictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -251,7 +251,7 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can tag sentences with atoms", () => {
+  void it("can tag sentences with atoms", async () => {
     const input = Epub.xhtmlParser.parse(/* xml */ `
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -271,7 +271,7 @@ void describe("tagSentences", () => {
 </html>
 `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.deepStrictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -293,19 +293,19 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can tag sentences in nested textblocks", () => {
+  void it("can tag sentences in nested textblocks", async () => {
     const input = Epub.xhtmlParser.parse(/* xml */ `
 <?xml version='1.0' encoding='utf-8'?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"
       epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/#" lang="en" xml:lang="en">
-    
+
   <head>
     <link href="../styles/9781534431010.css" rel="stylesheet" type="text/css" />
     <link href="../styles/SS_global.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="../../Styles/storyteller-readaloud.css" type="text/css" />
   </head>
-    
+
   <body>
     <blockquote class="blockquotelet">
       <p class="blockno"><span aria-label="page 7" id="page_7" role="doc-pagebreak" /></p>
@@ -319,23 +319,23 @@ void describe("tagSentences", () => {
       <p class="blockin">I hoped you’d come.</p>
     </blockquote>
   </body>
-    
+
 </html>
     `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.strictEqual(
       Epub.xhtmlBuilder.build(output),
       /* xml */ `
 <?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/#" lang="en" xml:lang="en">
-    
+
   <head>
     <link href="../styles/9781534431010.css" rel="stylesheet" type="text/css"/>
     <link href="../styles/SS_global.css" rel="stylesheet" type="text/css"/>
     <link rel="stylesheet" href="../../Styles/storyteller-readaloud.css" type="text/css"/>
   </head>
-    
+
   <body>
     <blockquote class="blockquotelet">
       <p class="blockno"><span aria-label="page 7" id="page_7" role="doc-pagebreak"/></p>
@@ -349,12 +349,12 @@ void describe("tagSentences", () => {
       <p class="blockin"><span id="chapter_one-sentence4">I hoped you’d come.</span></p>
     </blockquote>
   </body>
-    
+
 </html>`,
     )
   })
 
-  void it("can tag sentences that cross textblock boundaries", () => {
+  void it("can tag sentences that cross textblock boundaries", async () => {
     const input = Epub.xhtmlParser.parse(/* xml */ `
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -377,7 +377,7 @@ void describe("tagSentences", () => {
 </html>
     `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.strictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -402,7 +402,7 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can handle soft page breaks", () => {
+  void it("can handle soft page breaks", async () => {
     const input = Epub.xhtmlParser.parse(/* xml */ `
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en-US" xml:lang="en-US">
   <head>
@@ -432,7 +432,7 @@ void describe("tagSentences", () => {
   </body>
 </html>`) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.strictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -466,7 +466,7 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can handle boolean-like text values", () => {
+  void it("can handle boolean-like text values", async () => {
     const input = Epub.xhtmlParser.parse(`
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:ops="http://www.idpf.org/2007/ops" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <head>
@@ -477,7 +477,7 @@ void describe("tagSentences", () => {
 </html>
 `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.strictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -492,7 +492,7 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can handle number-like text values", () => {
+  void it("can handle number-like text values", async () => {
     const input = Epub.xhtmlParser.parse(`
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:ops="http://www.idpf.org/2007/ops" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <head>
@@ -503,7 +503,7 @@ void describe("tagSentences", () => {
 </html>
 `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.strictEqual(
       Epub.xhtmlBuilder.build(output),
@@ -518,7 +518,7 @@ void describe("tagSentences", () => {
     )
   })
 
-  void it("can handle null-like text values", () => {
+  void it("can handle null-like text values", async () => {
     const input = Epub.xhtmlParser.parse(`
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:ops="http://www.idpf.org/2007/ops" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <head>
@@ -529,7 +529,7 @@ void describe("tagSentences", () => {
 </html>
 `) as ParsedXml
 
-    const output = tagSentences("chapter_one", input)
+    const output = await tagSentences("chapter_one", input)
 
     assert.strictEqual(
       Epub.xhtmlBuilder.build(output),

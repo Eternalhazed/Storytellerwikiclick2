@@ -199,7 +199,7 @@ export class Synchronizer {
   private async getChapterSentences(chapterId: string) {
     const chapterXml = await this.epub.readXhtmlItemContents(chapterId)
 
-    const sentences = getXHtmlSentences(Epub.getXhtmlBody(chapterXml))
+    const sentences = await getXHtmlSentences(Epub.getXhtmlBody(chapterXml))
     const cleanSentences = sentences.map((sentence) =>
       sentence.replaceAll(/\s+/g, " "),
     )
@@ -302,7 +302,7 @@ export class Synchronizer {
       lastSentenceRange,
     )
     const expanded = expandEmptySentenceRanges(interpolated)
-    const tagged = tagSentences(chapterId, chapterXml)
+    const tagged = await tagSentences(chapterId, chapterXml)
 
     const storytellerStylesheetUrl = relative(
       dirname(chapter.href),

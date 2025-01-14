@@ -4,7 +4,7 @@ import { getXHtmlSentences } from "../getXhtmlSentences"
 import { strict as assert } from "node:assert/strict"
 
 void describe("getXhtmlSentences", () => {
-  void it("gets sentences from a text node", () => {
+  void it("gets sentences from a text node", async () => {
     const input = [
       {
         "#text":
@@ -12,7 +12,7 @@ void describe("getXhtmlSentences", () => {
       },
     ] as ParsedXml
 
-    const output = getXHtmlSentences(input)
+    const output = await getXHtmlSentences(input)
 
     assert.deepEqual(output, [
       "This is a text node.",
@@ -21,7 +21,7 @@ void describe("getXhtmlSentences", () => {
     ])
   })
 
-  void it("gets sentences from a single element", () => {
+  void it("gets sentences from a single element", async () => {
     const input: ParsedXml = [
       {
         p: [
@@ -43,7 +43,7 @@ void describe("getXhtmlSentences", () => {
       },
     ]
 
-    const output = getXHtmlSentences(input)
+    const output = await getXHtmlSentences(input)
 
     assert.deepEqual(output, [
       "This is a text node.",
@@ -54,7 +54,7 @@ void describe("getXhtmlSentences", () => {
     ])
   })
 
-  void it("gets sentences from nested elements", () => {
+  void it("gets sentences from nested elements", async () => {
     const input: ParsedXml = [
       {
         p: [
@@ -83,7 +83,7 @@ void describe("getXhtmlSentences", () => {
       },
     ]
 
-    const output = getXHtmlSentences(input)
+    const output = await getXHtmlSentences(input)
 
     assert.deepEqual(output, [
       "This is a text node.",

@@ -53,7 +53,7 @@
             inherit inputs pkgs;
             modules = [
               (
-                { pkgs, config, ... }:
+                { pkgs, ... }:
                 {
                   # This is your devenv configuration
                   packages = [
@@ -64,6 +64,10 @@
                     pkgs.git-lfs
                   ];
 
+                  env = {
+                    LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.stdenv.cc.cc ];
+                  };
+
                   tasks."repo:init" = {
                     description = "Do necessary work for setting up development";
                     exec = ''
@@ -71,7 +75,20 @@
                       git lfs pull
                       touch .devenv-initialized'';
                     status = "test -f .devenv-initialized";
-                    before = [ "devenv:enterShell" "devenv:enterTest" ];
+                    before = [
+                      "devenv:enterShell"
+                      "devenv:enterTest"
+                    ];
+                  };
+
+                  languages.python = {
+                    enable = true;
+                    venv.enable = true;
+                    venv.requirements = ''
+                      wtpsplit
+                      --index-url https://download.pytorch.org/whl/cpu
+                      torch==2.5.1+cpu
+                    '';
                   };
 
                   devcontainer.enable = true;

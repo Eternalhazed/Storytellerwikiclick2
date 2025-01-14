@@ -2,7 +2,7 @@ import { Epub, ParsedXml } from "@smoores/epub"
 import { tokenizeSentences } from "./nlp"
 import { BLOCKS } from "./semantics"
 
-export function getXHtmlSentences(xml: ParsedXml): string[] {
+export async function getXHtmlSentences(xml: ParsedXml): Promise<string[]> {
   const sentences: string[] = []
   let stagedText = ""
   for (const child of xml) {
@@ -16,13 +16,13 @@ export function getXHtmlSentences(xml: ParsedXml): string[] {
       stagedText += Epub.getXhtmlTextContent(child[childName]!)
       continue
     }
-    sentences.push(...tokenizeSentences(stagedText))
+    sentences.push(...(await tokenizeSentences(stagedText)))
     stagedText = ""
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    sentences.push(...getXHtmlSentences(child[childName]!))
+    sentences.push(...(await getXHtmlSentences(child[childName]!)))
   }
 
-  sentences.push(...tokenizeSentences(stagedText))
+  sentences.push(...(await tokenizeSentences(stagedText)))
 
   return sentences
 }
