@@ -16,7 +16,11 @@ export async function getSyncCache(bookUuid: UUID) {
 type SerializedCache = {
   chapter_index: Record<
     number,
-    { start_sentence: number; transcription_offset: number | null }
+    {
+      start_sentence: number
+      transcription_offset: number | null
+      epub_item: string
+    }
   >
 }
 
@@ -43,17 +47,23 @@ export class SyncCache {
     return {
       startSentence: existing.start_sentence,
       transcriptionOffset: existing.transcription_offset,
+      epubItem: existing.epub_item,
     }
   }
 
   async setChapterIndex(
     chapter: number,
-    update: { startSentence: number; transcriptionOffset: number | null },
+    update: {
+      startSentence: number
+      transcriptionOffset: number | null
+      epubItem: string
+    },
   ) {
     this.data.chapter_index[chapter] = {
       start_sentence: update.startSentence,
       transcription_offset: update.transcriptionOffset,
+      epub_item: update.epubItem, // Store the epub_item
     }
-    await writeFile(this.filepath, JSON.stringify(this.data))
+    await writeFile(this.filepath, JSON.stringify(this.data, null, 2))
   }
 }

@@ -371,8 +371,9 @@ export class Synchronizer {
           `Couldn't find matching transcription for chapter #${index}`,
         )
         await this.syncCache.setChapterIndex(index, {
-          startSentence: 0,
-          transcriptionOffset: null,
+          startSentence,
+          transcriptionOffset,
+          epubItem: spineItem.href,
         })
         continue
       }
@@ -384,6 +385,7 @@ export class Synchronizer {
       await this.syncCache.setChapterIndex(index, {
         startSentence,
         transcriptionOffset,
+        epubItem: spineItem.href,
       })
       ;({ lastSentenceRange, endTranscriptionOffset: lastTranscriptionOffset } =
         await this.syncChapter(
