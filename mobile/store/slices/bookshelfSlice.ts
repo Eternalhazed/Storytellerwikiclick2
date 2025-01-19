@@ -61,6 +61,13 @@ export const playerPositionUpdated = createAction(
   "bookshelf/playerPositionUpdated",
 )
 
+export const playerPositionSeeked = createAction(
+  "bookshelf/playerPositionSeeked",
+  (payload: { progress: number }) => ({
+    payload: { progress: payload.progress },
+  }),
+)
+
 export const localBookImported = createAction(
   "bookshelf/localBookImported",
   (bookId: number, archiveUrl: string) => ({ payload: { bookId, archiveUrl } }),

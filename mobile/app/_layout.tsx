@@ -18,8 +18,6 @@ import { AppState, AppStateStatus, Platform } from "react-native"
 import { logger } from "../logger"
 import "../tasks/backgroundFetchSyncPositions"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
-import { TamaguiProvider } from "tamagui"
-import { tamaguiConfig } from "../design/tamaguiConfig"
 
 TrackPlayer.registerPlaybackService(() => PlaybackService)
 
@@ -102,16 +100,14 @@ export default function Layout() {
   }, [])
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="paperWhite">
-      <GestureHandlerRootView>
-        <Provider store={store}>
-          <StorytellerProvider>
-            <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-              <Slot />
-            </SafeAreaProvider>
-          </StorytellerProvider>
-        </Provider>
-      </GestureHandlerRootView>
-    </TamaguiProvider>
+    <GestureHandlerRootView>
+      <Provider store={store}>
+        <StorytellerProvider>
+          <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+            <Slot />
+          </SafeAreaProvider>
+        </StorytellerProvider>
+      </Provider>
+    </GestureHandlerRootView>
   )
 }

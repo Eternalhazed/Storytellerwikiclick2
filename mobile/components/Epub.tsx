@@ -20,7 +20,6 @@ import { PlayPause } from "./PlayPause"
 import { MiniPlayer } from "./MiniPlayer"
 import { useAudioBook } from "../hooks/useAudioBook"
 import { Toolbar } from "./Toolbar"
-import { ToolbarDialogs } from "./ToolbarDialogs"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { SelectionMenu } from "./SelectionMenu"
 import { useColorTheme } from "../hooks/useColorTheme"
@@ -77,7 +76,6 @@ export function Epub({ book, locator }: Props) {
       ]}
     >
       <Tabs.Screen options={{ tabBarStyle: { display: "none" } }} />
-      <ToolbarDialogs topInset={insets.top + 6} />
       {selection && (
         <SelectionMenu
           bookId={book.id}

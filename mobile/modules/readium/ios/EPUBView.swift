@@ -21,7 +21,7 @@ class EPUBView: ExpoView {
     let onError = EventDispatcher()
     let onHighlightTap = EventDispatcher()
     let onBookmarksActivate = EventDispatcher()
-    
+
     public var bookId: Int?
     public var initialLocation: Locator?
     public var locator: Locator?
@@ -35,25 +35,25 @@ class EPUBView: ExpoView {
         lineHeight: 1.4,
         paragraphSpacing: 0.5
     )
-    
+
     private var didTapWork: DispatchWorkItem?
-    
+
     func initializeNavigator() {
         if self.navigator != nil {
             return
         }
-        
+
         guard let bookId = self.bookId, let locator = self.initialLocation else {
             return
         }
-        
+
         guard let publication = BookService.instance.getPublication(for: bookId) else {
             print("skipping navigator init, publication has not yet been opened")
             return
         }
-        
+
         let resources = Bundle.main.resourceURL!
-        
+
         guard let navigator = try? EPUBNavigatorViewController(
             publication: publication,
             initialLocation: locator,
@@ -80,7 +80,7 @@ class EPUBView: ExpoView {
             print("Failed to create Navigator instance")
             return
         }
-        
+
         navigator.delegate = self
         addSubview(navigator.view)
         self.navigator = navigator
@@ -92,18 +92,18 @@ class EPUBView: ExpoView {
             self?.onHighlightTap(["decoration": event.decoration.id, "x": rect.midX, "y": rect.minY])
         }
     }
-    
+
     public func updatePreferences() {
         navigator?.submitPreferences(preferences)
     }
-    
+
     func go(locator: Locator) {
         guard let navigator = self.navigator else {
             self.initialLocation = locator
             initializeNavigator()
             return
         }
-        
+
         _ = navigator.go(to: locator, animated: true) {
             if self.isPlaying {
                 self.highlightFragment(locator: locator)
@@ -122,31 +122,31 @@ class EPUBView: ExpoView {
         }
         navigator?.apply(decorations: decorations, in: "highlights")
     }
-    
+
     func highlightFragment(locator: Locator) {
         guard let id = locator.locations.fragments.first else {
             return
         }
-        
+
         let overlayHighlight = Decoration.Style.highlight(tint: readaloudColor, isActive: true)
         let decoration = Decoration(
             id: id,
             locator: locator,
             style: overlayHighlight)
-        
+
         navigator?.apply(decorations: [decoration], in: "overlay")
     }
-    
+
     func clearHighlightedFragment() {
         navigator?.apply(decorations: [], in: "overlay")
     }
-    
+
     override func layoutSubviews() {
         guard let navigatorView = self.navigator?.view else {
             print("layoutSubviews called before navigator was instantiated")
             return
         }
-        
+
         navigatorView.frame = bounds
     }
 
@@ -160,6 +160,7 @@ class EPUBView: ExpoView {
         }
 
         let joinedProgressions = bookmarks
+            .filter { $0.href == locator.href }
             .compactMap(\.locations.progression)
             .map { "\($0)" }
             .joined(separator: ",")
@@ -174,7 +175,7 @@ class EPUBView: ExpoView {
 
                 function snapOffset(offset) {
                     const value = offset + 1;
-                    
+
                     return value - (value % maxScreenX);
                 }
 
@@ -196,7 +197,7 @@ class EPUBView: ExpoView {
                     self.onBookmarksActivate(["activeBookmarks": []])
                     return
                 }
-                
+
                 let found = self.bookmarks.filter {
                     guard let progression = $0.locations.progression else {
                         return false
@@ -230,11 +231,11 @@ extension EPUBView: WKScriptMessageHandler {
                 guard let currentLocator = self.navigator?.currentLocation else {
                     return
                 }
-                
+
                 guard let locator = try? BookService.instance.getLocatorFor(bookId: bookId, href: currentLocator.href, fragment: fragment) else {
                     return
                 }
-                
+
                 self.onDoubleTouch(locator.json)
             case "storytellerSelectionCleared":
                 onSelection(["cleared": true])
@@ -249,7 +250,7 @@ extension EPUBView: EPUBNavigatorDelegate {
         onSelection(["x": selection.frame?.midX as Any, "y": selection.frame?.minY as Any, "locator": selection.locator.json])
         return false
     }
-    
+
     func navigator(_ navigator: EPUBNavigatorViewController, setupUserScripts userContentController: WKUserContentController) {
         let scriptSource = """
             function addDoubleTapListeners() {
@@ -266,7 +267,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                     });
                     element.addEventListener('touchend', (event) => {
                         if (storytellerTouchMoved || !document.getSelection().isCollapsed || event.changedTouches.length !== 1) return;
-            
+
                         event.bubbles = true
                         event.clientX = event.changedTouches[0].clientX
                         event.clientY = event.changedTouches[0].clientY
@@ -288,14 +289,14 @@ extension EPUBView: EPUBNavigatorDelegate {
                     })
                 }
             }
-        
+
             document.addEventListener('selectionchange', () => {
                 if (document.getSelection().isCollapsed) {
                     window.webkit.messageHandlers.storytellerSelectionCleared.postMessage(null);
                 }
             });
         """
-        
+
         userContentController.addUserScript(WKUserScript(source: scriptSource, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         userContentController.add(self, name: "storytellerDoubleClick")
         userContentController.add(self, name: "storytellerSelectionCleared")
@@ -304,7 +305,7 @@ extension EPUBView: EPUBNavigatorDelegate {
     func navigator(_ navigator: R2Navigator.Navigator, presentError error: R2Navigator.NavigatorError) {
         self.onError(["errorDescription": error.errorDescription as Any, "failureReason": error.failureReason as Any, "recoverySuggestion": error.recoverySuggestion as Any])
     }
-    
+
     func navigator(_ navigator: VisualNavigator, didTapAt point: CGPoint) {
         self.didTapWork = nil
         if point.x < self.bounds.maxX * 0.2 {
@@ -315,10 +316,10 @@ extension EPUBView: EPUBNavigatorDelegate {
             _ = navigator.goForward(animated: true) {}
             return
         }
-        
+
         self.onMiddleTouch()
     }
-    
+
     func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
         if isPlaying {
             return
@@ -327,25 +328,25 @@ extension EPUBView: EPUBNavigatorDelegate {
         guard let epubNav = navigator as? EPUBNavigatorViewController else {
             return
         }
-        
+
         findOnPage(locator: locator)
-        
+
         if locator.href != self.locator?.href {
             guard let bookId = self.bookId else {
                 return
             }
-            
+
             let fragments = BookService.instance.getFragments(for: bookId, locator: locator)
-            
+
             let joinedFragments = fragments.map(\.fragment).map { "\"\($0)\"" }.joined(separator: ",")
             let jsFragmentsArray = "[\(joinedFragments)]"
-            
+
             epubNav.evaluateJavaScript("""
                 globalThis.storytellerFragments = \(jsFragmentsArray);
                 addDoubleTapListeners();
             """)
         }
-        
+
         epubNav.evaluateJavaScript("""
             (function() {
                 function isEntirelyOnScreen(element) {
@@ -386,7 +387,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                 )
             }
         }
-        
+
         self.locator = locator
     }
 }

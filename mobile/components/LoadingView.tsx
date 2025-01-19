@@ -1,4 +1,5 @@
-import { ActivityIndicator, View } from "react-native"
+import { ActivityIndicator } from "react-native"
+import { View } from "tamagui"
 
 export function LoadingView() {
   return (

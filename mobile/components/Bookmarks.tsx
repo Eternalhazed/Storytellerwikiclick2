@@ -1,9 +1,7 @@
-import { View, Pressable } from "react-native"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { getCurrentlyPlayingBook } from "../store/selectors/bookshelfSelectors"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
-import { UIText } from "./UIText"
-import { Popover } from "tamagui"
+import { Button, Popover, SizableText, Stack, View } from "tamagui"
 
 export function Bookmarks() {
   const book = useAppSelector(getCurrentlyPlayingBook)
@@ -11,11 +9,22 @@ export function Bookmarks() {
 
   if (!book) return null
 
+  if (!book.bookmarks.length) {
+    return (
+      <Stack p="$12">
+        <SizableText color="$gray11">
+          No bookmarks yet! Try adding some by pressing the bookmark icon in the
+          toolbar.
+        </SizableText>
+      </Stack>
+    )
+  }
+
   return (
     <Popover.ScrollView>
       {book.bookmarks.map((bookmark) => (
-        <View key={JSON.stringify(bookmark)} style={{ paddingHorizontal: 8 }}>
-          <Pressable
+        <View key={JSON.stringify(bookmark)} px="$2">
+          <Button
             onPress={async () => {
               dispatch(
                 bookshelfSlice.actions.bookmarkTapped({
@@ -24,32 +33,24 @@ export function Bookmarks() {
                 }),
               )
             }}
-            style={{
-              borderBottomWidth: 1,
-              borderBottomColor: "#CCC",
-              paddingVertical: 16,
-              paddingHorizontal: 16,
-            }}
+            chromeless
+            br="$0"
+            bbw={1}
+            bbc="$borderColor"
+            alignItems="flex-start"
+            fd="column"
+            h="$8"
+            noTextWrap
           >
-            <UIText
-              style={{
-                fontSize: 14,
-                fontWeight: "bold",
-              }}
-            >
+            <SizableText size="$3.5" numberOfLines={2}>
               {bookmark.title}
-            </UIText>
+            </SizableText>
             {bookmark.locations?.position && (
-              <UIText
-                style={{
-                  fontSize: 13,
-                  marginTop: 8,
-                }}
-              >
+              <SizableText size="$3" alignSelf="flex-end">
                 Page {bookmark.locations?.position}
-              </UIText>
+              </SizableText>
             )}
-          </Pressable>
+          </Button>
         </View>
       ))}
     </Popover.ScrollView>

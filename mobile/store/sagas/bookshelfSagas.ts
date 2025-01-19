@@ -35,6 +35,7 @@ import {
   playerPositionUpdated,
   playerPaused,
   localBookImported,
+  playerPositionSeeked,
 } from "../slices/bookshelfSlice"
 import { librarySlice } from "../slices/librarySlice"
 import * as FileSystem from "expo-file-system"
@@ -865,6 +866,14 @@ export function* seekToLocatorSaga() {
   )
 }
 
+export function* manualTrackSeekSaga() {
+  yield takeLeadingWithQueue(playerPositionSeeked, function* (action) {
+    const { progress } = action.payload
+    yield call(TrackPlayer.seekTo, progress)
+    yield put(playerPositionUpdated)
+  })
+}
+
 export function* relocateToTrackPositionSaga() {
   yield takeLeadingWithQueue(
     [playerPositionUpdated, playerPaused],
@@ -875,8 +884,8 @@ export function* relocateToTrackPositionSaga() {
 
       if (!currentTrack) return
 
-      const position = (yield call(TrackPlayer.getPosition)) as Awaited<
-        ReturnType<typeof TrackPlayer.getPosition>
+      const { position } = (yield call(TrackPlayer.getProgress)) as Awaited<
+        ReturnType<typeof TrackPlayer.getProgress>
       >
 
       const currentBook = (yield select(getCurrentlyPlayingBook)) as ReturnType<

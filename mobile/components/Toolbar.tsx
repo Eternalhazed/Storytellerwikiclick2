@@ -23,10 +23,10 @@ import {
   Bookmark,
   BookmarkCheck,
   BookOpen,
-  CirclePlay,
   TableOfContents as ToC,
   MinusCircle,
   PlusCircle,
+  Headphones,
 } from "@tamagui/lucide-icons"
 import { ReadingSettings } from "./ReadingSettings"
 import { useWindowDimensions } from "react-native"
@@ -68,7 +68,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
       {mode === "text" && (
         <Popover>
           <Popover.Trigger asChild>
-            <Button size="$4" circular chromeless>
+            <Button size="$4" px="$1" chromeless>
               <ALargeSmall />
             </Button>
           </Popover.Trigger>
@@ -119,13 +119,14 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
 
       <Popover>
         <Popover.Trigger asChild>
-          <Button size="$4" circular chromeless>
+          <Button size="$4" px="$1" chromeless>
             <SpedometerIcon />
           </Button>
         </Popover.Trigger>
         <Popover.Content
+          mt={mode === "audio" ? -50 : 0}
           padding="$2"
-          width={300}
+          width={dimensions.width - 100}
           elevation={3}
           animation={[
             "quick",
@@ -154,7 +155,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
                   )
                 }}
               >
-                <MinusCircle size="$1" />
+                <MinusCircle size="$2" />
               </Button>
               <Slider
                 value={[currentSpeed ?? 1]}
@@ -189,7 +190,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
                   )
                 }}
               >
-                <PlusCircle size="$1" />
+                <PlusCircle size="$2" />
               </Button>
             </XStack>
             <XStack gap={8} margin={8}>
@@ -217,7 +218,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
 
       <Button
         size="$4"
-        circular
+        px="$1"
         disabled={!currentLocator}
         chromeless
         onPress={() => {
@@ -229,6 +230,8 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
               }),
             )
           } else if (currentLocator) {
+            // TODO: Try to get the title of the bookmark
+            // from the chapter, if it's not set in the locator
             dispatch(
               bookshelfSlice.actions.bookmarkAdded({
                 bookId: book.id,
@@ -243,15 +246,17 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
 
       <Popover>
         <Popover.Trigger asChild>
-          <Button size="$4" circular chromeless>
+          <Button size="$4" px="$1" chromeless>
             {/* <ListOrdered /> */}
             <ToC />
           </Button>
         </Popover.Trigger>
         <Popover.Content
-          padding="$2"
-          width={340}
-          height={600}
+          mt={mode === "audio" ? -50 : 0}
+          py="0"
+          px="$2"
+          width={dimensions.width - 50}
+          height={dimensions.height - 250}
           elevation={3}
           animation={[
             "quick",
@@ -266,16 +271,16 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
             defaultValue="contents"
             orientation="horizontal"
             flexDirection="column"
-            height={550}
+            height={dimensions.height - 280}
           >
-            <Tabs.List>
-              <Tabs.Tab value="contents">
+            <Tabs.List bbw={1} bbc="$gray8" bblr="$0" bbrr="$0">
+              <Tabs.Tab value="contents" h="$6" bblr="$0">
                 <SizableText>Contents</SizableText>
               </Tabs.Tab>
-              <Tabs.Tab value="bookmarks">
+              <Tabs.Tab value="bookmarks" h="$6">
                 <SizableText>Bookmarks</SizableText>
               </Tabs.Tab>
-              <Tabs.Tab value="highlights">
+              <Tabs.Tab value="highlights" h="$6" bbrr="$0">
                 <SizableText>Highlights</SizableText>
               </Tabs.Tab>
             </Tabs.List>
@@ -295,7 +300,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
       {mode === "audio" ? (
         <Button
           size="$4"
-          circular
+          px="$1"
           chromeless
           onPress={() => {
             router.replace({ pathname: "/book/[id]", params: { id: book.id } })
@@ -306,13 +311,13 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
       ) : (
         <Button
           size="$4"
-          circular
+          px="$1"
           chromeless
           onPress={() => {
             router.push({ pathname: "/player" })
           }}
         >
-          <CirclePlay />
+          <Headphones />
         </Button>
       )}
     </XStack>

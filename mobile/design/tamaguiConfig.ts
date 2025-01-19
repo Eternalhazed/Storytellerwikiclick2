@@ -803,10 +803,20 @@ export function objectKeys<O extends Record<string, unknown>>(obj: O) {
 
 const youngSerif = createFont({
   family: "YoungSerif",
-  size: {},
+  size: size,
   face: {
     500: {
       normal: "YoungSerif",
+    },
+  },
+})
+
+const bookerly = createFont({
+  family: "Bookerly",
+  size: size,
+  face: {
+    500: {
+      normal: "Bookerly",
     },
   },
 })
@@ -815,6 +825,7 @@ export const tamaguiConfig = createTamagui({
   ...defaultConfig,
   fonts: {
     heading: youngSerif,
+    book: bookerly,
   },
   tokens,
   themes,

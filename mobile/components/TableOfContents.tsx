@@ -1,6 +1,5 @@
-import { View, Pressable } from "react-native"
+import { View as RNView } from "react-native"
 import { ScrollView } from "react-native-gesture-handler"
-import { UIText } from "./UIText"
 import { locateLink } from "../modules/readium"
 import { useRef } from "react"
 import { useAppSelector, useAppDispatch } from "../store/appState"
@@ -10,12 +9,12 @@ import {
 } from "../store/selectors/bookshelfSelectors"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
 import { isSameChapter } from "../links"
-import { activeBackgroundColor } from "../design"
-import { Popover } from "tamagui"
+import { Popover, usePopoverContext, View, SizableText, Button } from "tamagui"
 
 export function TableOfContents() {
+  const popover = usePopoverContext()
   const ref = useRef<null | ScrollView>(null)
-  const currentItemRef = useRef<null | View>(null)
+  const currentItemRef = useRef<null | RNView>(null)
 
   const book = useAppSelector(getCurrentlyPlayingBook)
   const timestampedLocator = useAppSelector(
@@ -37,7 +36,7 @@ export function TableOfContents() {
         currentItemRef.current?.measureLayout(ref.current, (_x, y) => {
           ref.current?.scrollTo({
             y: y - 40,
-            animated: true,
+            animated: false,
           })
         })
       }}
@@ -49,12 +48,13 @@ export function TableOfContents() {
           {...(isSameChapter(item.href, locator?.href ?? "") && {
             ref: currentItemRef,
           })}
-          style={{ paddingHorizontal: 8 }}
+          px="$2"
         >
-          <Pressable
+          <Button
             onPress={async () => {
               const locator = await locateLink(book.id, item)
 
+              popover.onOpenChange(false, "press")
               dispatch(
                 bookshelfSlice.actions.navItemTapped({
                   bookId: book.id,
@@ -62,45 +62,45 @@ export function TableOfContents() {
                 }),
               )
             }}
-            style={{
-              borderBottomWidth: 1,
-              borderBottomColor: "#CCC",
-              paddingVertical: 16,
-              paddingHorizontal: 16,
-              ...(isSameChapter(item.href, locator?.href ?? "") && {
-                backgroundColor: activeBackgroundColor,
-              }),
-            }}
+            chromeless
+            br="$0"
+            bbw={1}
+            bbc="$borderColor"
+            justifyContent="flex-start"
+            h="$7"
+            bg={
+              isSameChapter(item.href, locator?.href ?? "")
+                ? "$background"
+                : undefined
+            }
+            noTextWrap
           >
-            <UIText
-              style={{
-                fontSize: 14,
-                fontWeight: "bold",
-              }}
-            >
+            <SizableText size="$3.5" numberOfLines={2}>
               {item.title}
-            </UIText>
-          </Pressable>
+            </SizableText>
+          </Button>
           {item.children?.map((child) => (
-            <Pressable
-              collapsable={false}
+            <Button
               key={child.href}
               {...(isSameChapter(child.href, locator?.href ?? "") && {
                 ref: currentItemRef,
               })}
-              style={{
-                borderBottomWidth: 1,
-                borderBottomColor: "#CCC",
-                paddingVertical: 16,
-                paddingHorizontal: 16,
-                paddingLeft: 24,
-                ...(isSameChapter(child.href, locator?.href ?? "") && {
-                  backgroundColor: activeBackgroundColor,
-                }),
-              }}
+              chromeless
+              br="$0"
+              bbw={1}
+              bbc="$borderColor"
+              justifyContent="flex-start"
+              h="$7"
+              pl="$8"
+              bg={
+                isSameChapter(child.href, locator?.href ?? "")
+                  ? "$background"
+                  : undefined
+              }
               onPress={async () => {
                 const locator = await locateLink(book.id, child)
 
+                popover.onOpenChange(false, "press")
                 dispatch(
                   bookshelfSlice.actions.navItemTapped({
                     bookId: book.id,
@@ -108,15 +108,12 @@ export function TableOfContents() {
                   }),
                 )
               }}
+              noTextWrap
             >
-              <UIText
-                style={{
-                  fontSize: 14,
-                }}
-              >
+              <SizableText size="$3" numberOfLines={2}>
                 {child.title}
-              </UIText>
-            </Pressable>
+              </SizableText>
+            </Button>
           ))}
         </View>
       ))}

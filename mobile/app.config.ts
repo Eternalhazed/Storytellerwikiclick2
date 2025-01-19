@@ -54,11 +54,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           image: "./assets/Storyteller_Logo.png",
           resizeMode: "contain",
-          imageWidth: 200,
+          imageWidth: 300,
           backgroundColor: "#ffffff",
           dark: {
             image: "./assets/Storyteller_Logo.png",
-            imageWidth: 200,
+            imageWidth: 300,
             backgroundColor: "#000000",
             resizeMode: "contain",
           },
