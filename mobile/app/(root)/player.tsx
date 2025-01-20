@@ -198,6 +198,7 @@ export default function PlayerScreen() {
             <Slider.Thumb
               index={0}
               size="$2"
+              hitSlop={20}
               borderColor="$brand6"
               backgroundColor="$brandColor"
               circular

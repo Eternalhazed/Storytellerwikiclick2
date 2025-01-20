@@ -80,12 +80,18 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
               dismissOnOverlayPress={false}
             >
               <Popover.Sheet.Overlay
+                unstyled
                 animation="lazy"
                 enterStyle={{ opacity: 0 }}
                 exitStyle={{ opacity: 0 }}
               />
-              <Popover.Sheet.Handle />
-              <Popover.Sheet.Frame padding="$4">
+              <Popover.Sheet.Handle backgroundColor="$color9" />
+              <Popover.Sheet.Frame
+                padding="$4"
+                elevation={3}
+                borderColor="$borderColor"
+                borderWidth={1}
+              >
                 <Adapt.Contents />
               </Popover.Sheet.Frame>
             </Popover.Sheet>
@@ -119,8 +125,12 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
 
       <Popover>
         <Popover.Trigger asChild>
-          <Button size="$4" px="$1" chromeless>
-            <SpedometerIcon />
+          <Button w="$5" px="$1" chromeless noTextWrap>
+            {currentSpeed === 1 ? (
+              <SpedometerIcon />
+            ) : (
+              <SizableText size="$3">{currentSpeed}x</SizableText>
+            )}
           </Button>
         </Popover.Trigger>
         <Popover.Content
@@ -128,6 +138,8 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
           padding="$2"
           width={dimensions.width - 100}
           elevation={3}
+          borderColor="$borderColor"
+          borderWidth={1}
           animation={[
             "quick",
             {
@@ -271,7 +283,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
             defaultValue="contents"
             orientation="horizontal"
             flexDirection="column"
-            height={dimensions.height - 280}
+            height={dimensions.height - 300}
           >
             <Tabs.List bbw={1} bbc="$gray8" bblr="$0" bbrr="$0">
               <Tabs.Tab value="contents" h="$6" bblr="$0">

@@ -261,7 +261,7 @@ const getTemplates = () => {
     const bgIndex = 5
     const lighten = isLight ? -1 : 1
     const darken = -lighten
-    const borderColor = bgIndex + 3
+    const borderColor = bgIndex + 5
 
     // templates use the palette and specify index
     // negative goes backwards from end so -1 is the last item

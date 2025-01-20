@@ -870,7 +870,7 @@ export function* manualTrackSeekSaga() {
   yield takeLeadingWithQueue(playerPositionSeeked, function* (action) {
     const { progress } = action.payload
     yield call(TrackPlayer.seekTo, progress)
-    yield put(playerPositionUpdated)
+    yield put(playerPositionUpdated())
   })
 }
 

@@ -1,9 +1,8 @@
-import { StyleSheet, View, ViewProps } from "react-native"
-import Slider from "@react-native-community/slider"
+import { StyleSheet, View } from "react-native"
 import { appColor } from "../design"
+import { Slider } from "tamagui"
 
 type Props = {
-  style?: ViewProps["style"]
   start?: number
   stop?: number
   progress: number
@@ -11,7 +10,6 @@ type Props = {
 }
 
 export function ProgressBar({
-  style,
   start = 0,
   stop = 100,
   progress,
@@ -21,22 +19,30 @@ export function ProgressBar({
     return (
       <Slider
         style={{ height: 3 }}
-        minimumValue={start}
-        maximumValue={stop}
-        value={progress}
-        minimumTrackTintColor={appColor}
-        maximumTrackTintColor="#EAEAEA"
-        thumbTintColor={appColor}
-        onValueChange={(value) => {
-          if (value === progress) return
-          onProgressChange(value)
+        min={start}
+        max={stop || 1}
+        value={[progress]}
+        onValueChange={([newProgress]) => {
+          onProgressChange(newProgress ?? 0)
         }}
-      />
+      >
+        <Slider.Track backgroundColor="$backgroundStrong">
+          <Slider.TrackActive backgroundColor="$brandColor" />
+        </Slider.Track>
+        <Slider.Thumb
+          index={0}
+          size="$2"
+          hitSlop={20}
+          borderColor="$brand6"
+          backgroundColor="$brandColor"
+          circular
+        />
+      </Slider>
     )
   }
 
   return (
-    <View style={[styles.outer, style]}>
+    <View style={[styles.outer]}>
       <View
         style={[styles.inner, { width: `${(progress / stop - start) * 100}%` }]}
       />

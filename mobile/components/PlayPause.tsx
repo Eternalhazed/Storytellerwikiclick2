@@ -1,8 +1,7 @@
-import { ActivityIndicator, Pressable, ViewProps } from "react-native"
-import { PauseIcon } from "../icons/PauseIcon"
-import { PlayIcon } from "../icons/PlayIcon"
+import { ActivityIndicator, ViewProps } from "react-native"
 import TrackPlayer from "react-native-track-player"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { Button, useTheme } from "tamagui"
+import { Pause, Play } from "@tamagui/lucide-icons"
 
 type Props = {
   style?: ViewProps["style"]
@@ -10,36 +9,34 @@ type Props = {
   isLoading?: boolean
 }
 
-export function PlayPause({ style, isPlaying, isLoading = false }: Props) {
-  const { foreground } = useColorTheme()
+export function PlayPause({ isPlaying, isLoading = false }: Props) {
+  const { color } = useTheme()
 
   if (isLoading) return <ActivityIndicator />
 
   return isPlaying ? (
-    <Pressable
-      hitSlop={20}
+    <Button
+      chromeless
+      px="$1"
       onPress={() => {
         TrackPlayer.pause()
       }}
     >
-      <PauseIcon style={style} />
-    </Pressable>
+      <Pause fill={color.val} stroke={color.val} />
+    </Button>
   ) : (
-    <Pressable
-      hitSlop={20}
+    <Button
+      chromeless
+      px="$1"
       onPress={() => {
         TrackPlayer.play()
       }}
     >
-      <PlayIcon
-        fill={foreground}
-        style={[
-          {
-            backgroundColor: "transparent",
-          },
-          style,
-        ]}
+      <Play
+        backgroundColor="$colorTransparent"
+        fill={color.val}
+        stroke={color.val}
       />
-    </Pressable>
+    </Button>
   )
 }

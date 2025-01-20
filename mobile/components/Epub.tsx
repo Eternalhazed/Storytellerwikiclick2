@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Platform, Pressable, StyleSheet, View } from "react-native"
+import { Platform, Pressable, StyleSheet } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Link, Tabs } from "expo-router"
@@ -14,8 +14,6 @@ import {
   EPUBViewRef,
   ReadiumLocator,
 } from "../modules/readium/src/Readium.types"
-import { ChevronLeftIcon } from "../icons/ChevronLeftIcon"
-import { UIText } from "./UIText"
 import { PlayPause } from "./PlayPause"
 import { MiniPlayer } from "./MiniPlayer"
 import { useAudioBook } from "../hooks/useAudioBook"
@@ -24,6 +22,8 @@ import { useAppDispatch, useAppSelector } from "../store/appState"
 import { SelectionMenu } from "./SelectionMenu"
 import { useColorTheme } from "../hooks/useColorTheme"
 import { getFilledBookPreferences } from "../store/selectors/preferencesSelectors"
+import { Button, SizableText, View, XStack } from "tamagui"
+import { ChevronLeft } from "@tamagui/lucide-icons"
 
 type Props = {
   book: BookshelfBook
@@ -65,16 +65,7 @@ export function Epub({ book, locator }: Props) {
   } = useAudioBook()
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: background },
-        {
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-        },
-      ]}
-    >
+    <View flex={1} paddingTop={insets.top} paddingBottom={insets.bottom}>
       <Tabs.Screen options={{ tabBarStyle: { display: "none" } }} />
       {selection && (
         <SelectionMenu
@@ -90,16 +81,17 @@ export function Epub({ book, locator }: Props) {
         />
       )}
       <View
-        style={[
-          styles.epubWrapper,
-          {
-            top: insets.top + 12,
-          },
-        ]}
+        position="absolute"
+        bottom={80}
+        left={0}
+        right={0}
+        zIndex={1}
+        paddingVertical={Platform.OS === "android" ? 36 : undefined}
+        top={insets.top + 12}
       >
         <EPUBView
           ref={epubViewRef}
-          style={styles.epub}
+          style={{ flex: 1 }}
           bookId={book.id}
           locator={locator}
           highlights={book.highlights}
@@ -171,31 +163,30 @@ export function Epub({ book, locator }: Props) {
         />
       </View>
       {showInterface && (
-        <View style={[styles.backButton, { top: insets.top }]}>
-          <Link href="/" asChild>
-            <Pressable hitSlop={20}>
-              <ChevronLeftIcon />
-            </Pressable>
-          </Link>
-        </View>
-      )}
-      {showInterface && (
-        <View
-          style={[
-            styles.toolbarWrapper,
-            {
-              top: insets.top + 6,
-            },
-          ]}
+        <XStack
+          top={insets.top + 6}
+          position="absolute"
+          left={12}
+          right={12}
+          zi={3}
+          alignItems="center"
+          justifyContent="space-between"
         >
+          <Button chromeless asChild>
+            <Link href="/" asChild>
+              <Pressable hitSlop={20}>
+                <ChevronLeft />
+              </Pressable>
+            </Link>
+          </Button>
           <Toolbar mode="text" activeBookmarks={activeBookmarks} />
-        </View>
+        </XStack>
       )}
       {!showInterface ? (
         <View style={styles.playerStatus}>
-          <UIText>
+          <SizableText size="$3.5">
             {percentComplete}% - {remainingTime} left
-          </UIText>
+          </SizableText>
           <PlayPause isPlaying={isPlaying} isLoading={isLoading} />
         </View>
       ) : (
