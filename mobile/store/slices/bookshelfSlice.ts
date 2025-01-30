@@ -35,6 +35,7 @@ export type BookshelfBook = {
   manifest: ReadiumManifest
   bookmarks: ReadiumLocator[]
   highlights: Highlight[]
+  positions: ReadiumLocator[]
 }
 
 export type BookshelfState = {
@@ -64,7 +65,14 @@ export const playerPositionUpdated = createAction(
 export const playerPositionSeeked = createAction(
   "bookshelf/playerPositionSeeked",
   (payload: { progress: number }) => ({
-    payload: { progress: payload.progress },
+    payload,
+  }),
+)
+
+export const playerTotalPositionSeeked = createAction(
+  "bookshelf/playerTotalPositionSeeked",
+  (payload: { progress: number }) => ({
+    payload,
   }),
 )
 

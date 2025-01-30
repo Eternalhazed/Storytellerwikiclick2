@@ -2,10 +2,7 @@ import { Link, router } from "expo-router"
 import { useWindowDimensions } from "react-native"
 import { useAppDispatch, useAppSelector } from "../../store/appState"
 import { useEffect, useMemo, useState } from "react"
-import TrackPlayer, {
-  useTrackPlayerEvents,
-  Event,
-} from "react-native-track-player"
+import TrackPlayer from "react-native-track-player"
 import {
   ChevronDown,
   Pause,
@@ -40,8 +37,6 @@ import { JumpBackwardFifteenIcon } from "../../icons/JumpBackwardFifteenIcon"
 import { JumpForwardFifteenIcon } from "../../icons/JumpForwardFifteenIcon"
 import { playerPositionSeeked } from "../../store/slices/bookshelfSlice"
 
-const events = [Event.PlaybackState, Event.PlaybackActiveTrackChanged]
-
 export default function PlayerScreen() {
   const { color } = useTheme()
   const dimensions = useWindowDimensions()
@@ -59,57 +54,33 @@ export default function PlayerScreen() {
         : [],
     [book, locator],
   )
-  const [currentTrack, setCurrentTrack] = useState(1)
-  const [trackCount, setTrackCount] = useState(1)
-
   const dispatch = useAppDispatch()
 
-  const {
-    isLoading,
-    isPlaying,
-    progress,
-    startPosition,
-    endPosition,
-    remainingTime,
-  } = useAudioBook()
+  const { isLoading, isPlaying, remainingTime, track, total } = useAudioBook()
 
-  const [eagerProgress, setEagerProgress] = useState(progress)
+  const [eagerProgress, setEagerProgress] = useState(track.position)
 
   const progressTime = useMemo(() => {
-    const relativeProgress = eagerProgress - startPosition
+    const relativeProgress = eagerProgress - track.startPosition
     const minutes = Math.floor(relativeProgress / 60)
     const seconds = Math.floor(relativeProgress - minutes * 60)
       .toString()
       .padStart(2, "0")
     return `${minutes}:${seconds}`
-  }, [eagerProgress, startPosition])
+  }, [eagerProgress, track.startPosition])
 
   const remainingProgressTime = useMemo(() => {
-    const remainingProgress = endPosition - eagerProgress
+    const remainingProgress = track.endPosition - eagerProgress
     const minutes = Math.floor(remainingProgress / 60)
     const seconds = Math.floor(remainingProgress - minutes * 60)
       .toString()
       .padStart(2, "0")
     return `-${minutes}:${seconds}`
-  }, [endPosition, eagerProgress])
+  }, [track.endPosition, eagerProgress])
 
   useEffect(() => {
-    setEagerProgress(progress)
-  }, [progress])
-
-  useTrackPlayerEvents(events, async () => {
-    setCurrentTrack(((await TrackPlayer.getActiveTrackIndex()) ?? 0) + 1)
-    setTrackCount((await TrackPlayer.getQueue()).length)
-  })
-
-  useEffect(() => {
-    async function updateStats() {
-      setCurrentTrack(((await TrackPlayer.getActiveTrackIndex()) ?? 0) + 1)
-      setTrackCount((await TrackPlayer.getQueue()).length)
-    }
-
-    updateStats()
-  }, [])
+    setEagerProgress(track.position)
+  }, [track.position])
 
   const isPresented = router.canGoBack()
 
@@ -172,19 +143,19 @@ export default function PlayerScreen() {
             {title}
           </SizableText>
           <SizableText size="$3.5" mb="$3">
-            Track {currentTrack} of {trackCount}
+            Track {track.index} of {total.trackCount}
           </SizableText>
           {/* TODO: Use local state and a use effect to make this more responsive */}
           <Slider
             value={[eagerProgress]}
-            min={startPosition}
+            min={track.startPosition}
             // For some reason, when the player is being opened,
             // the result of useProgress gets zeroed out for one
             // render. This results in setting min and max both
             // to zero, which positions the thumb at NaN, which
             // crashes the app. So we set the max to 1 if it was
             // 0, to prevent this edge case.
-            max={endPosition || 1}
+            max={track.endPosition || 1}
             step={1}
             alignSelf="stretch"
             onValueChange={([newProgress]) => {

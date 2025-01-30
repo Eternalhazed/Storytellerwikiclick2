@@ -6,6 +6,7 @@ type Props = {
   start?: number
   stop?: number
   progress: number
+  disabled?: boolean
   onProgressChange?: (newProgress: number) => void
 }
 
@@ -13,6 +14,7 @@ export function ProgressBar({
   start = 0,
   stop = 100,
   progress,
+  disabled = false,
   onProgressChange,
 }: Props) {
   if (onProgressChange) {
@@ -22,6 +24,8 @@ export function ProgressBar({
         min={start}
         max={stop || 1}
         value={[progress]}
+        step={1}
+        disabled={disabled}
         onValueChange={([newProgress]) => {
           onProgressChange(newProgress ?? 0)
         }}
@@ -29,14 +33,16 @@ export function ProgressBar({
         <Slider.Track backgroundColor="$backgroundStrong">
           <Slider.TrackActive backgroundColor="$brandColor" />
         </Slider.Track>
-        <Slider.Thumb
-          index={0}
-          size="$2"
-          hitSlop={20}
-          borderColor="$brand6"
-          backgroundColor="$brandColor"
-          circular
-        />
+        {!disabled && (
+          <Slider.Thumb
+            index={0}
+            size="$2"
+            hitSlop={20}
+            borderColor="$brand6"
+            backgroundColor="$brandColor"
+            circular
+          />
+        )}
       </Slider>
     )
   }

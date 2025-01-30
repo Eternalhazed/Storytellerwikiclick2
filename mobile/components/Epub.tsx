@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Platform, Pressable, StyleSheet } from "react-native"
+import { Platform, Pressable } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Link, Tabs } from "expo-router"
@@ -14,7 +14,6 @@ import {
   EPUBViewRef,
   ReadiumLocator,
 } from "../modules/readium/src/Readium.types"
-import { PlayPause } from "./PlayPause"
 import { MiniPlayer } from "./MiniPlayer"
 import { useAudioBook } from "../hooks/useAudioBook"
 import { Toolbar } from "./Toolbar"
@@ -22,7 +21,7 @@ import { useAppDispatch, useAppSelector } from "../store/appState"
 import { SelectionMenu } from "./SelectionMenu"
 import { useColorTheme } from "../hooks/useColorTheme"
 import { getFilledBookPreferences } from "../store/selectors/preferencesSelectors"
-import { Button, SizableText, View, XStack } from "tamagui"
+import { Button, View, XStack } from "tamagui"
 import { ChevronLeft } from "@tamagui/lucide-icons"
 
 type Props = {
@@ -54,15 +53,7 @@ export function Epub({ book, locator }: Props) {
   const [showInterface, setShowInterface] = useState(true)
   const epubViewRef = useRef<EPUBViewRef | null>(null)
 
-  const {
-    percentComplete,
-    progress,
-    remainingTime,
-    isPlaying,
-    isLoading,
-    startPosition,
-    endPosition,
-  } = useAudioBook()
+  const { isPlaying } = useAudioBook()
 
   return (
     <View flex={1} paddingTop={insets.top} paddingBottom={insets.bottom}>
@@ -182,72 +173,7 @@ export function Epub({ book, locator }: Props) {
           <Toolbar mode="text" activeBookmarks={activeBookmarks} />
         </XStack>
       )}
-      {!showInterface ? (
-        <View style={styles.playerStatus}>
-          <SizableText size="$3.5">
-            {percentComplete}% - {remainingTime} left
-          </SizableText>
-          <PlayPause isPlaying={isPlaying} isLoading={isLoading} />
-        </View>
-      ) : (
-        <MiniPlayer
-          book={book}
-          progress={progress}
-          startPosition={startPosition}
-          isPlaying={isPlaying}
-          isLoading={isLoading}
-          endPosition={endPosition}
-          style={styles.miniPlayer}
-        />
-      )}
+      {showInterface && <MiniPlayer book={book} />}
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
-  epubWrapper: {
-    position: "absolute",
-    bottom: 80,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-    ...(Platform.OS === "android" && { paddingVertical: 36 }),
-  },
-  epub: { flex: 1 },
-  backButton: {
-    position: "absolute",
-    flexDirection: "row",
-    alignItems: "center",
-    zIndex: 3,
-  },
-  toolbarWrapper: {
-    flexDirection: "row",
-    position: "absolute",
-    right: 12,
-    zIndex: 3,
-    alignItems: "flex-end",
-  },
-  playerStatus: {
-    position: "absolute",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 24,
-    bottom: 27,
-    left: 12,
-    right: 16,
-    zIndex: 3,
-  },
-  miniPlayer: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 32,
-    zIndex: 3,
-  },
-})

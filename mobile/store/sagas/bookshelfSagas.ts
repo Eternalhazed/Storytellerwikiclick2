@@ -36,6 +36,7 @@ import {
   playerPaused,
   localBookImported,
   playerPositionSeeked,
+  playerTotalPositionSeeked,
 } from "../slices/bookshelfSlice"
 import { librarySlice } from "../slices/librarySlice"
 import * as FileSystem from "expo-file-system"
@@ -78,6 +79,7 @@ import {
   extractArchive,
   getClip,
   getFragment,
+  getPositions,
   getResource,
   locateLink,
   openPublication,
@@ -365,6 +367,10 @@ export function* downloadBookSaga() {
         extractedPath,
       )) as Awaited<ReturnType<typeof openPublication>>
 
+      const positions = (yield call(getPositions, bookId)) as Awaited<
+        ReturnType<typeof getPositions>
+      >
+
       if (action.type === localBookImported.type) {
         const coverLink = manifest.resources?.find((resource) =>
           resource.rel?.includes("cover"),
@@ -464,6 +470,7 @@ export function* downloadBookSaga() {
             title: parseLocalizedString(manifest.metadata.title),
             authors: readiumToStorytellerAuthors(manifest.metadata.author),
             manifest,
+            positions,
             highlights: [],
             bookmarks: [],
           },
@@ -554,6 +561,10 @@ export function* hydrateBookshelf() {
       extractedPath,
     )) as Awaited<ReturnType<typeof openPublication>>
 
+    const positions = (yield call(getPositions, bookId)) as Awaited<
+      ReturnType<typeof getPositions>
+    >
+
     const oldCoverInfo = (yield call(
       FileSystem.getInfoAsync,
       getOldLocalBookCoverUrl(bookId),
@@ -591,6 +602,7 @@ export function* hydrateBookshelf() {
       title: parseLocalizedString(manifest.metadata.title),
       authors: readiumToStorytellerAuthors(manifest.metadata.author),
       manifest,
+      positions,
       highlights,
       bookmarks,
     })
@@ -867,11 +879,41 @@ export function* seekToLocatorSaga() {
 }
 
 export function* manualTrackSeekSaga() {
-  yield takeLeadingWithQueue(playerPositionSeeked, function* (action) {
-    const { progress } = action.payload
-    yield call(TrackPlayer.seekTo, progress)
-    yield put(playerPositionUpdated())
-  })
+  yield takeLeadingWithQueue(
+    [playerPositionSeeked, playerTotalPositionSeeked],
+    function* (action) {
+      const {
+        type,
+        payload: { progress },
+      } = action
+
+      // NOTE: This is currently unused, because the
+      // slider UI is too unwieldy
+      if (type === playerTotalPositionSeeked.type) {
+        let skipTo = progress
+        let nextTrack = null
+
+        const tracks = (yield call(TrackPlayer.getQueue)) as Awaited<
+          ReturnType<typeof TrackPlayer.getQueue>
+        >
+        let acc = 0
+        for (let i = 0; i < tracks.length; i++) {
+          const track = tracks[i]!
+          acc += track.duration ?? 0
+          if (acc > progress) break
+          nextTrack = i
+          skipTo -= track.duration ?? 0
+        }
+        if (nextTrack === null) return
+
+        yield call(TrackPlayer.skip, nextTrack, skipTo)
+      } else {
+        yield call(TrackPlayer.seekTo, progress)
+      }
+
+      yield put(playerPositionUpdated())
+    },
+  )
 }
 
 export function* relocateToTrackPositionSaga() {
