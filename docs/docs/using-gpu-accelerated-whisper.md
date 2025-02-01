@@ -132,7 +132,7 @@ the following,
 - "Base URL" to the URL of the whisper.cpp server, for example
   `http://192.168.1.19:8080`
 
-![Transcription settings screenshot](/static/img/gpu-accelerated-whisper-transcription-settings.png)
+![Transcription settings screenshot](/img/gpu-accelerated-whisper-transcription-settings.png)
 
 The most important part is the "Base URL" as this is what Storyteller will use
 to connect to the whisper.cpp server. The default port is `8080` but you can
