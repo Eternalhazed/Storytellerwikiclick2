@@ -81,9 +81,10 @@ export function HighlightNoteEditor({
       modal
       open={open}
       onOpenChange={onOpenChange}
-      snapPoints={[50]}
+      snapPoints={[40]}
       dismissOnSnapToBottom
-      animation="medium"
+      animation="quickest"
+      moveOnKeyboardChange={true}
     >
       <Sheet.Overlay
         animation="lazy"
@@ -91,7 +92,7 @@ export function HighlightNoteEditor({
         enterStyle={{ opacity: 0 }}
         exitStyle={{ opacity: 0 }}
       />
-      <Sheet.Handle />
+      {/*<Sheet.Handle />*/}
       <Sheet.Frame padding="$4" f={1} marginBottom="$6">
         <YStack f={1} gap="$3">
           <XStack>

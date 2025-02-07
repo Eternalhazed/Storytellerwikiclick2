@@ -118,7 +118,7 @@ export function SelectionMenu({
       {existingHighlight && (
         <>
           <TouchableOpacity style={styles.backdrop} onPress={onClose} />
-          <HighlightNoteEditor
+          {isNoteEditorOpen && <HighlightNoteEditor
             bookId={bookId}
             highlightId={existingHighlight.id}
             initialNote={existingHighlight.note}
@@ -127,7 +127,7 @@ export function SelectionMenu({
               setIsNoteEditorOpen(false)
               onClose();
             }}
-          />
+          />}
         </>
       )}
     </>
