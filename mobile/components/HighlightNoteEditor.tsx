@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Button, Input, Label, XStack, YStack, Sheet } from "tamagui"
+import { Button, Label, XStack, YStack, Sheet, TextArea } from "tamagui"
 import { useAppDispatch } from "../store/appState"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
 import type { UUID } from "crypto"
@@ -58,34 +58,34 @@ export function HighlightNoteEditor({
         exitStyle={{ opacity: 0 }}
       />
       <Sheet.Handle />
-      <Sheet.Frame padding="$4">
-        <YStack gap="$3">
-          <Label size="$3" htmlFor="highlight-note">
-            Note
-          </Label>
-          <Input
+      <Sheet.Frame padding="$4" f={1} marginBottom="$6">
+        <YStack f={1} gap="$3">
+          <XStack>
+            <Label size="$3" f={1} htmlFor="highlight-note">
+              Note
+            </Label>
+            <XStack gap="$2" justifyContent="flex-end">
+              <Button
+                size="$3"
+                variant="outlined"
+                onPress={() => onOpenChange(false)}
+                backgroundColor="$background"
+              >
+                Cancel
+              </Button>
+              <Button size="$3" onPress={handleSave}>
+                Save
+              </Button>
+            </XStack>
+          </XStack>
+          <TextArea
+            f={1}
             id="highlight-note"
-            size="$3"
             placeholder="Add a note..."
             value={note}
             onChangeText={setNote}
-            multiline
             autoFocus
           />
-
-          <XStack gap="$2" justifyContent="flex-end">
-            <Button
-              size="$3"
-              variant="outlined"
-              onPress={() => onOpenChange(false)}
-              backgroundColor="$background"
-            >
-              Cancel
-            </Button>
-            <Button size="$3" onPress={handleSave}>
-              Save
-            </Button>
-          </XStack>
         </YStack>
       </Sheet.Frame>
     </Sheet>
