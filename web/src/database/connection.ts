@@ -8,6 +8,9 @@ let db: Database | undefined
 
 const DATABASE_URL = join(DATA_DIR, "storyteller.db")
 
+// FIXME: I had to manually compile a dylib with
+//  gcc -dynamiclib -o uuid.c.dylib uuid.c -current_version 1.0 -compatibility_version 1.0 to get this to work on macOS
+//  I am not sure what the current_version and compatibility_version mean (AI generated and worked)
 const UUID_EXT_PATH = join(cwd(), "sqlite", "uuid.c")
 
 export function getDatabase(): Database {
