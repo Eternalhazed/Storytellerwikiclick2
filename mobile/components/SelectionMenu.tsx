@@ -123,7 +123,10 @@ export function SelectionMenu({
             highlightId={existingHighlight.id}
             initialNote={existingHighlight.note}
             open={isNoteEditorOpen}
-            onOpenChange={setIsNoteEditorOpen}
+            onOpenChange={() => {
+              setIsNoteEditorOpen(false)
+              onClose();
+            }}
           />
         </>
       )}
