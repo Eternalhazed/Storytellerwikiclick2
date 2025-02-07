@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button, Label, XStack, YStack, Sheet, TextArea } from "tamagui"
 import { useAppDispatch } from "../store/appState"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
 import type { UUID } from "crypto"
+import debounce from "lodash.debounce"
 
 type Props = {
   bookId: number
@@ -31,7 +32,6 @@ export function HighlightNoteEditor({
                                       bookId,
                                       highlightId,
                                       initialNote = "",
-                                      open,
                                       onOpenChange
                                     }: Props) {
   const [note, setNote] = useState(initialNote)
@@ -43,28 +43,28 @@ export function HighlightNoteEditor({
     dispatch(saveNoteAction(bookId, highlightId, note))
   }, [bookId, highlightId, dispatch])
 
-  // Save note with debounce
-  useEffect(() => {
-    if (note === lastSavedNote) return
-
-    const timer = setTimeout(() => {
-      saveNote(note)
-      setLastSavedNote(note)
-      setSavedShown(true)
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [note, lastSavedNote, saveNote])
+  const onNameChange = useMemo(
+    () =>
+      debounce((note: string) => {
+        saveNote(note)
+        setLastSavedNote(note)
+      }, 500),
+    [saveNote]
+  )
 
   useEffect(() => {
-    if (!savedShown) return
-
-    const timer = setTimeout(() => {
+    setSavedShown(true)
+    const timeout = setTimeout(() => {
       setSavedShown(false)
     }, 500)
 
-    return () => clearTimeout(timer)
-  }, [savedShown, lastSavedNote])
+    return () => clearTimeout(timeout)
+  }, [lastSavedNote])
+
+  // Save note with debounce
+  useEffect(() => {
+    onNameChange(note)
+  }, [onNameChange, note])
 
   const handleDiscard = useCallback(() => {
     dispatch(saveNoteAction(bookId, highlightId, initialNote))
@@ -79,7 +79,7 @@ export function HighlightNoteEditor({
   return (
     <Sheet
       modal
-      open={open}
+      open={true}
       onOpenChange={onOpenChange}
       snapPoints={[40]}
       dismissOnSnapToBottom
