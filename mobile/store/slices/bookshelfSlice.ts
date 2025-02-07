@@ -26,6 +26,7 @@ export type Highlight = {
   id: UUID
   color: HighlightTint
   locator: ReadiumLocator
+  note?: string
 }
 
 export type BookshelfBook = {
@@ -274,6 +275,41 @@ export const bookshelfSlice = createSlice({
       if (!highlight) return
 
       highlight.color = color
+    },
+    highlightNoteAdded(
+      state,
+      action: PayloadAction<{
+        bookId: number
+        highlightId: UUID
+        note: string
+      }>,
+    ) {
+      const { bookId, highlightId, note } = action.payload
+
+      const book = state.entities[bookId]
+      if (!book) return
+
+      const highlight = book.highlights.find((h) => h.id === highlightId)
+      if (!highlight) return
+
+      highlight.note = note
+    },
+    highlightNoteRemoved(
+      state,
+      action: PayloadAction<{
+        bookId: number
+        highlightId: UUID
+      }>,
+    ) {
+      const { bookId, highlightId } = action.payload
+
+      const book = state.entities[bookId]
+      if (!book) return
+
+      const highlight = book.highlights.find((h) => h.id === highlightId)
+      if (!highlight) return
+
+      delete highlight.note
     },
   },
 })
