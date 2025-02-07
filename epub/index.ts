@@ -6,7 +6,7 @@ import {
   ZipWriter,
 } from "@zip.js/zip.js"
 import { XMLBuilder, XMLParser } from "fast-xml-parser"
-import memoize, { memoizeClear } from "memoize"
+import memoize, { clear as memoizeClear } from "mem"
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path/posix"
 import { streamFile } from "@smoores/fs"

@@ -40,11 +40,11 @@
   },
   "dependencies": {
     "@smoores/fs": "workspace:^",
-    "@zip.js/zip.js": "^2.7.53",
+    "@zip.js/zip.js": "^2.0.0",
     "async-mutex": "^0.5.0",
-    "fast-xml-parser": "^4.5.0",
-    "memoize": "^10.0.0",
-    "mime-types": "^2.1.35"
+    "fast-xml-parser": "^4.0.0",
+    "mem": "^8.0.0",
+    "mime-types": "^2.0.0"
   },
   "publishConfig": {
     "access": "public"
