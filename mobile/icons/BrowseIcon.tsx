@@ -1,12 +1,12 @@
 import { ClipPath, Defs, G, Path, Rect, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 type Props = {
   focused: boolean
 }
 
 export function BrowseIcon({ focused }: Props) {
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
 
   return focused ? (
     <Svg width="26" height="26" viewBox="0 0 26 26" fill="none">

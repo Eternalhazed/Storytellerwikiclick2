@@ -37,6 +37,9 @@ import {
   localBookImported,
   playerPositionSeeked,
   playerTotalPositionSeeked,
+  playerTrackChanged,
+  nextTrackPressed,
+  prevTrackPressed,
 } from "../slices/bookshelfSlice"
 import { librarySlice } from "../slices/librarySlice"
 import * as FileSystem from "expo-file-system"
@@ -880,16 +883,22 @@ export function* seekToLocatorSaga() {
 
 export function* manualTrackSeekSaga() {
   yield takeLeadingWithQueue(
-    [playerPositionSeeked, playerTotalPositionSeeked],
+    [
+      playerPositionSeeked,
+      playerTotalPositionSeeked,
+      playerTrackChanged,
+      nextTrackPressed,
+      prevTrackPressed,
+    ],
     function* (action) {
-      const {
-        type,
-        payload: { progress },
-      } = action
+      const { type } = action
 
       // NOTE: This is currently unused, because the
       // slider UI is too unwieldy
       if (type === playerTotalPositionSeeked.type) {
+        const {
+          payload: { progress },
+        } = action
         let skipTo = progress
         let nextTrack = null
 
@@ -907,8 +916,20 @@ export function* manualTrackSeekSaga() {
         if (nextTrack === null) return
 
         yield call(TrackPlayer.skip, nextTrack, skipTo)
-      } else {
+      } else if (type === playerPositionSeeked.type) {
+        const {
+          payload: { progress },
+        } = action
         yield call(TrackPlayer.seekTo, progress)
+      } else if (type === playerTrackChanged.type) {
+        const {
+          payload: { index },
+        } = action
+        yield call(TrackPlayer.skip, index)
+      } else if (type === nextTrackPressed.type) {
+        yield call(TrackPlayer.skipToNext)
+      } else if (type === prevTrackPressed.type) {
+        yield call(TrackPlayer.skipToPrevious)
       }
 
       yield put(playerPositionUpdated())

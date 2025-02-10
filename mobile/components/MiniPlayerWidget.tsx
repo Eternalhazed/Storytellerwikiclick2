@@ -2,7 +2,7 @@ import { Image, Pressable, StyleSheet } from "react-native"
 import { useAudioBook } from "../hooks/useAudioBook"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { getCurrentlyPlayingBook } from "../store/selectors/bookshelfSelectors"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { Link } from "expo-router"
 import { useState, useEffect } from "react"
 import { getLocalAudioBookCoverUrl } from "../store/persistence/files"
@@ -12,7 +12,7 @@ import { ProgressBar } from "./ProgressBar"
 import { SizableText, View } from "tamagui"
 
 export function MiniPlayerWidget() {
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
 
   const book = useAppSelector(getCurrentlyPlayingBook)
   const { isPlaying, isLoading, progress, startPosition, endPosition } =

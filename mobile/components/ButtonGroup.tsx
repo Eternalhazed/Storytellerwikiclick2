@@ -2,6 +2,7 @@ import { ReactElement, createContext, useContext, useMemo } from "react"
 import { Pressable, PressableProps, StyleSheet, View } from "react-native"
 import { appColor } from "../design"
 import { ThemeOverrideProvider } from "./ThemeOverrideProvider"
+import { Button, ButtonProps } from "tamagui"
 
 type ButtonGroupContextValue = {
   onPress: (value: unknown) => void
@@ -42,21 +43,16 @@ export function ButtonGroup<Value>({
 export function ButtonGroupButton<Value>({
   value,
   ...props
-}: PressableProps & { value: Value }) {
+}: ButtonProps & { value: Value }) {
   const { onPress, currentValue } = useContext(ButtonGroupContext)
   return (
-    <ThemeOverrideProvider
-      foreground={currentValue === value ? "white" : undefined}
-    >
-      <Pressable
-        {...props}
-        onPress={() => onPress(value)}
-        style={{
-          ...(currentValue === value && styles.active),
-          ...styles.button,
-        }}
-      />
-    </ThemeOverrideProvider>
+    <Button
+      {...props}
+      size="$3.5"
+      onPress={() => onPress(value)}
+      backgroundColor={currentValue === value ? "$brandColor" : "transparent"}
+      color="$white1"
+    />
   )
 }
 

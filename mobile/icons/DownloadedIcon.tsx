@@ -1,9 +1,9 @@
 import { StyleProp, ViewStyle } from "react-native"
 import Svg, { G, Path } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function DownloadedIcon({ style }: { style?: StyleProp<ViewStyle> }) {
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
 
   return (
     <Svg style={style} width="28" height="28" viewBox="0 0 28 28" fill="none">

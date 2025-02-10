@@ -5,7 +5,7 @@ import { useState } from "react"
 import { UIText } from "./UIText"
 import { Bookmarks } from "./Bookmarks"
 import { Highlights } from "./Highlights"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 type Props = {
   topInset?: number | undefined
@@ -18,7 +18,7 @@ enum BookNavTab {
 }
 
 export function BookNavigation({ topInset }: Props) {
-  const { background, foreground } = useColorTheme()
+  const { background, foreground } = useDarkMode()
   const [selectedTab, setSelectedTab] = useState(BookNavTab.TABLE_OF_CONTENTS)
   const insets = useSafeAreaInsets()
 

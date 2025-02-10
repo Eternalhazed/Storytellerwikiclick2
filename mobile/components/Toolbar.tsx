@@ -31,12 +31,13 @@ import {
 import { ReadingSettings } from "./ReadingSettings"
 import { useWindowDimensions } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { getBookPlayerSpeed } from "../store/selectors/preferencesSelectors"
 import { preferencesSlice } from "../store/slices/preferencesSlice"
 import { TableOfContents } from "./TableOfContents"
 import { Bookmarks } from "./Bookmarks"
 import { Highlights } from "./Highlights"
+import { TrackList } from "./TrackList"
 
 type Props = {
   mode: "audio" | "text"
@@ -44,7 +45,7 @@ type Props = {
 }
 
 export function Toolbar({ mode, activeBookmarks }: Props) {
-  const { background } = useColorTheme()
+  const { background } = useDarkMode()
   const book = useAppSelector(getCurrentlyPlayingBook)
   const currentLocator = useAppSelector(
     (state) => book && getLocator(state, book.id),
@@ -297,7 +298,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
               </Tabs.Tab>
             </Tabs.List>
             <Tabs.Content value="contents">
-              <TableOfContents />
+              {mode === "text" ? <TableOfContents /> : <TrackList />}
             </Tabs.Content>
             <Tabs.Content value="bookmarks">
               <Bookmarks />

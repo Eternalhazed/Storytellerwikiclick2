@@ -1,8 +1,8 @@
 import { Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function CopyIcon() {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return (
     <Svg height="24px" viewBox="0 0 48 48" width="24px" fill={foreground}>

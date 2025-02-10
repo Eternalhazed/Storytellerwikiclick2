@@ -22,7 +22,7 @@ import defaultConfig from "@tamagui/config/v3"
 import { createFont, createTamagui } from "tamagui"
 
 const colorTokens = {
-  paperWhite: {
+  Day: {
     blue,
     gray,
     green,
@@ -32,7 +32,7 @@ const colorTokens = {
     red,
     yellow,
   },
-  nightBlack: {
+  Night: {
     blue: blueDark,
     gray: grayDark,
     green: greenDark,
@@ -50,25 +50,25 @@ const darkShadowColor = "rgba(0,0,0,0.2)"
 const darkShadowColorStrong = "rgba(0,0,0,0.3)"
 
 const darkColors = {
-  ...colorTokens.nightBlack.blue,
-  ...colorTokens.nightBlack.gray,
-  ...colorTokens.nightBlack.green,
-  ...colorTokens.nightBlack.orange,
-  ...colorTokens.nightBlack.pink,
-  ...colorTokens.nightBlack.purple,
-  ...colorTokens.nightBlack.red,
-  ...colorTokens.nightBlack.yellow,
+  ...colorTokens.Night.blue,
+  ...colorTokens.Night.gray,
+  ...colorTokens.Night.green,
+  ...colorTokens.Night.orange,
+  ...colorTokens.Night.pink,
+  ...colorTokens.Night.purple,
+  ...colorTokens.Night.red,
+  ...colorTokens.Night.yellow,
 }
 
 const lightColors = {
-  ...colorTokens.paperWhite.blue,
-  ...colorTokens.paperWhite.gray,
-  ...colorTokens.paperWhite.green,
-  ...colorTokens.paperWhite.orange,
-  ...colorTokens.paperWhite.pink,
-  ...colorTokens.paperWhite.purple,
-  ...colorTokens.paperWhite.red,
-  ...colorTokens.paperWhite.yellow,
+  ...colorTokens.Day.blue,
+  ...colorTokens.Day.gray,
+  ...colorTokens.Day.green,
+  ...colorTokens.Day.orange,
+  ...colorTokens.Day.pink,
+  ...colorTokens.Day.purple,
+  ...colorTokens.Day.red,
+  ...colorTokens.Day.yellow,
 }
 
 const color = {
@@ -154,12 +154,12 @@ export const defaultPalettes = (() => {
   }
 
   const brandColor = {
-    paperWhite: color.brand9,
-    nightBlack: color.brand9,
+    Day: color.brand9,
+    Night: color.brand9,
   }
 
   const lightPalette = [
-    brandColor.paperWhite,
+    brandColor.Day,
     color.white0,
     color.white025,
     color.white05,
@@ -180,11 +180,11 @@ export const defaultPalettes = (() => {
     color.black05,
     color.black025,
     color.black0,
-    brandColor.nightBlack,
+    brandColor.Night,
   ]
 
   const darkPalette = [
-    brandColor.nightBlack,
+    brandColor.Night,
     color.black0,
     color.black025,
     color.black05,
@@ -205,18 +205,18 @@ export const defaultPalettes = (() => {
     color.white05,
     color.white025,
     color.white0,
-    brandColor.paperWhite,
+    brandColor.Day,
   ]
 
-  const lightColorNames = objectKeys(colorTokens.paperWhite)
+  const lightColorNames = objectKeys(colorTokens.Day)
   const lightPalettes = objectFromEntries(
     lightColorNames.map(
       (key, index) =>
         [
-          `paperWhite_${key}`,
+          `Day_${key}`,
           getColorPalette(
-            colorTokens.paperWhite[key],
-            colorTokens.paperWhite[
+            colorTokens.Day[key],
+            colorTokens.Day[
               lightColorNames[(index + 1) % lightColorNames.length]!
             ],
           ),
@@ -224,15 +224,15 @@ export const defaultPalettes = (() => {
     ),
   )
 
-  const darkColorNames = objectKeys(colorTokens.nightBlack)
+  const darkColorNames = objectKeys(colorTokens.Night)
   const darkPalettes = objectFromEntries(
     darkColorNames.map(
       (key, index) =>
         [
-          `nightBlack_${key}`,
+          `Night_${key}`,
           getColorPalette(
-            colorTokens.nightBlack[key],
-            colorTokens.paperWhite[
+            colorTokens.Night[key],
+            colorTokens.Day[
               darkColorNames[(index + 1) % darkColorNames.length]!
             ],
           ),
@@ -246,15 +246,15 @@ export const defaultPalettes = (() => {
   }
 
   return {
-    paperWhite: lightPalette,
-    nightBlack: darkPalette,
+    Day: lightPalette,
+    Night: darkPalette,
     ...colorPalettes,
   }
 })()
 
 const getTemplates = () => {
-  const getBaseTemplates = (scheme: "nightBlack" | "paperWhite") => {
-    const isLight = scheme === "paperWhite"
+  const getBaseTemplates = (scheme: "Night" | "Day") => {
+    const isLight = scheme === "Day"
 
     // our palettes have 4 things padding each end until you get to bg/color:
     // [accentBg, transparent1, transparent2, transparent3, transparent4, background, ...]
@@ -414,17 +414,17 @@ const getTemplates = () => {
     }
   }
 
-  const lightTemplates = getBaseTemplates("paperWhite")
-  const darkTemplates = getBaseTemplates("nightBlack")
+  const lightTemplates = getBaseTemplates("Day")
+  const darkTemplates = getBaseTemplates("Night")
   const templates = {
     ...objectFromEntries(
       objectKeys(lightTemplates).map(
-        (name) => [`paperWhite_${name}`, lightTemplates[name]] as const,
+        (name) => [`Day_${name}`, lightTemplates[name]] as const,
       ),
     ),
     ...objectFromEntries(
       objectKeys(darkTemplates).map(
-        (name) => [`nightBlack_${name}`, darkTemplates[name]] as const,
+        (name) => [`Night_${name}`, darkTemplates[name]] as const,
       ),
     ),
   }
@@ -434,13 +434,13 @@ const getTemplates = () => {
 export const defaultTemplates = getTemplates()
 
 const shadows = {
-  paperWhite: {
+  Day: {
     shadowColor: lightShadowColorStrong,
     shadowColorHover: lightShadowColorStrong,
     shadowColorPress: lightShadowColor,
     shadowColorFocus: lightShadowColor,
   },
-  nightBlack: {
+  Night: {
     shadowColor: darkShadowColorStrong,
     shadowColorHover: darkShadowColorStrong,
     shadowColorPress: darkShadowColor,
@@ -449,25 +449,25 @@ const shadows = {
 }
 
 const nonInherited = {
-  paperWhite: {
+  Day: {
     ...lightColors,
-    ...shadows.paperWhite,
+    ...shadows.Day,
   },
-  nightBlack: {
+  Night: {
     ...darkColors,
-    ...shadows.nightBlack,
+    ...shadows.Night,
   },
 }
 
 const overlayThemeDefinitions = [
   {
-    parent: "paperWhite",
+    parent: "Day",
     theme: {
       background: "rgba(0,0,0,0.5)",
     },
   },
   {
-    parent: "nightBlack",
+    parent: "Night",
     theme: {
       background: "rgba(0,0,0,0.8)",
     },
@@ -596,15 +596,15 @@ const themeBuilder = createThemeBuilder()
   .addPalettes(defaultPalettes)
   .addTemplates(defaultTemplates)
   .addThemes({
-    paperWhite: {
+    Day: {
       template: "base",
-      palette: "paperWhite",
-      nonInheritedValues: nonInherited.paperWhite,
+      palette: "Day",
+      nonInheritedValues: nonInherited.Day,
     },
-    nightBlack: {
+    Night: {
       template: "base",
-      palette: "nightBlack",
-      nonInheritedValues: nonInherited.nightBlack,
+      palette: "Night",
+      nonInheritedValues: nonInherited.Night,
     },
   })
   .addChildThemes({
@@ -658,8 +658,8 @@ const themeBuilder = createThemeBuilder()
 const themesIn = themeBuilder.build()
 
 type ThemeKeys =
-  | keyof typeof defaultTemplates.paperWhite_base
-  | keyof typeof nonInherited.paperWhite
+  | keyof typeof defaultTemplates.Day_base
+  | keyof typeof nonInherited.Day
 
 export type Theme = Record<ThemeKeys, string>
 

@@ -19,7 +19,7 @@ import { useAudioBook } from "../hooks/useAudioBook"
 import { Toolbar } from "./Toolbar"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { SelectionMenu } from "./SelectionMenu"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { getFilledBookPreferences } from "../store/selectors/preferencesSelectors"
 import { Button, View, XStack } from "tamagui"
 import { ChevronLeft } from "@tamagui/lucide-icons"
@@ -33,7 +33,7 @@ export function Epub({ book, locator }: Props) {
   useKeepAwake()
 
   const hasLoadedRef = useRef(false)
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
   const [activeBookmarks, setActiveBookmarks] = useState<ReadiumLocator[]>([])
   const [activeHighlight, setActiveHighlight] = useState<Highlight | null>(null)
   const preferences = useAppSelector((state) =>

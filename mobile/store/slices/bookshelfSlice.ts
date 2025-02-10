@@ -83,6 +83,17 @@ export const localBookImported = createAction(
 
 export const playerPaused = createAction("bookshelf/playerPaused")
 
+export const playerTrackChanged = createAction(
+  "bookshelf/playerTrackChanged",
+  (payload: { index: number }) => ({
+    payload,
+  }),
+)
+
+export const nextTrackPressed = createAction("bookshelf/nextTrackPressed")
+
+export const prevTrackPressed = createAction("bookshelf/prevTrackPressed")
+
 function compareLocators(a: ReadiumLocator, b: ReadiumLocator) {
   if (a.locations?.totalProgression === undefined) {
     return -1

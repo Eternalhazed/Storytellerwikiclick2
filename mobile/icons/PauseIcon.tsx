@@ -1,13 +1,13 @@
 import { View, ViewProps } from "react-native"
 import { G, Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 type Props = {
   style?: ViewProps["style"]
 }
 
 export function PauseIcon({ style }: Props) {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return (
     <View

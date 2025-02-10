@@ -7,6 +7,7 @@ import { ProgressBar } from "./ProgressBar"
 import { PlayPause } from "./PlayPause"
 import {
   BookshelfBook,
+  bookshelfSlice,
   playerPositionSeeked,
   playerTotalPositionSeeked,
 } from "../store/slices/bookshelfSlice"
@@ -32,9 +33,6 @@ export function MiniPlayer({ book }: Props) {
 
   const dispatch = useAppDispatch()
   const [eagerProgress, setEagerProgress] = useState(track.position)
-  const positionRef = useRef(total.position)
-  positionRef.current =
-    bookPrefs?.detailView?.scope === "book" ? total.position : track.position
 
   const syncEagerProgress = useMemo(() => {
     return debounce(() => {
@@ -47,11 +45,11 @@ export function MiniPlayer({ book }: Props) {
     return () => {
       syncEagerProgress.cancel()
     }
-  }, [total.position, track.position, syncEagerProgress])
+  }, [total.position, track.position, locator, syncEagerProgress])
 
   useEffect(() => {
     setEagerProgress(positionRef.current)
-  }, [bookPrefs?.detailView?.scope])
+  }, [bookPrefs?.detailView?.scope, bookPrefs?.detailView?.mode])
 
   const chapterTitle = useMemo(() => {
     return book.manifest.toc?.find((link) =>
@@ -64,6 +62,38 @@ export function MiniPlayer({ book }: Props) {
       (position) => position.href === locator?.locator.href,
     )
   }, [book.positions, locator?.locator.href])
+
+  const positionRef = useRef(total.position)
+  positionRef.current = useMemo(
+    () =>
+      bookPrefs?.detailView?.mode === "audio"
+        ? bookPrefs?.detailView?.scope === "book"
+          ? total.position
+          : track.position
+        : bookPrefs?.detailView?.scope === "book"
+          ? locator?.locator.locations?.position ??
+            (book.positions.findIndex(
+              (position) =>
+                (position.locations?.totalProgression ?? 0) >=
+                (locator?.locator.locations?.totalProgression ?? 0),
+            ) ?? 0)
+          : (chapterPositions.findIndex(
+              (position) =>
+                (position.locations?.progression ?? 0) >=
+                (locator?.locator.locations?.progression ?? 0),
+            ) ?? 0),
+    [
+      book.positions,
+      bookPrefs?.detailView?.mode,
+      bookPrefs?.detailView?.scope,
+      chapterPositions,
+      locator?.locator.locations?.position,
+      locator?.locator.locations?.progression,
+      locator?.locator.locations?.totalProgression,
+      total.position,
+      track.position,
+    ],
+  )
 
   const formattedEagerProgress = useMemo(() => {
     return formatTime(eagerProgress)
@@ -83,15 +113,24 @@ export function MiniPlayer({ book }: Props) {
       }
     }
     if (bookPrefs?.detailView?.scope === "book") {
+      const position =
+        locator?.locator.locations?.position ??
+        (book.positions.findIndex(
+          (position) =>
+            (position.locations?.totalProgression ?? 0) >=
+            (locator?.locator.locations?.totalProgression ?? 0),
+        ) ?? 0) + 1
       return {
         title: book.title,
-        formattedProgress: `pg. ${locator?.locator.locations?.position} / ${book.positions.length}`,
+        formattedProgress: `pg. ${position} / ${book.positions.length}`,
       }
     }
-    const chapterPosition = chapterPositions.findIndex(
-      (position) =>
-        position.locations?.position === locator?.locator.locations?.position,
-    )
+    const chapterPosition =
+      (chapterPositions.findIndex(
+        (position) =>
+          (position.locations?.progression ?? 0) >=
+          (locator?.locator.locations?.progression ?? 0),
+      ) ?? 0) + 1
     return {
       title: chapterTitle,
       formattedProgress: `pg. ${chapterPosition} / ${chapterPositions.length}`,
@@ -100,6 +139,8 @@ export function MiniPlayer({ book }: Props) {
     bookPrefs?.detailView?.mode,
     bookPrefs?.detailView?.scope,
     locator?.locator.locations?.position,
+    locator?.locator.locations?.totalProgression,
+    locator?.locator.locations?.progression,
     chapterTitle,
     total.formattedEndPosition,
     total.trackCount,
@@ -111,29 +152,48 @@ export function MiniPlayer({ book }: Props) {
     chapterPositions,
   ])
 
+  const progressStart =
+    bookPrefs?.detailView?.mode === "audio"
+      ? bookPrefs?.detailView?.scope === "book"
+        ? total.startPosition
+        : track.startPosition
+      : 1
+
+  const progressEnd =
+    bookPrefs?.detailView?.mode === "audio"
+      ? bookPrefs?.detailView?.scope === "book"
+        ? total.endPosition
+        : track.endPosition
+      : bookPrefs?.detailView?.scope === "book"
+        ? book.positions.length
+        : chapterPositions.length
+
   return (
     book &&
     bookPrefs && (
       <View position="absolute" left={12} right={12} bottom={32} zIndex={3}>
         <ProgressBar
-          start={
-            bookPrefs?.detailView?.scope === "book"
-              ? total.startPosition
-              : track.startPosition
-          }
-          stop={
-            bookPrefs?.detailView?.scope === "book"
-              ? total.endPosition
-              : track.endPosition
-          }
+          start={progressStart}
+          stop={progressEnd}
           disabled={bookPrefs?.detailView?.scope === "book"}
           progress={eagerProgress}
           onProgressChange={(value) => {
             setEagerProgress(value)
-            if (bookPrefs?.detailView?.scope === "book") {
-              dispatch(playerTotalPositionSeeked({ progress: value }))
+            if (bookPrefs?.detailView?.mode === "audio") {
+              if (bookPrefs?.detailView?.scope === "book") {
+                dispatch(playerTotalPositionSeeked({ progress: value }))
+              } else {
+                dispatch(playerPositionSeeked({ progress: value }))
+              }
             } else {
-              dispatch(playerPositionSeeked({ progress: value }))
+              const nextLocator = chapterPositions[value - 1]
+              if (nextLocator === undefined) return
+              dispatch(
+                bookshelfSlice.actions.bookRelocated({
+                  bookId: book.id,
+                  locator: { locator: nextLocator, timestamp: Date.now() },
+                }),
+              )
             }
           }}
         />

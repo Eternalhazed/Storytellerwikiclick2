@@ -1,8 +1,8 @@
 import { G, Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function MoreHorizontalIcon() {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return (
     <Svg width="24" height="25" viewBox="0 0 24 25" fill="none">

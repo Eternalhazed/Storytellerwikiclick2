@@ -39,7 +39,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           fonts: [
             "./assets/fonts/Bookerly.ttf",
             "./assets/fonts/Bookerly Bold.ttf",
+            "./assets/fonts/Bookerly Italic.ttf",
             "./assets/fonts/YoungSerif.ttf",
+            "./assets/fonts/OpenDyslexic-Regular.otf",
+            "./assets/fonts/OpenDyslexic-Bold.otf",
+            "./assets/fonts/OpenDyslexic-Bold-Italic.otf",
+            "./assets/fonts/OpenDyslexic-Italic.otf",
+            "./node_modules/@expo-google-fonts/literata/Literata_500Medium.ttf",
           ],
         },
       ],

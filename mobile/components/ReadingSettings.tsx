@@ -1,6 +1,6 @@
-import Slider from "@react-native-community/slider"
-import { Pressable, StyleSheet, View } from "react-native"
-import Select from "react-native-picker-select"
+import { Pressable, StyleSheet } from "react-native"
+import { SizableText, View, Select, Button, Slider } from "tamagui"
+// import Select from "react-native-picker-select"
 import { dequal } from "dequal"
 import { appColor } from "../design"
 import { formatNumber } from "../formatting"
@@ -11,13 +11,15 @@ import {
 import { ButtonGroup, ButtonGroupButton } from "./ButtonGroup"
 import { HighlightColorPicker } from "./HighlightColorPicker"
 import { UIText } from "./UIText"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import {
   getFilledBookPreferences,
   getGlobalPreferences,
 } from "../store/selectors/preferencesSelectors"
 import { useMemo } from "react"
+import { ThemeSelector } from "./ThemeSelector"
+import { FontSelector } from "./FontSelector"
 
 type Props = {
   bookId?: number
@@ -36,14 +38,16 @@ export function ReadingSettings({ bookId }: Props) {
     [globalPreferences, preferences],
   )
 
-  const { foreground, dark } = useColorTheme()
+  const { foreground, dark } = useDarkMode()
   const dispatch = useAppDispatch()
 
   return (
     <View>
-      <UIText style={styles.subheading}>Colors</UIText>
-      <View style={styles.field}>
-        <UIText style={styles.label}>Dark mode</UIText>
+      <SizableText size="$6" fontWeight="bold" my={12}>
+        Colors
+      </SizableText>
+      <View w="100%" fd="row" jc="space-between" ai="center" my="$3">
+        <SizableText size="$4">Dark mode</SizableText>
         <ButtonGroup
           value={preferences.darkMode}
           onChange={(value: boolean | "auto") =>
@@ -55,81 +59,59 @@ export function ReadingSettings({ bookId }: Props) {
           }
         >
           <ButtonGroupButton value={false}>
-            <UIText>Light</UIText>
+            <SizableText
+              color={preferences.darkMode === false ? "$white1" : undefined}
+              size="$3.5"
+            >
+              Light
+            </SizableText>
           </ButtonGroupButton>
           <ButtonGroupButton value={"auto"}>
-            <UIText>Device</UIText>
+            <SizableText
+              color={preferences.darkMode === "auto" ? "$white1" : undefined}
+              size="$3.5"
+            >
+              Device
+            </SizableText>
           </ButtonGroupButton>
           <ButtonGroupButton value={true}>
-            <UIText>Dark</UIText>
+            <SizableText
+              color={preferences.darkMode === true ? "$white1" : undefined}
+              size="$3.5"
+            >
+              Dark
+            </SizableText>
           </ButtonGroupButton>
         </ButtonGroup>
       </View>
-      <View style={styles.field}>
-        <UIText style={styles.label}>Light theme</UIText>
-        <Select
-          darkTheme={dark}
+      <View gap="$8" w="100%" fd="row" jc="space-between" ai="center" my="$3">
+        <SizableText size="$4">Light theme</SizableText>
+        <ThemeSelector
           value={preferences.lightTheme}
-          useNativeAndroidPickerStyle={false}
-          onValueChange={(value) => {
+          onChange={(value) => {
             dispatch(
               preferencesSlice.actions.globalPreferencesUpdated({
                 lightTheme: value,
               }),
             )
           }}
-          items={preferences.colorThemes
-            .filter(({ isDark }) => !isDark)
-            .map(({ name }) => ({
-              label: name,
-              value: name,
-            }))}
-          style={{
-            inputIOS: {
-              color: foreground,
-            },
-            inputAndroid: {
-              color: foreground,
-            },
-          }}
         />
       </View>
-      <View style={styles.field}>
-        <UIText style={styles.label}>Dark theme</UIText>
-        <Select
-          darkTheme={dark}
+      <View gap="$8" w="100%" fd="row" jc="space-between" ai="center" my="$3">
+        <SizableText size="$4">Dark theme</SizableText>
+        <ThemeSelector
           value={preferences.darkTheme}
-          useNativeAndroidPickerStyle={false}
-          onValueChange={(value) => {
+          onChange={(value) => {
             dispatch(
               preferencesSlice.actions.globalPreferencesUpdated({
                 darkTheme: value,
               }),
             )
           }}
-          items={preferences.colorThemes
-            .filter(({ isDark }) => isDark)
-            .map(({ name }) => ({
-              label: name,
-              value: name,
-            }))}
-          style={{
-            inputIOS: {
-              color: foreground,
-            },
-            inputAndroid: {
-              color: foreground,
-            },
-          }}
         />
       </View>
-      <View
-        style={[
-          styles.field,
-          { flexDirection: "column", alignItems: "flex-start" },
-        ]}
-      >
-        <UIText style={styles.label}>Readaloud color</UIText>
+      <View w="100%" fd="column" jc="space-between" ai="flex-start" my="$3">
+        <SizableText size="$4">Readaloud color</SizableText>
         <HighlightColorPicker
           style={{ alignSelf: "flex-end" }}
           value={preferences.readaloudColor}
@@ -142,10 +124,10 @@ export function ReadingSettings({ bookId }: Props) {
           }}
         />
       </View>
-      <View style={styles.typographyHeaderContainer}>
-        <UIText style={styles.subsubheading}>
+      <View fd="row" ai="center" jc="space-between">
+        <SizableText size="$6" fontWeight="bold" my={12}>
           Typography{!bookId && " defaults"}
-        </UIText>
+        </SizableText>
         {bookId ? (
           <Pressable
             disabled={dirty}
@@ -162,43 +144,51 @@ export function ReadingSettings({ bookId }: Props) {
             </UIText>
           </Pressable>
         ) : (
-          <Pressable
+          <Button
+            chromeless
+            size="$3"
             disabled={preferences.typography === defaultPreferences.typography}
             onPress={() => {
               dispatch(preferencesSlice.actions.typographyPreferencesReset())
             }}
           >
-            <UIText
-              style={
+            <SizableText
+              size="$3.5"
+              color={
+                preferences.typography !== defaultPreferences.typography
+                  ? "$brandColor"
+                  : undefined
+              }
+              opacity={
                 preferences.typography === defaultPreferences.typography
-                  ? styles.disabled
-                  : styles.pressable
+                  ? 0.6
+                  : undefined
               }
             >
               Reset
-            </UIText>
-          </Pressable>
+            </SizableText>
+          </Button>
         )}
       </View>
 
-      <View style={styles.field}>
-        <UIText style={[styles.label, { flexGrow: 1 }]}>Font scaling</UIText>
-        <View style={styles.sliderWrapper}>
+      <View gap={16} w="100%" fd="row" jc="space-between" ai="flex-end" my="$3">
+        <SizableText size="$4">Font scaling</SizableText>
+        <View ai="stretch" jc="space-between" fg={1} gap={16}>
+          <SizableText size="$3" als="center">
+            {formatNumber(preferences.typography.scale, 2)}x
+          </SizableText>
           <Slider
-            style={styles.slider}
-            minimumValue={0.7}
-            maximumValue={1.5}
+            h={3}
+            min={0.7}
+            max={1.5}
+            value={[preferences.typography.scale]}
             step={0.05}
-            value={preferences.typography.scale}
-            minimumTrackTintColor={appColor}
-            maximumTrackTintColor="#EAEAEA"
-            thumbTintColor={appColor}
-            onValueChange={(value) => {
+            onValueChange={([value]) => {
               const update = {
                 typography: {
                   ...preferences.typography,
                   // Rounding to hundredths to account for floating point errors
-                  scale: Math.round(value * 100) / 100,
+                  scale: Math.round((value ?? 0) * 100) / 100,
                 },
               }
               const action = bookId
@@ -209,28 +199,39 @@ export function ReadingSettings({ bookId }: Props) {
                 : preferencesSlice.actions.globalPreferencesUpdated(update)
               dispatch(action)
             }}
-          />
-          <UIText>{formatNumber(preferences.typography.scale, 2)}x</UIText>
+          >
+            <Slider.Track backgroundColor="$backgroundStrong">
+              <Slider.TrackActive backgroundColor="$brandColor" />
+            </Slider.Track>
+            <Slider.Thumb
+              index={0}
+              size="$2"
+              hitSlop={40}
+              borderColor="$brand6"
+              backgroundColor="$brandColor"
+              circular
+            />
+          </Slider>
         </View>
       </View>
-      <View style={styles.field}>
-        <UIText style={[styles.label, { flexGrow: 1 }]}>Line height</UIText>
-        <View style={styles.sliderWrapper}>
+      <View gap={16} w="100%" fd="row" jc="space-between" ai="flex-end" my="$3">
+        <SizableText size="$4">Line height</SizableText>
+        <View ai="stretch" jc="space-between" fg={1} gap={16}>
+          <SizableText size="$3" als="center">
+            {formatNumber(preferences.typography.lineHeight, 2)}x
+          </SizableText>
           <Slider
-            style={styles.slider}
-            minimumValue={1.0}
-            maximumValue={2.0}
+            style={{ height: 3 }}
+            min={0.7}
+            max={1.5}
+            value={[preferences.typography.lineHeight]}
             step={0.05}
-            value={preferences.typography.lineHeight}
-            minimumTrackTintColor={appColor}
-            maximumTrackTintColor="#EAEAEA"
-            thumbTintColor={appColor}
-            onValueChange={(value) => {
+            onValueChange={([value]) => {
               const update = {
                 typography: {
                   ...preferences.typography,
                   // Rounding to hundredths to account for floating point errors
-                  lineHeight: Math.round(value * 100) / 100,
+                  lineHeight: Math.round((value ?? 0) * 100) / 100,
                 },
               }
               const action = bookId
@@ -241,12 +242,23 @@ export function ReadingSettings({ bookId }: Props) {
                 : preferencesSlice.actions.globalPreferencesUpdated(update)
               dispatch(action)
             }}
-          />
-          <UIText>{formatNumber(preferences.typography.lineHeight, 2)}x</UIText>
+          >
+            <Slider.Track backgroundColor="$backgroundStrong">
+              <Slider.TrackActive backgroundColor="$brandColor" />
+            </Slider.Track>
+            <Slider.Thumb
+              index={0}
+              size="$2"
+              hitSlop={40}
+              borderColor="$brand6"
+              backgroundColor="$brandColor"
+              circular
+            />
+          </Slider>
         </View>
       </View>
       <View style={styles.field}>
-        <UIText style={styles.label}>Text alignment</UIText>
+        <SizableText size="$4">Text alignment</SizableText>
         <ButtonGroup
           value={preferences.typography.alignment}
           onChange={(value: "justify" | "left") => {
@@ -266,44 +278,34 @@ export function ReadingSettings({ bookId }: Props) {
           }}
         >
           <ButtonGroupButton value="justify">
-            <UIText>Justify</UIText>
+            <SizableText
+              color={
+                preferences.typography.alignment === "justify"
+                  ? "$white1"
+                  : undefined
+              }
+              size="$3.5"
+            >
+              Justify
+            </SizableText>
           </ButtonGroupButton>
           <ButtonGroupButton value="left">
-            <UIText>Left</UIText>
+            <SizableText
+              color={
+                preferences.typography.alignment === "left"
+                  ? "$white1"
+                  : undefined
+              }
+              size="$3.5"
+            >
+              Left
+            </SizableText>
           </ButtonGroupButton>
         </ButtonGroup>
       </View>
-      <View style={styles.field}>
-        <UIText style={styles.label}>Font family</UIText>
-        <Select
-          darkTheme={dark}
-          value={preferences.typography.fontFamily}
-          useNativeAndroidPickerStyle={false}
-          onValueChange={(value) => {
-            const update = {
-              typography: {
-                ...preferences.typography,
-                fontFamily: value,
-              },
-            }
-            const action = bookId
-              ? preferencesSlice.actions.bookPreferencesUpdated({
-                  bookId,
-                  prefs: update,
-                })
-              : preferencesSlice.actions.globalPreferencesUpdated(update)
-            dispatch(action)
-          }}
-          items={[{ label: "Bookerly", value: "Bookerly" }]}
-          style={{
-            inputIOS: {
-              color: foreground,
-            },
-            inputAndroid: {
-              color: foreground,
-            },
-          }}
-        />
+      <View gap="$8" w="100%" fd="row" jc="space-between" ai="center" my="$3">
+        <SizableText size="$4">Font family</SizableText>
+        <FontSelector />
       </View>
     </View>
   )

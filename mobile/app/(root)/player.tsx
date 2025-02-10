@@ -35,7 +35,11 @@ import { LoadingView } from "../../components/LoadingView"
 import { getLocalAudioBookCoverUrl } from "../../store/persistence/files"
 import { JumpBackwardFifteenIcon } from "../../icons/JumpBackwardFifteenIcon"
 import { JumpForwardFifteenIcon } from "../../icons/JumpForwardFifteenIcon"
-import { playerPositionSeeked } from "../../store/slices/bookshelfSlice"
+import {
+  nextTrackPressed,
+  playerPositionSeeked,
+  prevTrackPressed,
+} from "../../store/slices/bookshelfSlice"
 
 export default function PlayerScreen() {
   const { color } = useTheme()
@@ -143,7 +147,7 @@ export default function PlayerScreen() {
             {title}
           </SizableText>
           <SizableText size="$3.5" mb="$3">
-            Track {track.index} of {total.trackCount}
+            Track {track.index + 1} of {total.trackCount}
           </SizableText>
           {/* TODO: Use local state and a use effect to make this more responsive */}
           <Slider
@@ -195,9 +199,7 @@ export default function PlayerScreen() {
               chromeless
               size="$6"
               onPress={() => {
-                // TODO: Also dispatch an action here, so that
-                // we can relocateToTrackPositionSaga this, too
-                TrackPlayer.skipToPrevious()
+                dispatch(prevTrackPressed())
               }}
             >
               <SkipBack />
@@ -255,7 +257,7 @@ export default function PlayerScreen() {
               chromeless
               size="$6"
               onPress={() => {
-                TrackPlayer.skipToNext()
+                dispatch(nextTrackPressed())
               }}
             >
               <SkipForward />

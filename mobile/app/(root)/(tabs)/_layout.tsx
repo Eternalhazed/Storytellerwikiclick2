@@ -2,10 +2,10 @@ import { Tabs } from "expo-router"
 import { BookshelfIcon } from "../../../icons/BookshelfIcon"
 import { BrowseIcon } from "../../../icons/BrowseIcon"
 import { SettingsIcon } from "../../../icons/SettingsIcon"
-import { useColorTheme } from "../../../hooks/useColorTheme"
+import { useDarkMode } from "../../../hooks/useColorTheme"
 
 export default function TabLayout() {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return (
     <Tabs

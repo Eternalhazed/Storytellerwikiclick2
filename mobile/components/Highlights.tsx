@@ -2,13 +2,13 @@ import { useAppDispatch, useAppSelector } from "../store/appState"
 import { getCurrentlyPlayingBook } from "../store/selectors/bookshelfSelectors"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
 import { highlightTints, highlightUnderlines } from "../colors"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { Popover, SizableText, Stack, View } from "tamagui"
 import { Pressable } from "react-native"
 
 export function Highlights() {
   const book = useAppSelector(getCurrentlyPlayingBook)
-  const { dark } = useColorTheme()
+  const { dark } = useDarkMode()
   const dispatch = useAppDispatch()
 
   if (!book) return null

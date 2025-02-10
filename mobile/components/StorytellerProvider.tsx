@@ -1,19 +1,24 @@
 import { ReactNode, useEffect } from "react"
-import { DefaultTheme, ThemeProvider } from "@react-navigation/native"
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native"
 import { getStartupStatus } from "../store/selectors/startupSelectors"
 import { StartupStatus } from "../store/slices/startupSlice"
 import { useRouter } from "expo-router"
 import * as SplashScreen from "expo-splash-screen"
 import { useAppSelector } from "../store/appState"
-import { useColorTheme } from "../hooks/useColorTheme"
-import { activeBackgroundColor } from "../design"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { TamaguiProvider } from "tamagui"
 import { tamaguiConfig } from "../design/tamaguiConfig"
+import { getGlobalPreferences } from "../store/selectors/preferencesSelectors"
 
 export function StorytellerProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const startupStatus = useAppSelector(getStartupStatus)
-  const { foreground, background, dark } = useColorTheme()
+  const { dark } = useDarkMode()
+  const preferences = useAppSelector(getGlobalPreferences)
 
   useEffect(() => {
     if (
@@ -27,21 +32,17 @@ export function StorytellerProvider({ children }: { children: ReactNode }) {
   return (
     <TamaguiProvider
       config={tamaguiConfig}
-      defaultTheme={dark ? "nightBlack" : "paperWhite"}
+      defaultTheme={dark ? preferences.darkTheme : preferences.lightTheme}
     >
       <ThemeProvider
-        value={{
-          ...DefaultTheme,
-          dark,
-          colors: {
-            primary: foreground,
-            background,
-            card: background,
-            text: foreground,
-            border: activeBackgroundColor,
-            notification: background,
-          },
-        }}
+        value={
+          dark
+            ? DarkTheme
+            : {
+                ...DefaultTheme,
+                colors: { ...DefaultTheme.colors, background: "white" },
+              }
+        }
       >
         {startupStatus !== StartupStatus.HYDRATED &&
         startupStatus !== StartupStatus.IN_ERROR

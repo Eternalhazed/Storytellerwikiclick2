@@ -37,7 +37,7 @@ export function ProgressBar({
           <Slider.Thumb
             index={0}
             size="$2"
-            hitSlop={20}
+            hitSlop={40}
             borderColor="$brand6"
             backgroundColor="$brandColor"
             circular

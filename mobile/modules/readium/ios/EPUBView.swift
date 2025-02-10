@@ -71,6 +71,44 @@ class EPUBView: ExpoView {
                                 file: resources.appendingPathComponent("Bookerly.ttf"),
                                 style: .normal, weight: .standard(.normal)
                             ),
+                            CSSFontFace(
+                                file: resources.appendingPathComponent("Bookerly Bold.ttf"),
+                                style: .normal, weight: .standard(.bold)
+                            ),
+                            CSSFontFace(
+                                file: resources.appendingPathComponent("Bookerly Italic.ttf"),
+                                style: .italic, weight: .standard(.normal)
+                            ),
+                        ]
+                    ).eraseToAnyHTMLFontFamilyDeclaration(),
+                    CSSFontFamilyDeclaration(
+                        fontFamily: FontFamily(rawValue: "OpenDyslexic"),
+                        fontFaces: [
+                            CSSFontFace(
+                                file: resources.appendingPathComponent("OpenDyslexic-Regular.otf"),
+                                style: .normal, weight: .standard(.normal)
+                            ),
+                            CSSFontFace(
+                                file: resources.appendingPathComponent("OpenDyslexic-Bold.otf"),
+                                style: .normal, weight: .standard(.bold)
+                            ),
+                            CSSFontFace(
+                                file: resources.appendingPathComponent("OpenDyslexic-Italic.otf"),
+                                style: .italic, weight: .standard(.normal)
+                            ),
+                            CSSFontFace(
+                                file: resources.appendingPathComponent("OpenDyslexic-Bold-Italic.otf"),
+                                style: .italic, weight: .standard(.bold)
+                            ),
+                        ]
+                    ).eraseToAnyHTMLFontFamilyDeclaration(),
+                    CSSFontFamilyDeclaration(
+                        fontFamily: FontFamily(rawValue: "Literata"),
+                        fontFaces: [
+                            CSSFontFace(
+                                file: resources.appendingPathComponent("Literata_500Medium.ttf"),
+                                style: .normal, weight: .standard(.normal)
+                            ),
                         ]
                     ).eraseToAnyHTMLFontFamilyDeclaration(),
                 ]

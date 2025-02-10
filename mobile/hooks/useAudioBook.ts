@@ -76,6 +76,7 @@ export function useAudioBook() {
     progress: position,
     isPlaying,
     trackCount: tracks.length,
+    tracks,
     startPosition: 0,
     endPosition: duration,
     percentComplete: percentComplete,

@@ -5511,6 +5511,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo-google-fonts/literata@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "@expo-google-fonts/literata@npm:0.2.3"
+  checksum: 10c0/7400335e06bf104a5801d4798b9ce11c811b8842f5c79b9a508b163557a2a657e654309a603f5b83b1a6c9370cbbbc73846ca1956104ad6e1b23c88249c2b855
+  languageName: node
+  linkType: hard
+
 "@expo/bunyan@npm:^4.0.0":
   version: 4.0.0
   resolution: "@expo/bunyan@npm:4.0.0"
@@ -8642,6 +8649,7 @@ __metadata:
     "@babel/plugin-transform-arrow-functions": "npm:^7.23.3"
     "@babel/plugin-transform-shorthand-properties": "npm:^7.23.3"
     "@babel/plugin-transform-template-literals": "npm:^7.23.3"
+    "@expo-google-fonts/literata": "npm:^0.2.3"
     "@expo/config-plugins": "npm:~9.0.0"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
     "@react-native-clipboard/clipboard": "npm:^1.14.2"

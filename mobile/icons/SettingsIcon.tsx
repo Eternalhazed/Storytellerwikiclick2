@@ -1,12 +1,12 @@
 import { Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 type Props = {
   focused: boolean
 }
 
 export function SettingsIcon({ focused }: Props) {
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
 
   return focused ? (
     <Svg width="28" height="26" viewBox="0 0 28 26" fill="none">

@@ -1,8 +1,8 @@
 import { Text, TextProps } from "react-native"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function HeaderText({ children, ...props }: TextProps) {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return (
     <Text

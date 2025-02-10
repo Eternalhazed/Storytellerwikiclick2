@@ -7,7 +7,7 @@ import {
 import { useContext } from "react"
 import { ThemeOverrideContext } from "../components/ThemeOverrideProvider"
 
-export function useColorTheme() {
+export function useDarkMode() {
   const colorScheme = useColorScheme()
 
   const darkModePreference = useAppSelector(getDarkMode)
