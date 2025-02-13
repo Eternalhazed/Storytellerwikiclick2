@@ -73,13 +73,15 @@ export function FontSelector({ bookId }: Props) {
           <Select.Group>
             <Select.Label />
             <Select.Item index={0} value="Bookerly">
-              <Select.ItemText>Bookerly</Select.ItemText>
+              <Select.ItemText fontFamily="$bookerly">Bookerly</Select.ItemText>
             </Select.Item>
             <Select.Item index={0} value="Literata">
-              <Select.ItemText>Literata</Select.ItemText>
+              <Select.ItemText fontFamily="$literata">Literata</Select.ItemText>
             </Select.Item>
             <Select.Item index={0} value="OpenDyslexic">
-              <Select.ItemText>OpenDyslexic</Select.ItemText>
+              <Select.ItemText fontFamily="$openDyslexic">
+                OpenDyslexic
+              </Select.ItemText>
             </Select.Item>
           </Select.Group>
         </Select.Viewport>

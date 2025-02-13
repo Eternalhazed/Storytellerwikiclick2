@@ -21,6 +21,7 @@ import org.readium.r2.navigator.ExperimentalDecorator
 import org.readium.r2.navigator.epub.EpubNavigatorFragment
 import org.readium.r2.navigator.epub.EpubPreferences
 import org.readium.r2.navigator.preferences.FontFamily
+import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.extensions.toMap
 import org.readium.r2.shared.publication.Locator
 
@@ -47,6 +48,7 @@ class EpubView(context: Context, appContext: AppContext) :
     var highlights: List<Highlight> = listOf()
     var bookmarks: List<Locator> = listOf()
     var readaloudColor = 0xffffff00.toInt()
+    @OptIn(ExperimentalReadiumApi::class)
     var preferences: EpubPreferences =
             EpubPreferences(
                     fontFamily = FontFamily("Bookerly"),
@@ -101,6 +103,7 @@ class EpubView(context: Context, appContext: AppContext) :
         }
     }
 
+    @OptIn(ExperimentalReadiumApi::class)
     fun updatePreferences() {
         navigator?.submitPreferences(preferences)
     }

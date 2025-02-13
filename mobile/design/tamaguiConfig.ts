@@ -813,19 +813,56 @@ const youngSerif = createFont({
 
 const bookerly = createFont({
   family: "Bookerly",
-  size: size,
+  size: { ...size, $true: 16 },
   face: {
     500: {
       normal: "Bookerly",
+      italic: "Bookerly Italic",
+    },
+    700: {
+      normal: "Bookerly Bold",
     },
   },
 })
+
+const literata = createFont({
+  family: "Literata",
+  size: { ...size, $true: 16 },
+  face: {
+    500: {
+      normal: "Literata_500Medium",
+    },
+  },
+})
+
+const openDyslexic = createFont({
+  family: "OpenDyslexic",
+  size: { ...size, $true: 16 },
+  face: {
+    500: {
+      normal: "OpenDyslexic-Regular",
+      italic: "OpenDyslexic-Italic",
+    },
+    700: {
+      normal: "OpenDyslexic-Bold",
+      italic: "OpenDyslexic-Bold-Italic",
+    },
+  },
+})
+
+export const fonts = {
+  Bookerly: bookerly,
+  Literata: literata,
+  OpenDyslexic: openDyslexic,
+} as const
 
 export const tamaguiConfig = createTamagui({
   ...defaultConfig,
   fonts: {
     heading: youngSerif,
-    book: bookerly,
+    bookerly: bookerly,
+    literata: literata,
+    openDyslexic,
   },
   tokens,
   themes,
