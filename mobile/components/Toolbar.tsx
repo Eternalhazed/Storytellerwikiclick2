@@ -1,21 +1,25 @@
 import { Link } from "expo-router"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
-import { BookOpenOutlineIcon } from "../icons/BookOpenOutlineIcon"
 import { SpedometerIcon } from "../icons/SpedometerIcon"
-import { TableOfContentsIcon } from "../icons/TableOfContentsIcon"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import {
   getCurrentlyPlayingBook,
   getLocator,
 } from "../store/selectors/bookshelfSelectors"
 import { ToolbarDialog, toolbarSlice } from "../store/slices/toolbarSlice"
-import { PlayIcon } from "../icons/PlayIcon"
-import { BookmarkIcon } from "../icons/BookmarkIcon"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
 import { ReadiumLocator } from "../modules/readium/src/Readium.types"
-import { UIText } from "./UIText"
 import { getOpenDialog } from "../store/selectors/toolbarSelectors"
 import { activeBackgroundColor } from "../design"
+import {
+  ALargeSmall,
+  Bookmark,
+  BookmarkCheck,
+  BookOpen,
+  Headphones,
+  TableOfContents,
+} from "lucide-react-native"
+import { useColorTheme } from "../hooks/useColorTheme"
 
 type Props = {
   mode: "audio" | "text"
@@ -28,6 +32,8 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
     (state) => book && getLocator(state, book.id),
   )
   const openDialog = useAppSelector(getOpenDialog)
+
+  const { foreground } = useColorTheme()
 
   const dispatch = useAppDispatch()
 
@@ -51,7 +57,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
               )
             }}
           >
-            <UIText style={{ fontSize: 20 }}>Aa</UIText>
+            <ALargeSmall color={foreground} />
           </Pressable>
         )}
 
@@ -91,7 +97,11 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
             }
           }}
         >
-          <BookmarkIcon filled={!!activeBookmarks.length} />
+          {activeBookmarks.length ? (
+            <BookmarkCheck color={foreground} />
+          ) : (
+            <Bookmark color={foreground} />
+          )}
         </Pressable>
 
         <Pressable
@@ -108,21 +118,21 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
             )
           }}
         >
-          <TableOfContentsIcon />
+          <TableOfContents color={foreground} />
         </Pressable>
         {mode === "audio" ? (
           <Link
             style={[styles.toolbarButton, styles.bookLink]}
             href={{ pathname: "/book/[id]", params: { id: book.id } }}
           >
-            <BookOpenOutlineIcon />
+            <BookOpen color={foreground} />
           </Link>
         ) : (
           <Link
             style={[styles.toolbarButton, styles.audioLink]}
             href={{ pathname: "/player" }}
           >
-            <PlayIcon />
+            <Headphones color={foreground} />
           </Link>
         )}
       </View>
@@ -145,7 +155,9 @@ const styles = StyleSheet.create({
   },
   bookLink: {
     ...(Platform.OS === "ios" && { marginTop: 12 }),
-    marginHorizontal: 0,
+    marginTop: 4,
+    padding: 0,
+    marginLeft: 0,
   },
   audioLink: {
     marginTop: 4,

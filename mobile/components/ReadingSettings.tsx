@@ -2,7 +2,6 @@ import Slider from "@react-native-community/slider"
 import { Pressable, StyleSheet, View } from "react-native"
 import Select from "react-native-picker-select"
 import { dequal } from "dequal"
-import { appColor } from "../design"
 import { formatNumber } from "../formatting"
 import {
   defaultPreferences,
@@ -18,6 +17,9 @@ import {
   getGlobalPreferences,
 } from "../store/selectors/preferencesSelectors"
 import { useMemo } from "react"
+import { colors } from "./ui/tokens/colors"
+import { fontSizes } from "./ui/tokens/fontSizes"
+import { spacing } from "./ui/tokens/spacing"
 
 type Props = {
   bookId?: number
@@ -190,9 +192,9 @@ export function ReadingSettings({ bookId }: Props) {
             maximumValue={1.5}
             step={0.05}
             value={preferences.typography.scale}
-            minimumTrackTintColor={appColor}
+            minimumTrackTintColor={colors.primary9}
             maximumTrackTintColor="#EAEAEA"
-            thumbTintColor={appColor}
+            thumbTintColor={colors.primary9}
             onValueChange={(value) => {
               const update = {
                 typography: {
@@ -222,9 +224,9 @@ export function ReadingSettings({ bookId }: Props) {
             maximumValue={2.0}
             step={0.05}
             value={preferences.typography.lineHeight}
-            minimumTrackTintColor={appColor}
-            maximumTrackTintColor="#EAEAEA"
-            thumbTintColor={appColor}
+            minimumTrackTintColor={colors.primary9}
+            maximumTrackTintColor={colors.gray2}
+            thumbTintColor={colors.primary9}
             onValueChange={(value) => {
               const update = {
                 typography: {
@@ -294,7 +296,11 @@ export function ReadingSettings({ bookId }: Props) {
               : preferencesSlice.actions.globalPreferencesUpdated(update)
             dispatch(action)
           }}
-          items={[{ label: "Bookerly", value: "Bookerly" }]}
+          items={[
+            { label: "Bookerly", value: "Bookerly" },
+            { label: "Literata", value: "Literata" },
+            { label: "OpenDyslexic", value: "OpenDyslexic" },
+          ]}
           style={{
             inputIOS: {
               color: foreground,
@@ -311,24 +317,24 @@ export function ReadingSettings({ bookId }: Props) {
 
 const styles = StyleSheet.create({
   subsubheading: {
-    fontSize: 22,
+    ...fontSizes.xl,
     fontWeight: "600",
-    marginVertical: 12,
+    marginVertical: spacing["1.5"],
   },
   subheading: {
-    fontSize: 24,
+    ...fontSizes["2xl"],
     fontWeight: "bold",
-    marginVertical: 12,
+    marginVertical: spacing["1.5"],
   },
   field: {
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 12,
+    marginVertical: spacing["1.5"],
   },
   label: {
-    fontSize: 18,
+    ...fontSizes.lg,
   },
   typographyHeaderContainer: {
     flexDirection: "row",
@@ -336,7 +342,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   pressable: {
-    color: appColor,
+    color: colors.primary9,
   },
   disabled: {
     opacity: 0.6,
@@ -347,5 +353,5 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     flexGrow: 3,
   },
-  slider: { height: 16, flexBasis: 200 },
+  slider: { height: spacing[2], flexBasis: 200 },
 })

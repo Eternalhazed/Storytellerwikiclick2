@@ -24,7 +24,7 @@ export default function Settings() {
   return (
     <View style={{ ...styles.container, paddingTop: top }}>
       <HeaderText style={styles.title}>Settings</HeaderText>
-      <ScrollView>
+      <ScrollView style={styles.scrollview}>
         <View>
           {apiBaseUrl ? (
             <>
@@ -97,5 +97,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginVertical: 12,
+  },
+  scrollview: {
+    width: "100%",
   },
 })

@@ -5494,6 +5494,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo-google-fonts/literata@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "@expo-google-fonts/literata@npm:0.2.3"
+  checksum: 10c0/7400335e06bf104a5801d4798b9ce11c811b8842f5c79b9a508b163557a2a657e654309a603f5b83b1a6c9370cbbbc73846ca1956104ad6e1b23c88249c2b855
+  languageName: node
+  linkType: hard
+
 "@expo/bunyan@npm:^4.0.0":
   version: 4.0.0
   resolution: "@expo/bunyan@npm:4.0.0"
@@ -8490,6 +8497,7 @@ __metadata:
     "@babel/plugin-transform-arrow-functions": "npm:^7.23.3"
     "@babel/plugin-transform-shorthand-properties": "npm:^7.23.3"
     "@babel/plugin-transform-template-literals": "npm:^7.23.3"
+    "@expo-google-fonts/literata": "npm:^0.2.3"
     "@expo/config-plugins": "npm:~9.0.0"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
     "@react-native-clipboard/clipboard": "npm:^1.14.2"
@@ -8530,6 +8538,7 @@ __metadata:
     expo-status-bar: "npm:~2.0.0"
     expo-system-ui: "npm:~4.0.6"
     expo-task-manager: "npm:~12.0.3"
+    lucide-react-native: "npm:^0.475.0"
     prettier: "npm:^3.2.5"
     react: "npm:18.3.1"
     react-native: "npm:0.76.5"
@@ -19859,6 +19868,17 @@ __metadata:
   dependencies:
     yallist: "npm:^4.0.0"
   checksum: 10c0/cb53e582785c48187d7a188d3379c181b5ca2a9c78d2bce3e7dee36f32761d1c42983da3fe12b55cb74e1779fa94cdc2e5367c028a9b35317184ede0c07a30a9
+  languageName: node
+  linkType: hard
+
+"lucide-react-native@npm:^0.475.0":
+  version: 0.475.0
+  resolution: "lucide-react-native@npm:0.475.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0
+    react-native: "*"
+    react-native-svg: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0
+  checksum: 10c0/47641b95d0dca8c257102c62b4d7549ec9cde5d4320ef6bb4d9073ce30f3c66bd654f0b0c5fcc2d50b140be1b84b8ae777d24e3fd4fe9a6ce5f831ad815c192f
   languageName: node
   linkType: hard
 

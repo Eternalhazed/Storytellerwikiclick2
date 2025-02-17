@@ -1,7 +1,6 @@
 import { ReactElement, createContext, useContext, useMemo } from "react"
-import { Pressable, PressableProps, StyleSheet, View } from "react-native"
-import { appColor } from "../design"
-import { ThemeOverrideProvider } from "./ThemeOverrideProvider"
+import { StyleSheet, View } from "react-native"
+import { Button, ButtonProps } from "./ui/Button"
 
 type ButtonGroupContextValue = {
   onPress: (value: unknown) => void
@@ -42,21 +41,14 @@ export function ButtonGroup<Value>({
 export function ButtonGroupButton<Value>({
   value,
   ...props
-}: PressableProps & { value: Value }) {
+}: ButtonProps & { value: Value }) {
   const { onPress, currentValue } = useContext(ButtonGroupContext)
   return (
-    <ThemeOverrideProvider
-      foreground={currentValue === value ? "white" : undefined}
-    >
-      <Pressable
-        {...props}
-        onPress={() => onPress(value)}
-        style={{
-          ...(currentValue === value && styles.active),
-          ...styles.button,
-        }}
-      />
-    </ThemeOverrideProvider>
+    <Button
+      {...props}
+      onPress={() => onPress(value)}
+      variant={currentValue === value ? "primary" : "secondary"}
+    />
   )
 }
 
@@ -68,8 +60,5 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingHorizontal: 12,
     paddingVertical: 4,
-  },
-  active: {
-    backgroundColor: appColor,
   },
 })

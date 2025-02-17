@@ -1,13 +1,14 @@
-import { StyleSheet, View, ViewProps } from "react-native"
+import { StyleProp, StyleSheet, View, ViewProps } from "react-native"
 import Slider from "@react-native-community/slider"
 import { appColor } from "../design"
+import { colors } from "./ui/tokens/colors"
 
 type Props = {
-  style?: ViewProps["style"]
+  style?: StyleProp<ViewProps>
   start?: number
   stop?: number
   progress: number
-  onProgressChange?: (newProgress: number) => void
+  onProgressChange?: ((newProgress: number) => void) | undefined
 }
 
 export function ProgressBar({
@@ -19,26 +20,31 @@ export function ProgressBar({
 }: Props) {
   if (onProgressChange) {
     return (
-      <Slider
-        style={{ height: 3 }}
-        minimumValue={start}
-        maximumValue={stop}
-        value={progress}
-        minimumTrackTintColor={appColor}
-        maximumTrackTintColor="#EAEAEA"
-        thumbTintColor={appColor}
-        onValueChange={(value) => {
-          if (value === progress) return
-          onProgressChange(value)
-        }}
-      />
+      <View style={{ marginTop: -18, marginBottom: -18 }}>
+        <Slider
+          style={{ height: 3 }}
+          minimumValue={start}
+          maximumValue={stop}
+          value={progress}
+          minimumTrackTintColor={colors.primary9}
+          maximumTrackTintColor={colors.gray2}
+          thumbTintColor={colors.primary9}
+          onValueChange={(value) => {
+            if (value === progress) return
+            onProgressChange(value)
+          }}
+        />
+      </View>
     )
   }
 
   return (
     <View style={[styles.outer, style]}>
       <View
-        style={[styles.inner, { width: `${(progress / stop - start) * 100}%` }]}
+        style={[
+          styles.inner,
+          { width: `${(progress / (stop - start)) * 100}%` },
+        ]}
       />
     </View>
   )
