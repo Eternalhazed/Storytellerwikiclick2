@@ -86,9 +86,20 @@ export function MiniPlayer({ book }: Props) {
   }, [bookPrefs?.detailView?.scope, bookPrefs?.detailView?.mode])
 
   const chapterTitle = useMemo(() => {
-    return book.manifest.toc?.find((link) =>
-      isSameChapter(link.href, locator?.locator.href ?? ""),
-    )?.title
+    if (!book.manifest.toc) return undefined
+
+    for (const link of book.manifest.toc) {
+      if (isSameChapter(link.href, locator?.locator.href ?? "")) {
+        return link.title
+      }
+      if (!link.children) continue
+      for (const childLink of link.children) {
+        if (isSameChapter(childLink.href, locator?.locator.href ?? "")) {
+          return childLink.title
+        }
+      }
+    }
+    return undefined
   }, [book.manifest.toc, locator?.locator.href])
 
   const chapterPositions = useMemo(() => {
