@@ -78,7 +78,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: IS_DEV
-        ? "dev.smoores.Storyteller.dev"
+        ? "dev.smoores.Storyteller.dev.jc"
         : "dev.smoores.Storyteller",
       config: {
         usesNonExemptEncryption: false,
@@ -94,7 +94,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: IS_DEV
-        ? "dev.smoores.Storyteller.dev"
+        ? "dev.smoores.Storyteller.dev.jc"
         : "dev.smoores.Storyteller",
       adaptiveIcon: {
         foregroundImage: "./assets/Storyteller_Logo.png",

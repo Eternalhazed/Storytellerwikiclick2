@@ -8684,6 +8684,7 @@ __metadata:
     "@tamagui/lucide-icons": "npm:^1.124.17"
     "@tsconfig/strictest": "npm:^2.0.1"
     "@types/base-64": "npm:^1.0.0"
+    "@types/lodash.debounce": "npm:^4"
     "@types/react": "npm:~18.3.12"
     "@types/react-native-uuid": "npm:^2.0.0"
     "@types/redux-logger": "npm:^3.0.9"
@@ -8714,6 +8715,7 @@ __metadata:
     expo-status-bar: "npm:~2.0.1"
     expo-system-ui: "npm:~4.0.7"
     expo-task-manager: "npm:~12.0.4"
+    lodash.debounce: "npm:^4.0.8"
     prettier: "npm:^3.2.5"
     react: "npm:18.3.1"
     react-native: "npm:0.76.6"
@@ -10821,6 +10823,22 @@ __metadata:
   version: 13.3.0
   resolution: "@types/lint-staged@npm:13.3.0"
   checksum: 10c0/b4da6c76bb93b546c5aa1ad98ad845ea9d10aec15df30d5e3b2567d0cc360c4be26b1af9e5ca32c956322da1be4b26dab02a1ec41b82dab2f4f75dc27b9b791b
+  languageName: node
+  linkType: hard
+
+"@types/lodash.debounce@npm:^4":
+  version: 4.0.9
+  resolution: "@types/lodash.debounce@npm:4.0.9"
+  dependencies:
+    "@types/lodash": "npm:*"
+  checksum: 10c0/9fbb24e5e52616faf60ba5c82d8c6517f4b86fc6e9ab353b4c56c0760f63d9bf53af3f2d8f6c37efa48090359fb96dba1087d497758511f6c40677002191d042
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:*":
+  version: 4.17.15
+  resolution: "@types/lodash@npm:4.17.15"
+  checksum: 10c0/2eb2dc6d231f5fb4603d176c08c8d7af688f574d09af47466a179cd7812d9f64144ba74bb32ca014570ffdc544eedc51b7a5657212bad083b6eecbd72223f9bb
   languageName: node
   linkType: hard
 

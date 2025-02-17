@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   Pressable,
   StyleSheet,
@@ -14,6 +15,8 @@ import { TrashIcon } from "../icons/TrashIcon"
 import { HighlightColorPicker } from "./HighlightColorPicker"
 import { useDarkMode } from "../hooks/useColorTheme"
 import { CopyIcon } from "../icons/CopyIcon"
+import { NoteIcon } from "../icons/NoteIcon"
+import { HighlightNoteEditor } from "./HighlightNoteEditor"
 import type { UUID } from "node:crypto"
 
 type Props = {
@@ -33,11 +36,12 @@ export function SelectionMenu({
   existingHighlight,
   onClose,
 }: Props) {
+  const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false)
   const dimensions = useWindowDimensions()
   const { background } = useDarkMode()
   const dispatch = useAppDispatch()
 
-  const numIcons = existingHighlight ? 7 : 6
+  const numIcons = existingHighlight ? 8 : 7
   const panelWidth = numIcons * (24 + 16)
   const leftOffset = Math.max(
     16, // Minimum left padding
@@ -88,6 +92,12 @@ export function SelectionMenu({
         >
           <CopyIcon />
         </Pressable>
+        <Pressable
+          style={styles.noteButton}
+          onPress={() => setIsNoteEditorOpen(true)}
+        >
+          <NoteIcon />
+        </Pressable>
         {existingHighlight && (
           <Pressable
             style={styles.trashButton}
@@ -106,7 +116,19 @@ export function SelectionMenu({
         )}
       </View>
       {existingHighlight && (
-        <TouchableOpacity style={styles.backdrop} onPress={onClose} />
+        <>
+          <TouchableOpacity style={styles.backdrop} onPress={onClose} />
+          {isNoteEditorOpen && <HighlightNoteEditor
+            bookId={bookId}
+            highlightId={existingHighlight.id}
+            initialNote={existingHighlight.note}
+            open={isNoteEditorOpen}
+            onOpenChange={() => {
+              setIsNoteEditorOpen(false)
+              onClose();
+            }}
+          />}
+        </>
       )}
     </>
   )
@@ -148,6 +170,11 @@ const styles = StyleSheet.create({
     margin: 8,
   },
   trashButton: {
+    width: 24,
+    height: 24,
+    margin: 8,
+  },
+  noteButton: {
     width: 24,
     height: 24,
     margin: 8,

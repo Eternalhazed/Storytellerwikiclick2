@@ -54,21 +54,37 @@ export function Highlights() {
               </SizableText>
             )}
             {highlight.locator.text?.highlight && (
-              <SizableText
-                size="$3"
-                fontFamily="$book"
-                fontSize={14}
-                textAlign="justify"
-                lineHeight={14 * 1.4}
-                textDecorationLine="underline"
-                textDecorationStyle="solid"
-                textDecorationColor={
-                  highlightUnderlines[dark ? "dark" : "light"][highlight.color]
-                }
-                bg={highlightTints[dark ? "dark" : "light"][highlight.color]}
-              >
-                {highlight.locator.text.highlight}
-              </SizableText>
+              <>
+                <SizableText
+                  size="$3"
+                  fontFamily="$book"
+                  fontSize={14}
+                  textAlign="justify"
+                  lineHeight={14 * 1.4}
+                  textDecorationLine="underline"
+                  textDecorationStyle="solid"
+                  textDecorationColor={
+                    highlightUnderlines[dark ? "dark" : "light"][highlight.color]
+                  }
+                  bg={highlightTints[dark ? "dark" : "light"][highlight.color]}
+                >
+                  {highlight.locator.text.highlight}
+                </SizableText>
+                {highlight.note && (
+                  <SizableText
+                    size="$3"
+                    fontFamily="$book"
+                    fontSize={13}
+                    textAlign="justify"
+                    lineHeight={13 * 1.4}
+                    color="$gray11"
+                    mt="$2"
+                    ml="$2"
+                  >
+                    {highlight.note}
+                  </SizableText>
+                )}
+              </>
             )}
           </Pressable>
         </View>
