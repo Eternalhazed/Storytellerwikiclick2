@@ -19,10 +19,6 @@ Storyteller-produced ebooks, but it has less robust audiobook features than the
 other hand, it has far more robust library management, sharing, and ebook
 features.
 
-[Colibrio Reader](https://www.colibrio.com/) focuses on preserving authors, publishers and designers original visual style. Links to 
-[Android App](https://play.google.com/store/apps/details?id=com.colibrio.reader&hl=en_US)  & 
-[Web App](https://demo.colibrio.com/) 
-
 To add a Storyteller book to BookFusion, navigate to your Storyteller web
 interface on your mobile device and download the book files that you wish to
 read. Then open the BookFusion app and click on the blue-and-white "upload"
@@ -40,6 +36,17 @@ interface, download the book files you wish to read, and then open the book with
 Thorium Reader either from a file manager or by pressing the "+" button in the
 Thorium Reader interface. To start listening to the book, press the "Activate
 Readaloud" button (speaker icon).
+
+## Colibrio Reader
+
+[Colibrio Reader](https://www.colibrio.com/) focuses on preserving authors,
+publishers and designers original visual style. Links to
+[Android App](https://play.google.com/store/apps/details?id=com.colibrio.reader&hl=en_US)
+&amp; [Web App](https://demo.colibrio.com/)
+
+To add a Storyteller book to Thorium Reader, go to your Storyteller web
+interface, download the book files you wish to read, and then open the book with
+Colibrio by choosing Browse and selecting the downloaded file.
 
 ## Suggestions Are Welcome!
 
