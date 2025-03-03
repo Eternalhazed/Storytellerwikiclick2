@@ -1,13 +1,12 @@
-import { StyleSheet, View, Image } from "react-native"
+import { StyleSheet, View, Image, Pressable } from "react-native"
 import { formatTime, useAudioBook } from "../hooks/useAudioBook"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { getCurrentlyPlayingBook } from "../store/selectors/bookshelfSelectors"
 import { useColorTheme } from "../hooks/useColorTheme"
-import { useState, useEffect, forwardRef, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { ProgressBar } from "./ProgressBar"
 import { playerPositionSeeked } from "../store/slices/bookshelfSlice"
 import { Link } from "expo-router"
-import { Pressable, PressableProps } from "react-native-gesture-handler"
 import { getLocalAudioBookCoverUrl } from "../store/persistence/files"
 import { UIText } from "./UIText"
 import { PlayPause } from "./PlayPause"
@@ -69,7 +68,7 @@ export function MiniPlayerWidget() {
             }}
           >
             <Link href="/player" asChild>
-              <RefablePressable style={styles.details}>
+              <Pressable style={styles.details}>
                 <Image
                   style={{
                     height: 40,
@@ -97,7 +96,7 @@ export function MiniPlayerWidget() {
                     {formattedProgress}
                   </UIText>
                 </View>
-              </RefablePressable>
+              </Pressable>
             </Link>
             <PlayPause isPlaying={isPlaying} isLoading={isLoading} />
           </View>
@@ -106,13 +105,6 @@ export function MiniPlayerWidget() {
     </View>
   )
 }
-
-// Obnoxious hack to quiet ref forwarding warning
-export const RefablePressable = forwardRef<typeof Pressable, PressableProps>(
-  function RefablePressable(props: PressableProps, _ref) {
-    return <Pressable {...props} />
-  },
-)
 
 const styles = StyleSheet.create({
   player: {

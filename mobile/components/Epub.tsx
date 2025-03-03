@@ -167,7 +167,7 @@ export function Epub({ book, locator }: Props) {
       {showInterface && (
         <>
           <Group style={[styles.backButton, { top: insets.top + 6 }]}>
-            <Link href="/" asChild>
+            <Link href="/" replace asChild>
               <Pressable hitSlop={20}>
                 <ChevronLeft color={foreground} />
               </Pressable>
