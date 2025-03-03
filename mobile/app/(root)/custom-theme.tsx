@@ -22,7 +22,7 @@ import { Group } from "../../components/ui/Group"
 import { Button } from "../../components/ui/Button"
 import { useAppDispatch } from "../../store/appState"
 import { preferencesSlice } from "../../store/slices/preferencesSlice"
-import { ButtonGroup, ButtonGroupButton } from "../../components/ButtonGroup"
+import { ButtonGroup, ButtonGroupButton } from "../../components/ui/ButtonGroup"
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,

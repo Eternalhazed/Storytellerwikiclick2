@@ -7,7 +7,7 @@ import {
   defaultPreferences,
   preferencesSlice,
 } from "../store/slices/preferencesSlice"
-import { ButtonGroup, ButtonGroupButton } from "./ButtonGroup"
+import { ButtonGroup, ButtonGroupButton } from "./ui/ButtonGroup"
 import { HighlightColorPicker } from "./HighlightColorPicker"
 import { UIText } from "./UIText"
 import { useColorTheme } from "../hooks/useColorTheme"
@@ -222,68 +222,65 @@ export function ReadingSettings({ bookId }: Props) {
 
       <View style={[styles.field, { gap: spacing[2] }]}>
         <UIText style={styles.label}>Font scaling</UIText>
-        <View style={styles.sliderWrapper}>
-          <Slider
-            style={styles.slider}
-            minimumValue={0.7}
-            maximumValue={1.5}
-            step={0.05}
-            value={preferences.typography.scale}
-            minimumTrackTintColor={colors.primary9}
-            maximumTrackTintColor={surface}
-            thumbImage={require("../assets/slider-thumb-image.png")}
-            onValueChange={(value) => {
-              const update = {
-                typography: {
-                  ...preferences.typography,
-                  // Rounding to hundredths to account for floating point errors
-                  scale: Math.round(value * 100) / 100,
-                },
-              }
-              const action = bookId
-                ? preferencesSlice.actions.bookPreferencesUpdated({
-                    bookId,
-                    prefs: update,
-                  })
-                : preferencesSlice.actions.globalPreferencesUpdated(update)
-              dispatch(action)
-            }}
-          />
-          <UIText>{formatNumber(preferences.typography.scale, 2)}x</UIText>
-        </View>
+        <Slider
+          style={styles.slider}
+          minimumValue={0.7}
+          maximumValue={1.5}
+          step={0.05}
+          value={preferences.typography.scale}
+          minimumTrackTintColor={colors.primary9}
+          maximumTrackTintColor={surface}
+          thumbImage={require("../assets/slider-thumb-image.png")}
+          onValueChange={(value) => {
+            const update = {
+              typography: {
+                ...preferences.typography,
+                // Rounding to hundredths to account for floating point errors
+                scale: Math.round(value * 100) / 100,
+              },
+            }
+            const action = bookId
+              ? preferencesSlice.actions.bookPreferencesUpdated({
+                  bookId,
+                  prefs: update,
+                })
+              : preferencesSlice.actions.globalPreferencesUpdated(update)
+            dispatch(action)
+          }}
+        />
+        <UIText>{formatNumber(preferences.typography.scale, 2)}x</UIText>
       </View>
       <View style={[styles.field, { gap: spacing[2] }]}>
         <UIText style={styles.label}>Line height</UIText>
-        <View style={styles.sliderWrapper}>
-          <Slider
-            style={styles.slider}
-            minimumValue={1.0}
-            maximumValue={2.0}
-            step={0.05}
-            value={preferences.typography.lineHeight}
-            minimumTrackTintColor={colors.primary9}
-            maximumTrackTintColor={surface}
-            thumbImage={require("../assets/slider-thumb-image.png")}
-            onValueChange={(value) => {
-              const update = {
-                typography: {
-                  ...preferences.typography,
-                  // Rounding to hundredths to account for floating point errors
-                  lineHeight: Math.round(value * 100) / 100,
-                },
-              }
-              const action = bookId
-                ? preferencesSlice.actions.bookPreferencesUpdated({
-                    bookId,
-                    prefs: update,
-                  })
-                : preferencesSlice.actions.globalPreferencesUpdated(update)
-              dispatch(action)
-            }}
-          />
-          {/* TODO: Why the fuck is this off screen */}
-          <UIText>{formatNumber(preferences.typography.lineHeight, 2)}x</UIText>
-        </View>
+        <Slider
+          style={styles.slider}
+          minimumValue={1.0}
+          maximumValue={2.0}
+          step={0.05}
+          value={preferences.typography.lineHeight}
+          minimumTrackTintColor={colors.primary9}
+          maximumTrackTintColor={surface}
+          thumbImage={require("../assets/slider-thumb-image.png")}
+          onValueChange={(value) => {
+            const update = {
+              typography: {
+                ...preferences.typography,
+                // Rounding to hundredths to account for floating point errors
+                lineHeight: Math.round(value * 100) / 100,
+              },
+            }
+            const action = bookId
+              ? preferencesSlice.actions.bookPreferencesUpdated({
+                  bookId,
+                  prefs: update,
+                })
+              : preferencesSlice.actions.globalPreferencesUpdated(update)
+            dispatch(action)
+          }}
+        />
+        <UIText style={{ flexGrow: 1 }}>
+          {formatNumber(preferences.typography.lineHeight, 2)}x
+        </UIText>
       </View>
       <View style={styles.field}>
         <UIText style={styles.label}>Text alignment</UIText>
@@ -365,7 +362,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing["1.5"],
   },
   field: {
-    // width: "100%",
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -392,8 +389,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    flexGrow: 1,
-    // flexShrink: 1,
     gap: spacing[1],
   },
   slider: { height: spacing[2], flexGrow: 1 },

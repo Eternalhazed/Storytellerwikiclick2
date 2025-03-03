@@ -69,7 +69,7 @@ export function Epub({ book, locator }: Props) {
       ]}
     >
       <Tabs.Screen options={{ tabBarStyle: { display: "none" } }} />
-      <ToolbarDialogs topInset={insets.top + 6} />
+      <ToolbarDialogs mode="text" topInset={insets.top + 6} />
       {selection && (
         <SelectionMenu
           bookId={book.id}

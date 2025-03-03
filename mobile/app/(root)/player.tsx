@@ -108,7 +108,7 @@ export default function PlayerScreen() {
 
   return (
     <View style={styles.container}>
-      <ToolbarDialogs />
+      <ToolbarDialogs mode="audio" />
       <View style={styles.topbar}>
         {isPresented ? (
           <Pressable

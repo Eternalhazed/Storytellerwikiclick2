@@ -21,6 +21,8 @@ import {
 } from "lucide-react-native"
 import { useColorTheme } from "../hooks/useColorTheme"
 import { Button } from "./ui/Button"
+import { UIText } from "./UIText"
+import { getBookPlayerSpeed } from "../store/selectors/preferencesSelectors"
 
 type Props = {
   mode: "audio" | "text"
@@ -33,6 +35,9 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
     (state) => book && getLocator(state, book.id),
   )
   const openDialog = useAppSelector(getOpenDialog)
+  const currentSpeed = useAppSelector(
+    (state) => book && getBookPlayerSpeed(state, book.id),
+  )
 
   const { foreground, surface } = useColorTheme()
 
@@ -79,7 +84,11 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
             )
           }}
         >
-          <SpedometerIcon />
+          {currentSpeed === 1 ? (
+            <SpedometerIcon />
+          ) : (
+            <UIText>{currentSpeed}x</UIText>
+          )}
         </Button>
 
         <Button

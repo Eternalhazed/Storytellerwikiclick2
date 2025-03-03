@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[1],
     paddingHorizontal: spacing["1.5"],
     borderRadius: spacing.borderRadius,
+    alignItems: "center",
   },
   disabled: { opacity: 0.6 },
 })

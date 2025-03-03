@@ -10,8 +10,6 @@ import { Link } from "expo-router"
 import { apiSlice } from "../../../store/slices/apiSlice"
 import { getDebugLoggingEnabled } from "../../../store/selectors/loggingSelectors"
 import { loggingSlice } from "../../../store/slices/loggingSlice"
-import { UILink } from "../../../components/UILink"
-import { buttonStyles } from "../../../components/Button"
 import { Button } from "../../../components/ui/Button"
 import { ReadingSettings } from "../../../components/ReadingSettings"
 import { spacing } from "../../../components/ui/tokens/spacing"
@@ -42,9 +40,11 @@ export default function Settings() {
               </Button>
             </>
           ) : (
-            <UILink style={buttonStyles.button} href="/server">
-              Choose server
-            </UILink>
+            <Link href="/server" asChild>
+              <Button>
+                <UIText>Choose server</UIText>
+              </Button>
+            </Link>
           )}
         </View>
         {apiBaseUrl && (
@@ -63,8 +63,10 @@ export default function Settings() {
                 </Button>
               </>
             ) : (
-              <Link href="/login" style={buttonStyles.button}>
-                Log in
+              <Link href="/login" asChild>
+                <Button>
+                  <UIText>Log in</UIText>
+                </Button>
               </Link>
             )}
           </View>
@@ -79,7 +81,9 @@ export default function Settings() {
           >
             <UIText>{debugEnabled ? "Disable" : "Enable"} debug logging</UIText>
           </Button>
-          <UILink href="/log">View logs</UILink>
+          <Link href="/log">
+            <UIText>View logs</UIText>
+          </Link>
         </View>
       </ScrollView>
     </View>

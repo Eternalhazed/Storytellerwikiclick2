@@ -39,7 +39,9 @@ export default function ModalLayout() {
         />
         <Stack.Screen
           name="log"
-          options={{ presentation: "fullScreenModal" }}
+          options={{
+            presentation: Platform.isPad ? "fullScreenModal" : "modal",
+          }}
         />
       </Stack>
     )

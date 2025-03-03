@@ -6,7 +6,7 @@ import {
   useMemo,
 } from "react"
 import { StyleSheet, View } from "react-native"
-import { Button, ButtonProps } from "./ui/Button"
+import { Button, ButtonProps } from "./Button"
 
 type ButtonGroupContextValue = {
   onPress: (value: unknown) => void
