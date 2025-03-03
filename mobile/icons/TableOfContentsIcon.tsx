@@ -1,8 +1,8 @@
 import { Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function TableOfContentsIcon() {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return (
     <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">

@@ -1,12 +1,12 @@
 import { Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 type Props = {
   filled?: boolean
 }
 
 export function BookmarkIcon({ filled }: Props) {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return filled ? (
     <Svg height="24px" viewBox="0 -960 960 960" width="24px" fill={foreground}>

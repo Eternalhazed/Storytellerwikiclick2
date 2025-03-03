@@ -35,6 +35,10 @@ export type BookPreferences = {
   typography?: Partial<TypographyPreferences>
   layout?: Partial<LayoutPreferences>
   audio?: Partial<AudioPreferences>
+  detailView?: {
+    mode: "audio" | "text"
+    scope: "chapter" | "book"
+  }
 }
 
 export type PreferencesState = {
@@ -130,6 +134,27 @@ export const preferencesSlice = createSlice({
         ...book,
         ...prefs,
       }
+    },
+    bookDetailImagePressed(state, action: PayloadAction<{ bookId: number }>) {
+      const { bookId } = action.payload
+
+      const book = state.bookPreferences[bookId] ?? {}
+      const detailPrefs = book.detailView ?? { mode: "text", scope: "chapter" }
+      detailPrefs.mode = detailPrefs.mode === "audio" ? "text" : "audio"
+      book.detailView = detailPrefs
+      state.bookPreferences[bookId] = book
+    },
+    bookDetailPositionPressed(
+      state,
+      action: PayloadAction<{ bookId: number }>,
+    ) {
+      const { bookId } = action.payload
+
+      const book = state.bookPreferences[bookId] ?? {}
+      const detailPrefs = book.detailView ?? { mode: "text", scope: "chapter" }
+      detailPrefs.scope = detailPrefs.scope === "book" ? "chapter" : "book"
+      book.detailView = detailPrefs
+      state.bookPreferences[bookId] = book
     },
     bookPreferencesSetAsDefaults(
       state,

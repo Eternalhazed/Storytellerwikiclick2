@@ -2,7 +2,7 @@ import { Pressable, ScrollView, TouchableOpacity, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { UIText } from "./UIText"
 import { useAppDispatch, useAppSelector } from "../store/appState"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { getBookPlayerSpeed } from "../store/selectors/preferencesSelectors"
 import { preferencesSlice } from "../store/slices/preferencesSlice"
 
@@ -13,7 +13,7 @@ type Props = {
 }
 
 export function SpeedMenu({ bookId, topInset, onOutsideTap }: Props) {
-  const { background } = useColorTheme()
+  const { background } = useDarkMode()
 
   const insets = useSafeAreaInsets()
 

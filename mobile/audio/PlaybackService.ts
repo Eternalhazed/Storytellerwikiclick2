@@ -7,7 +7,7 @@ import {
 
 export async function PlaybackService() {
   TrackPlayer.addEventListener(Event.PlaybackProgressUpdated, async () => {
-    const state = await TrackPlayer.getState()
+    const { state } = await TrackPlayer.getPlaybackState()
     if (state !== State.Playing) return
 
     store.dispatch(playerPositionUpdated())

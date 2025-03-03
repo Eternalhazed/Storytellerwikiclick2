@@ -12,7 +12,7 @@ import { useAppDispatch } from "../store/appState"
 import { Highlight, bookshelfSlice } from "../store/slices/bookshelfSlice"
 import { TrashIcon } from "../icons/TrashIcon"
 import { HighlightColorPicker } from "./HighlightColorPicker"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { CopyIcon } from "../icons/CopyIcon"
 import type { UUID } from "node:crypto"
 
@@ -34,7 +34,7 @@ export function SelectionMenu({
   onClose,
 }: Props) {
   const dimensions = useWindowDimensions()
-  const { background } = useColorTheme()
+  const { background } = useDarkMode()
   const dispatch = useAppDispatch()
 
   const numIcons = existingHighlight ? 7 : 6

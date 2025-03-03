@@ -1,8 +1,8 @@
 import { Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function ChevronDownIcon() {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return (
     <Svg width="44" height="44" viewBox="0 0 44 44" fill="none">

@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native"
 import { HighlightTint, highlightTints } from "../colors"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 type Props = {
   style?: ViewStyle | undefined
@@ -9,7 +9,7 @@ type Props = {
 }
 
 export function HighlightColorPicker({ style, value, onChange }: Props) {
-  const { foreground, dark } = useColorTheme()
+  const { foreground, dark } = useDarkMode()
   return (
     <View style={[styles.container, style]}>
       {(

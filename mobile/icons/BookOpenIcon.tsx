@@ -1,9 +1,9 @@
 import { StyleProp, View, ViewStyle } from "react-native"
 import Svg, { G, Path } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function BookOpenIcon({ style }: { style?: StyleProp<ViewStyle> }) {
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
 
   return (
     <View

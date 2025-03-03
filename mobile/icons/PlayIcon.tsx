@@ -1,6 +1,6 @@
 import { StyleProp, View, ViewStyle } from "react-native"
 import { G, Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function PlayIcon({
   fill,
@@ -9,7 +9,7 @@ export function PlayIcon({
   fill?: string
   style?: StyleProp<ViewStyle>
 }) {
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
 
   const fillColor = fill ?? background
 

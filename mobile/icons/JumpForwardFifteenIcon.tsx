@@ -1,8 +1,8 @@
 import { Path, Svg } from "react-native-svg"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 
 export function JumpForwardFifteenIcon() {
-  const { foreground } = useColorTheme()
+  const { foreground } = useDarkMode()
 
   return (
     <Svg width="33" height="32" viewBox="0 0 33 32" fill="none">

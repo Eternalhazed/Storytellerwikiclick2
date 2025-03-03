@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Platform, Pressable, StyleSheet, View } from "react-native"
+import { Platform, Pressable } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Link, Tabs } from "expo-router"
@@ -14,17 +14,15 @@ import {
   EPUBViewRef,
   ReadiumLocator,
 } from "../modules/readium/src/Readium.types"
-import { ChevronLeftIcon } from "../icons/ChevronLeftIcon"
-import { UIText } from "./UIText"
-import { PlayPause } from "./PlayPause"
 import { MiniPlayer } from "./MiniPlayer"
 import { useAudioBook } from "../hooks/useAudioBook"
 import { Toolbar } from "./Toolbar"
-import { ToolbarDialogs } from "./ToolbarDialogs"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import { SelectionMenu } from "./SelectionMenu"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
 import { getFilledBookPreferences } from "../store/selectors/preferencesSelectors"
+import { Button, View, XStack } from "tamagui"
+import { ChevronLeft } from "@tamagui/lucide-icons"
 
 type Props = {
   book: BookshelfBook
@@ -35,7 +33,7 @@ export function Epub({ book, locator }: Props) {
   useKeepAwake()
 
   const hasLoadedRef = useRef(false)
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
   const [activeBookmarks, setActiveBookmarks] = useState<ReadiumLocator[]>([])
   const [activeHighlight, setActiveHighlight] = useState<Highlight | null>(null)
   const preferences = useAppSelector((state) =>
@@ -55,29 +53,11 @@ export function Epub({ book, locator }: Props) {
   const [showInterface, setShowInterface] = useState(true)
   const epubViewRef = useRef<EPUBViewRef | null>(null)
 
-  const {
-    percentComplete,
-    progress,
-    remainingTime,
-    isPlaying,
-    isLoading,
-    startPosition,
-    endPosition,
-  } = useAudioBook()
+  const { isPlaying } = useAudioBook()
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: background },
-        {
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-        },
-      ]}
-    >
+    <View flex={1} paddingTop={insets.top} paddingBottom={insets.bottom}>
       <Tabs.Screen options={{ tabBarStyle: { display: "none" } }} />
-      <ToolbarDialogs topInset={insets.top + 6} />
       {selection && (
         <SelectionMenu
           bookId={book.id}
@@ -92,16 +72,17 @@ export function Epub({ book, locator }: Props) {
         />
       )}
       <View
-        style={[
-          styles.epubWrapper,
-          {
-            top: insets.top + 12,
-          },
-        ]}
+        position="absolute"
+        bottom={80}
+        left={0}
+        right={0}
+        zIndex={1}
+        paddingVertical={Platform.OS === "android" ? 36 : undefined}
+        top={insets.top + 12}
       >
         <EPUBView
           ref={epubViewRef}
-          style={styles.epub}
+          style={{ flex: 1 }}
           bookId={book.id}
           locator={locator}
           highlights={book.highlights}
@@ -173,92 +154,26 @@ export function Epub({ book, locator }: Props) {
         />
       </View>
       {showInterface && (
-        <View style={[styles.backButton, { top: insets.top }]}>
-          <Link href="/" asChild>
-            <Pressable hitSlop={20}>
-              <ChevronLeftIcon />
-            </Pressable>
-          </Link>
-        </View>
-      )}
-      {showInterface && (
-        <View
-          style={[
-            styles.toolbarWrapper,
-            {
-              top: insets.top + 6,
-            },
-          ]}
+        <XStack
+          top={insets.top + 6}
+          position="absolute"
+          left={12}
+          right={12}
+          zi={3}
+          alignItems="center"
+          justifyContent="space-between"
         >
+          <Button chromeless asChild>
+            <Link href="/" asChild>
+              <Pressable hitSlop={20}>
+                <ChevronLeft />
+              </Pressable>
+            </Link>
+          </Button>
           <Toolbar mode="text" activeBookmarks={activeBookmarks} />
-        </View>
+        </XStack>
       )}
-      {!showInterface ? (
-        <View style={styles.playerStatus}>
-          <UIText>
-            {percentComplete}% - {remainingTime} left
-          </UIText>
-          <PlayPause isPlaying={isPlaying} isLoading={isLoading} />
-        </View>
-      ) : (
-        <MiniPlayer
-          book={book}
-          progress={progress}
-          startPosition={startPosition}
-          isPlaying={isPlaying}
-          isLoading={isLoading}
-          endPosition={endPosition}
-          style={styles.miniPlayer}
-        />
-      )}
+      {showInterface && <MiniPlayer book={book} />}
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
-  epubWrapper: {
-    position: "absolute",
-    bottom: 80,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-    ...(Platform.OS === "android" && { paddingVertical: 36 }),
-  },
-  epub: { flex: 1 },
-  backButton: {
-    position: "absolute",
-    flexDirection: "row",
-    alignItems: "center",
-    zIndex: 3,
-  },
-  toolbarWrapper: {
-    flexDirection: "row",
-    position: "absolute",
-    right: 12,
-    zIndex: 3,
-    alignItems: "flex-end",
-  },
-  playerStatus: {
-    position: "absolute",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 24,
-    bottom: 27,
-    left: 12,
-    right: 16,
-    zIndex: 3,
-  },
-  miniPlayer: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 32,
-    zIndex: 3,
-  },
-})

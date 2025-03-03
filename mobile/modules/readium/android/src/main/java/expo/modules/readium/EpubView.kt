@@ -3,37 +3,34 @@ package expo.modules.readium
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.PointF
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.annotation.ColorInt
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
-import kotlinx.serialization.json.Json
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
+import kotlin.math.ceil
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.readium.r2.navigator.DecorableNavigator
 import org.readium.r2.navigator.Decoration
 import org.readium.r2.navigator.ExperimentalDecorator
 import org.readium.r2.navigator.epub.EpubNavigatorFragment
 import org.readium.r2.navigator.epub.EpubPreferences
-import org.readium.r2.navigator.preferences.Color
 import org.readium.r2.navigator.preferences.FontFamily
+import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.extensions.toMap
 import org.readium.r2.shared.publication.Locator
-import kotlin.math.ceil
 
 data class Highlight(val id: String, @ColorInt val color: Int, val locator: Locator)
 
 @SuppressLint("ViewConstructor", "ResourceType")
 @OptIn(ExperimentalDecorator::class)
-class EpubView(context: Context, appContext: AppContext) : ExpoView(context, appContext),
-    EpubNavigatorFragment.Listener, DecorableNavigator.Listener {
+class EpubView(context: Context, appContext: AppContext) :
+        ExpoView(context, appContext), EpubNavigatorFragment.Listener, DecorableNavigator.Listener {
 
     val onLocatorChange by EventDispatcher()
     val onMiddleTouch by EventDispatcher()
@@ -51,11 +48,13 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
     var highlights: List<Highlight> = listOf()
     var bookmarks: List<Locator> = listOf()
     var readaloudColor = 0xffffff00.toInt()
-    var preferences: EpubPreferences = EpubPreferences(
-        fontFamily = FontFamily("Bookerly"),
-        lineHeight = 1.4,
-        paragraphSpacing = 0.5
-    )
+    @OptIn(ExperimentalReadiumApi::class)
+    var preferences: EpubPreferences =
+            EpubPreferences(
+                    fontFamily = FontFamily("Bookerly"),
+                    lineHeight = 1.4,
+                    paragraphSpacing = 0.5
+            )
 
     fun initializeNavigator() {
         if (this.navigator != null) {
@@ -86,17 +85,17 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
         navigator?.addDecorationListener("highlights", this)
 
         activity?.lifecycleScope?.launch {
-            navigator?.currentLocator?.collect {
-                onLocatorChanged(it)
-            }
+            navigator?.currentLocator?.collect { onLocatorChanged(it) }
         }
     }
 
     fun go(locator: Locator) {
-        val navigator = this.navigator ?: run {
-            this.initialLocator = locator
-            return initializeNavigator()
-        }
+        val navigator =
+                this.navigator
+                        ?: run {
+                            this.initialLocator = locator
+                            return initializeNavigator()
+                        }
 
         navigator.go(locator, true)
         if (isPlaying) {
@@ -104,6 +103,7 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
         }
     }
 
+    @OptIn(ExperimentalReadiumApi::class)
     fun updatePreferences() {
         navigator?.submitPreferences(preferences)
     }
@@ -117,14 +117,11 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
     }
 
     fun decorateHighlights() {
-        val decorations = highlights.map {
-            val style = Decoration.Style.Highlight(it.color, isActive = true)
-            return@map Decoration(
-                id = it.id,
-                locator = it.locator,
-                style = style
-            )
-        }
+        val decorations =
+                highlights.map {
+                    val style = Decoration.Style.Highlight(it.color, isActive = true)
+                    return@map Decoration(id = it.id, locator = it.locator, style = style)
+                }
 
         val activity: FragmentActivity? = appContext.currentActivity as FragmentActivity?
         activity?.lifecycleScope?.launch {
@@ -142,14 +139,11 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
         activity?.lifecycleScope?.launch {
             navigator?.applyDecorations(listOf(decoration), "overlay")
         }
-
     }
 
     fun clearHighlightFragment() {
         val activity: FragmentActivity? = appContext.currentActivity as FragmentActivity?
-        activity?.lifecycleScope?.launch {
-            navigator?.applyDecorations(listOf(), "overlay")
-        }
+        activity?.lifecycleScope?.launch { navigator?.applyDecorations(listOf(), "overlay") }
     }
 
     suspend fun findOnPage(locator: Locator) {
@@ -157,12 +151,16 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
         val currentProgression = locator.locations.progression ?: return
 
         val joinedProgressions =
-            bookmarks.mapNotNull { it.locations.progression }.joinToString { it.toString() }
+                bookmarks
+                        .filter { it.href == locator.href }
+                        .mapNotNull { it.locations.progression }
+                        .joinToString { it.toString() }
 
         val jsProgressionsArray = "[${joinedProgressions}]"
 
-        val result = epubNav.evaluateJavascript(
-            """
+        val result =
+                epubNav.evaluateJavascript(
+                        """
             (function() {
                 const maxScreenX = window.orientation === 0 || window.orientation == 180
                         ? screen.width
@@ -170,7 +168,7 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
 
                 function snapOffset(offset) {
                     const value = offset + 1;
-                    
+
                     return value - (value % maxScreenX);
                 }
 
@@ -183,13 +181,15 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
                 );
             })();
             """.trimIndent()
-        ) ?: return onBookmarksActivate(mapOf("activeBookmarks" to listOf<Locator>()))
+                )
+                        ?: return onBookmarksActivate(mapOf("activeBookmarks" to listOf<Locator>()))
 
         val parsed = Json.decodeFromString<List<Double>>(result)
-        val found = bookmarks.filter {
-            val progression = it.locations.progression ?: return@filter false
-            return@filter parsed.contains(progression)
-        }
+        val found =
+                bookmarks.filter {
+                    val progression = it.locations.progression ?: return@filter false
+                    return@filter parsed.contains(progression)
+                }
 
         onBookmarksActivate(mapOf("activeBookmarks" to found.map { it.toJSON().toMap() }))
     }
@@ -198,7 +198,7 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
         val activity: FragmentActivity? = appContext.currentActivity as FragmentActivity?
         activity?.lifecycleScope?.launch {
             navigator?.evaluateJavascript(
-                """
+                    """
                 function addDoubleTapListeners() {
                     let storytellerDoubleClickTimeout = null;
                     let storytellerTouchMoved = false;
@@ -213,7 +213,7 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
                         });
                         element.addEventListener('touchend', (event) => {
                             if (storytellerTouchMoved || !document.getSelection().isCollapsed || event.changedTouches.length !== 1) return;
-                
+
                             event.bubbles = true
                             event.clientX = event.changedTouches[0].clientX
                             event.clientY = event.changedTouches[0].clientY
@@ -235,7 +235,7 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
                         })
                     }
                 }
-            
+
                 document.addEventListener('selectionchange', () => {
                     if (document.getSelection().isCollapsed) {
                         storyteller.handleSelectionCleared();
@@ -291,12 +291,12 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
 
             val locator = this.locator ?: this.navigator?.currentLocator?.value ?: return
             val fragments = bookService?.getFragments(bookId, locator) ?: return
-    
+
             val joinedFragments = fragments.joinToString { "\"${it.fragment}\"" }
             val jsFragmentsArray = "[${joinedFragments}]"
 
             navigator?.evaluateJavascript(
-                """
+                    """
                 globalThis.storytellerFragments = ${jsFragmentsArray};
                 addDoubleTapListeners();
             """.trimIndent()
@@ -305,8 +305,9 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
 
         Log.d("EpubView", "Navigated to ${locator.locations.position}")
 
-        val result = navigator?.evaluateJavascript(
-            """
+        val result =
+                navigator?.evaluateJavascript(
+                        """
             (function() {
                 function isEntirelyOnScreen(element) {
                     const rects = element.getClientRects();
@@ -329,16 +330,17 @@ class EpubView(context: Context, appContext: AppContext) : ExpoView(context, app
                 return null;
             })();
         """.trimIndent()
-        )
+                )
         Log.d("EpubView", "result: $result")
         if (result == null) {
             return onLocatorChange(locator.toJSON().toMap())
         }
-        val fragment = Json.decodeFromString<String?>(result)
-            ?: return onLocatorChange(locator.toJSON().toMap())
+        val fragment =
+                Json.decodeFromString<String?>(result)
+                        ?: return onLocatorChange(locator.toJSON().toMap())
 
         val fragmentsLocator =
-            locator.copy(locations = locator.locations.copy(fragments = listOf(fragment)))
+                locator.copy(locations = locator.locations.copy(fragments = listOf(fragment)))
         onLocatorChange(fragmentsLocator.toJSON().toMap())
 
         this.locator = locator

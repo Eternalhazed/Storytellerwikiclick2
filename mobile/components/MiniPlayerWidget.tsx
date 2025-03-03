@@ -1,16 +1,29 @@
-import { StyleSheet, View } from "react-native"
-import { MiniPlayer } from "./MiniPlayer"
+import { Image, Pressable, StyleSheet } from "react-native"
 import { useAudioBook } from "../hooks/useAudioBook"
-import { useAppSelector } from "../store/appState"
+import { useAppDispatch, useAppSelector } from "../store/appState"
 import { getCurrentlyPlayingBook } from "../store/selectors/bookshelfSelectors"
-import { useColorTheme } from "../hooks/useColorTheme"
+import { useDarkMode } from "../hooks/useColorTheme"
+import { Link } from "expo-router"
+import { useState, useEffect } from "react"
+import { getLocalAudioBookCoverUrl } from "../store/persistence/files"
+import { playerPositionSeeked } from "../store/slices/bookshelfSlice"
+import { PlayPause } from "./PlayPause"
+import { ProgressBar } from "./ProgressBar"
+import { SizableText, View } from "tamagui"
 
 export function MiniPlayerWidget() {
-  const { foreground, background } = useColorTheme()
+  const { foreground, background } = useDarkMode()
 
   const book = useAppSelector(getCurrentlyPlayingBook)
   const { isPlaying, isLoading, progress, startPosition, endPosition } =
     useAudioBook()
+
+  const dispatch = useAppDispatch()
+  const [eagerProgress, setEagerProgress] = useState(progress)
+
+  useEffect(() => {
+    setEagerProgress(progress)
+  }, [progress])
 
   return (
     <View
@@ -19,14 +32,53 @@ export function MiniPlayerWidget() {
         { backgroundColor: background, shadowColor: foreground },
       ]}
     >
-      <MiniPlayer
-        book={book}
-        isPlaying={isPlaying}
-        isLoading={isLoading}
-        progress={progress}
-        startPosition={startPosition}
-        endPosition={endPosition}
-      />
+      {book && (
+        <View>
+          <ProgressBar
+            start={startPosition}
+            stop={endPosition}
+            progress={eagerProgress}
+            onProgressChange={(value) => {
+              setEagerProgress(value)
+              dispatch(playerPositionSeeked({ progress: value }))
+            }}
+          />
+
+          <View
+            py={15}
+            pl={15}
+            pr="$4"
+            flexDirection="row"
+            alignItems="center"
+            justifyContent="space-between"
+            gap="$3"
+          >
+            <Link href="/player" asChild>
+              <Pressable
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <Image
+                  style={{
+                    height: 40,
+                    width: 40,
+                    borderRadius: 4,
+                  }}
+                  source={{ uri: getLocalAudioBookCoverUrl(book.id) }}
+                />
+                <SizableText size="$3.5" flex={1} numberOfLines={2}>
+                  {book.title}
+                </SizableText>
+              </Pressable>
+            </Link>
+            <PlayPause isPlaying={isPlaying} isLoading={isLoading} />
+          </View>
+        </View>
+      )}
     </View>
   )
 }
