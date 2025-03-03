@@ -1,4 +1,5 @@
 export const fontSizes = {
+  "2xs": { fontSize: 8, lineHeight: 10 },
   xs: { fontSize: 12, lineHeight: 16 },
   sm: { fontSize: 14, lineHeight: 20 },
   base: { fontSize: 16, lineHeight: 24 },

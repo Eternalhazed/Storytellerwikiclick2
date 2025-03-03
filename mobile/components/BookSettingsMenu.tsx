@@ -21,7 +21,7 @@ type Props = {
 export function BookSettingsMenu({ bookId }: Props) {
   const insets = useSafeAreaInsets()
   const dimensions = useWindowDimensions()
-  const { background, foreground } = useColorTheme()
+  const { background, foreground, surface } = useColorTheme()
   const dispatch = useAppDispatch()
 
   return (
@@ -32,6 +32,7 @@ export function BookSettingsMenu({ bookId }: Props) {
           bottom: insets.bottom,
           backgroundColor: background,
           shadowColor: foreground,
+          borderColor: surface,
         },
       ]}
     >
@@ -67,7 +68,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
     borderWidth: 1,
-    borderColor: "#AAA",
     borderBottomColor: "transparent",
     paddingHorizontal: 24,
     paddingTop: 16,
