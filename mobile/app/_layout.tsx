@@ -93,6 +93,8 @@ export default function Layout() {
     return
   }, [])
 
+  // console.log(usePathname())
+
   return (
     <GestureHandlerRootView>
       <Provider store={store}>

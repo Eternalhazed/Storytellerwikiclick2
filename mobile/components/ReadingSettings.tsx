@@ -20,6 +20,8 @@ import { useMemo } from "react"
 import { colors } from "./ui/tokens/colors"
 import { fontSizes } from "./ui/tokens/fontSizes"
 import { spacing } from "./ui/tokens/spacing"
+import { PlusIcon } from "lucide-react-native"
+import { Link } from "expo-router"
 
 type Props = {
   bookId?: number
@@ -38,7 +40,7 @@ export function ReadingSettings({ bookId }: Props) {
     [globalPreferences, preferences],
   )
 
-  const { foreground, dark } = useColorTheme()
+  const { foreground, dark, surface } = useColorTheme()
   const dispatch = useAppDispatch()
 
   return (
@@ -73,6 +75,7 @@ export function ReadingSettings({ bookId }: Props) {
           darkTheme={dark}
           value={preferences.lightTheme}
           useNativeAndroidPickerStyle={false}
+          placeholder={{}}
           onValueChange={(value) => {
             dispatch(
               preferencesSlice.actions.globalPreferencesUpdated({
@@ -102,6 +105,7 @@ export function ReadingSettings({ bookId }: Props) {
           darkTheme={dark}
           value={preferences.darkTheme}
           useNativeAndroidPickerStyle={false}
+          placeholder={{}}
           onValueChange={(value) => {
             dispatch(
               preferencesSlice.actions.globalPreferencesUpdated({
@@ -125,6 +129,13 @@ export function ReadingSettings({ bookId }: Props) {
           }}
         />
       </View>
+      <Link
+        href="/custom-theme"
+        style={{ flexDirection: "row", alignItems: "center" }}
+      >
+        <PlusIcon color={colors.primary9} size={spacing[2]} />
+        <UIText style={{ color: colors.primary9 }}> Custom theme</UIText>
+      </Link>
       <View
         style={[
           styles.field,
@@ -144,25 +155,51 @@ export function ReadingSettings({ bookId }: Props) {
           }}
         />
       </View>
-      <View style={styles.typographyHeaderContainer}>
+      <View
+        style={
+          bookId
+            ? styles.bookTypographyHeaderContainer
+            : styles.typographyHeaderContainer
+        }
+      >
         <UIText style={styles.subsubheading}>
           Typography{!bookId && " defaults"}
         </UIText>
         {bookId ? (
-          <Pressable
-            disabled={dirty}
-            onPress={() => {
-              dispatch(
-                preferencesSlice.actions.bookPreferencesSetAsDefaults({
-                  bookId,
-                }),
-              )
-            }}
-          >
-            <UIText style={dirty ? styles.disabled : styles.pressable}>
-              Set as defaults
-            </UIText>
-          </Pressable>
+          <View style={styles.typographyControls}>
+            <Pressable
+              disabled={dirty}
+              onPress={() => {
+                dispatch(
+                  preferencesSlice.actions.bookPreferencesSetAsDefaults({
+                    bookId,
+                  }),
+                )
+              }}
+            >
+              <UIText style={dirty ? styles.disabled : styles.pressable}>
+                Set as defaults
+              </UIText>
+            </Pressable>
+            <Pressable
+              disabled={
+                preferences.typography === defaultPreferences.typography
+              }
+              onPress={() => {
+                dispatch(preferencesSlice.actions.typographyPreferencesReset())
+              }}
+            >
+              <UIText
+                style={
+                  preferences.typography === defaultPreferences.typography
+                    ? styles.disabled
+                    : styles.pressable
+                }
+              >
+                Reset to defaults
+              </UIText>
+            </Pressable>
+          </View>
         ) : (
           <Pressable
             disabled={preferences.typography === defaultPreferences.typography}
@@ -183,8 +220,8 @@ export function ReadingSettings({ bookId }: Props) {
         )}
       </View>
 
-      <View style={styles.field}>
-        <UIText style={[styles.label, { flexGrow: 1 }]}>Font scaling</UIText>
+      <View style={[styles.field, { gap: spacing[2] }]}>
+        <UIText style={styles.label}>Font scaling</UIText>
         <View style={styles.sliderWrapper}>
           <Slider
             style={styles.slider}
@@ -193,8 +230,8 @@ export function ReadingSettings({ bookId }: Props) {
             step={0.05}
             value={preferences.typography.scale}
             minimumTrackTintColor={colors.primary9}
-            maximumTrackTintColor="#EAEAEA"
-            thumbTintColor={colors.primary9}
+            maximumTrackTintColor={surface}
+            thumbImage={require("../assets/slider-thumb-image.png")}
             onValueChange={(value) => {
               const update = {
                 typography: {
@@ -215,8 +252,8 @@ export function ReadingSettings({ bookId }: Props) {
           <UIText>{formatNumber(preferences.typography.scale, 2)}x</UIText>
         </View>
       </View>
-      <View style={styles.field}>
-        <UIText style={[styles.label, { flexGrow: 1 }]}>Line height</UIText>
+      <View style={[styles.field, { gap: spacing[2] }]}>
+        <UIText style={styles.label}>Line height</UIText>
         <View style={styles.sliderWrapper}>
           <Slider
             style={styles.slider}
@@ -225,8 +262,8 @@ export function ReadingSettings({ bookId }: Props) {
             step={0.05}
             value={preferences.typography.lineHeight}
             minimumTrackTintColor={colors.primary9}
-            maximumTrackTintColor={colors.gray2}
-            thumbTintColor={colors.primary9}
+            maximumTrackTintColor={surface}
+            thumbImage={require("../assets/slider-thumb-image.png")}
             onValueChange={(value) => {
               const update = {
                 typography: {
@@ -244,6 +281,7 @@ export function ReadingSettings({ bookId }: Props) {
               dispatch(action)
             }}
           />
+          {/* TODO: Why the fuck is this off screen */}
           <UIText>{formatNumber(preferences.typography.lineHeight, 2)}x</UIText>
         </View>
       </View>
@@ -327,7 +365,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing["1.5"],
   },
   field: {
-    width: "100%",
+    // width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -335,12 +373,15 @@ const styles = StyleSheet.create({
   },
   label: {
     ...fontSizes.lg,
+    flexGrow: 0,
   },
   typographyHeaderContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
+  bookTypographyHeaderContainer: {},
+  typographyControls: { flexDirection: "row", justifyContent: "space-between" },
   pressable: {
     color: colors.primary9,
   },
@@ -351,7 +392,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    flexGrow: 3,
+    flexGrow: 1,
+    // flexShrink: 1,
+    gap: spacing[1],
   },
-  slider: { height: spacing[2], flexBasis: 200 },
+  slider: { height: spacing[2], flexGrow: 1 },
 })

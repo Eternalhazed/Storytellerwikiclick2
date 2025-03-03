@@ -33,7 +33,16 @@ export async function readGlobalPreferences(): Promise<null | Omit<
 
   // Ensure that new default themes get added to user preferences
   defaultPreferences.colorThemes.forEach((theme) => {
-    if (preferences.colorThemes.some((t) => t.name === theme.name)) return
+    const existingTheme = preferences.colorThemes.find(
+      (t) => t.name === theme.name,
+    )
+    if (existingTheme) {
+      existingTheme.background = theme.background
+      existingTheme.foreground = theme.foreground
+      existingTheme.isDark = theme.isDark
+      existingTheme.surface = theme.surface
+      return
+    }
 
     preferences.colorThemes.push(theme)
   })

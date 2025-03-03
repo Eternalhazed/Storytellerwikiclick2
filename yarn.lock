@@ -8555,6 +8555,7 @@ __metadata:
     react-native-uuid: "npm:^2.0.2"
     react-native-webview: "npm:13.12.5"
     react-redux: "npm:^8.1.2"
+    reanimated-color-picker: "npm:^3.0.6"
     redux-logger: "npm:^3.0.6"
     redux-saga: "npm:^1.2.3"
     typescript: "npm:^5.3.0"
@@ -25340,6 +25341,22 @@ __metadata:
   version: 0.2.0
   resolution: "real-require@npm:0.2.0"
   checksum: 10c0/23eea5623642f0477412ef8b91acd3969015a1501ed34992ada0e3af521d3c865bb2fe4cdbfec5fe4b505f6d1ef6a03e5c3652520837a8c3b53decff7e74b6a0
+  languageName: node
+  linkType: hard
+
+"reanimated-color-picker@npm:^3.0.6":
+  version: 3.0.6
+  resolution: "reanimated-color-picker@npm:3.0.6"
+  peerDependencies:
+    expo: ">=44.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: ">=2.0.0"
+    react-native-reanimated: ^2.0.0 || ^3.0.0
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 10c0/06a52913c33361f10757379a34a234f0cdb40dc157e016e0b87bc051a3ceb0d94e3f656aa89c39f079af7bcb977588830e7440ee5dbcc0203494b50238983343
   languageName: node
   linkType: hard
 

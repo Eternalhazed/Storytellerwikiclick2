@@ -11,8 +11,10 @@ import { apiSlice } from "../../../store/slices/apiSlice"
 import { getDebugLoggingEnabled } from "../../../store/selectors/loggingSelectors"
 import { loggingSlice } from "../../../store/slices/loggingSlice"
 import { UILink } from "../../../components/UILink"
-import { Button, buttonStyles } from "../../../components/Button"
+import { buttonStyles } from "../../../components/Button"
+import { Button } from "../../../components/ui/Button"
 import { ReadingSettings } from "../../../components/ReadingSettings"
+import { spacing } from "../../../components/ui/tokens/spacing"
 
 export default function Settings() {
   const { top } = useSafeAreaInsets()
@@ -31,6 +33,7 @@ export default function Settings() {
               <UIText>Logged in to:</UIText>
               <UIText>{apiBaseUrl}</UIText>
               <Button
+                style={styles.button}
                 onPress={() => {
                   dispatch(apiSlice.actions.changeServerButtonTapped())
                 }}
@@ -51,6 +54,7 @@ export default function Settings() {
                 <UIText>Logged in as:</UIText>
                 <UIText>{username}</UIText>
                 <Button
+                  style={styles.button}
                   onPress={() => {
                     dispatch(authSlice.actions.logoutButtonTapped())
                   }}
@@ -75,7 +79,7 @@ export default function Settings() {
           >
             <UIText>{debugEnabled ? "Disable" : "Enable"} debug logging</UIText>
           </Button>
-          <UILink href="log">View logs</UILink>
+          <UILink href="/log">View logs</UILink>
         </View>
       </ScrollView>
     </View>
@@ -100,5 +104,8 @@ const styles = StyleSheet.create({
   },
   scrollview: {
     width: "100%",
+  },
+  button: {
+    marginVertical: spacing[1],
   },
 })

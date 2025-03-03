@@ -1,5 +1,5 @@
 import { Link } from "expo-router"
-import { Platform, Pressable, StyleSheet, View } from "react-native"
+import { Platform, StyleSheet, View } from "react-native"
 import { SpedometerIcon } from "../icons/SpedometerIcon"
 import { useAppDispatch, useAppSelector } from "../store/appState"
 import {
@@ -20,6 +20,7 @@ import {
   TableOfContents,
 } from "lucide-react-native"
 import { useColorTheme } from "../hooks/useColorTheme"
+import { Button } from "./ui/Button"
 
 type Props = {
   mode: "audio" | "text"
@@ -33,7 +34,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
   )
   const openDialog = useAppSelector(getOpenDialog)
 
-  const { foreground } = useColorTheme()
+  const { foreground, surface } = useColorTheme()
 
   const dispatch = useAppDispatch()
 
@@ -43,11 +44,14 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
     <>
       <View style={styles.toolbar}>
         {mode === "text" && (
-          <Pressable
+          <Button
+            chromeless
             style={[
               styles.toolbarButton,
               styles.settingsButton,
-              openDialog === ToolbarDialog.SETTINGS && styles.activeButton,
+              openDialog === ToolbarDialog.SETTINGS && {
+                backgroundColor: surface,
+              },
             ]}
             onPress={() => {
               dispatch(
@@ -58,14 +62,15 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
             }}
           >
             <ALargeSmall color={foreground} />
-          </Pressable>
+          </Button>
         )}
 
-        <Pressable
+        <Button
           style={[
             styles.toolbarButton,
-            openDialog === ToolbarDialog.SPEED && styles.activeButton,
+            openDialog === ToolbarDialog.SPEED && { backgroundColor: surface },
           ]}
+          chromeless
           onPress={() => {
             dispatch(
               toolbarSlice.actions.dialogToggled({
@@ -75,10 +80,10 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
           }}
         >
           <SpedometerIcon />
-        </Pressable>
+        </Button>
 
-        <Pressable
-          disabled={!currentLocator}
+        <Button
+          chromeless
           onPress={() => {
             if (activeBookmarks.length) {
               dispatch(
@@ -102,13 +107,15 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
           ) : (
             <Bookmark color={foreground} />
           )}
-        </Pressable>
+        </Button>
 
-        <Pressable
+        <Button
+          chromeless
           style={[
             styles.toolbarButton,
-            openDialog === ToolbarDialog.TABLE_OF_CONTENTS &&
-              styles.activeButton,
+            openDialog === ToolbarDialog.TABLE_OF_CONTENTS && {
+              backgroundColor: surface,
+            },
           ]}
           onPress={() => {
             dispatch(
@@ -119,13 +126,13 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
           }}
         >
           <TableOfContents color={foreground} />
-        </Pressable>
+        </Button>
         {mode === "audio" ? (
           <Link
             style={[styles.toolbarButton, styles.bookLink]}
             href={{ pathname: "/book/[id]", params: { id: book.id } }}
           >
-            <BookOpen color={foreground} />
+            <BookOpen style={{ marginBottom: -4 }} color={foreground} />
           </Link>
         ) : (
           <Link

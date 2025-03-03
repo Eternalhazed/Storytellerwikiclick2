@@ -31,6 +31,12 @@ export default function ModalLayout() {
           }}
         />
         <Stack.Screen
+          name="custom-theme"
+          options={{
+            presentation: Platform.isPad ? "fullScreenModal" : "modal",
+          }}
+        />
+        <Stack.Screen
           name="log"
           options={{ presentation: "fullScreenModal" }}
         />
@@ -44,6 +50,14 @@ export default function ModalLayout() {
     <JsStack screenOptions={{ headerShown: false }}>
       <JsStack.Screen
         name="player"
+        options={{
+          presentation: "modal",
+          gestureEnabled: true,
+          ...TransitionPresets.ModalPresentationIOS,
+        }}
+      />
+      <JsStack.Screen
+        name="custom-theme"
         options={{
           presentation: "modal",
           gestureEnabled: true,

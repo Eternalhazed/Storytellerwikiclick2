@@ -66,9 +66,9 @@ export const defaultPreferences: Omit<PreferencesState, "bookPreferences"> = {
     },
     {
       name: "Sepia",
-      foreground: colors.yellow0,
-      background: colors.yellow9,
-      surface: colors.yellow2,
+      foreground: colors.brown9,
+      background: colors.yellow0,
+      surface: colors.brown2,
       isDark: false,
     },
     {
@@ -185,6 +185,9 @@ export const preferencesSlice = createSlice({
     },
     typographyPreferencesReset(state) {
       state.typography = defaultPreferences.typography
+    },
+    customThemeSaved(state, action: PayloadAction<{ theme: ColorTheme }>) {
+      state.colorThemes.push(action.payload.theme)
     },
   },
 })

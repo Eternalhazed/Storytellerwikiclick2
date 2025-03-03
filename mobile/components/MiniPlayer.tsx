@@ -218,6 +218,11 @@ export function MiniPlayer({ book }: Props) {
     bookPrefs && (
       <View style={styles.container}>
         <ProgressBar
+          style={
+            bookPrefs?.detailView?.scope === "book"
+              ? undefined
+              : { marginTop: -18, marginBottom: -18 }
+          }
           start={progressStart}
           stop={progressEnd}
           progress={eagerProgress}
