@@ -24,6 +24,7 @@ export default function ModalLayout() {
   if (Platform.OS === "ios") {
     return (
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="player"
           options={{
@@ -48,6 +49,7 @@ export default function ModalLayout() {
   // sheet, so on Android we fall back to the legacy JS stack
   return (
     <JsStack screenOptions={{ headerShown: false }}>
+      <JsStack.Screen name="(tabs)" />
       <JsStack.Screen
         name="player"
         options={{

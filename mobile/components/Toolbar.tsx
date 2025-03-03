@@ -130,7 +130,8 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
         {mode === "audio" ? (
           <Link
             style={[styles.toolbarButton, styles.bookLink]}
-            href={{ pathname: "/book/[id]", params: { id: book.id } }}
+            // href={{ pathname: "/book/[id]", params: { id: book.id } }}
+            href="/settings"
           >
             <BookOpen style={{ marginBottom: -4 }} color={foreground} />
           </Link>
