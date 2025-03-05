@@ -1,4 +1,4 @@
-import { Link, router } from "expo-router"
+import { router } from "expo-router"
 import {
   Image,
   Platform,
@@ -98,8 +98,6 @@ export default function PlayerScreen() {
     updateStats()
   }, [])
 
-  const isPresented = router.canGoBack()
-
   if (!book) return null
 
   const title = book.manifest.toc?.find((link) =>
@@ -110,20 +108,14 @@ export default function PlayerScreen() {
     <View style={styles.container}>
       <ToolbarDialogs mode="audio" />
       <View style={styles.topbar}>
-        {isPresented ? (
-          <Pressable
-            hitSlop={20}
-            onPress={() => {
-              router.back()
-            }}
-          >
-            <ChevronDownIcon />
-          </Pressable>
-        ) : (
-          <Link href="/">
-            <ChevronDownIcon />
-          </Link>
-        )}
+        <Pressable
+          hitSlop={20}
+          onPress={() => {
+            router.back()
+          }}
+        >
+          <ChevronDownIcon />
+        </Pressable>
         <Toolbar mode="audio" activeBookmarks={activeBookmarks} />
       </View>
 

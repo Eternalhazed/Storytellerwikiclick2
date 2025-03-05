@@ -64,9 +64,17 @@ export function MiniPlayer({ book }: Props) {
     getBookPreferences(state, book.id),
   )
   const { isPlaying, isLoading, track, total } = useAudioBook()
+  const trackPositionRef = useRef(track.position)
+  trackPositionRef.current = track.position
 
   const dispatch = useAppDispatch()
   const [eagerProgress, setEagerProgress] = useState(track.position)
+
+  useEffect(() => {
+    if (!isLoading) {
+      setEagerProgress(trackPositionRef.current)
+    }
+  }, [isLoading])
 
   const syncEagerProgress = useMemo(() => {
     return debounce(() => {
