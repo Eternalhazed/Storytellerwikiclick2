@@ -21,38 +21,7 @@ import { getBookPreferences } from "../store/selectors/preferencesSelectors"
 import { spacing } from "./ui/tokens/spacing"
 import { preferencesSlice } from "../store/slices/preferencesSlice"
 import { fontSizes } from "./ui/tokens/fontSizes"
-
-export function debounce<A extends unknown[]>(
-  func: (...args: A) => void,
-  wait?: number,
-  leading?: boolean,
-): ((...args: A) => void) & {
-  cancel: () => void
-} {
-  let timeout: NodeJS.Timeout | null
-  let isCancelled = false
-
-  function debounced(this: unknown, ...args: A): void {
-    isCancelled = false
-    if (leading && !timeout) {
-      func.apply(this, args)
-    }
-    if (timeout) clearTimeout(timeout)
-    timeout = setTimeout(() => {
-      timeout = null
-      if (!(leading || isCancelled)) {
-        func.apply(this, args)
-      }
-      isCancelled = false
-    }, wait)
-  }
-
-  debounced.cancel = () => {
-    isCancelled = true
-  }
-
-  return debounced
-}
+import { debounce } from "../debounce"
 
 type Props = {
   book: BookshelfBook
@@ -69,12 +38,6 @@ export function MiniPlayer({ book }: Props) {
 
   const dispatch = useAppDispatch()
   const [eagerProgress, setEagerProgress] = useState(track.position)
-
-  useEffect(() => {
-    if (!isLoading) {
-      setEagerProgress(trackPositionRef.current)
-    }
-  }, [isLoading])
 
   const syncEagerProgress = useMemo(() => {
     return debounce(() => {
