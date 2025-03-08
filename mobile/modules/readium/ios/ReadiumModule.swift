@@ -197,6 +197,8 @@ public class ReadiumModule: Module {
             }
 
             Prop("fontFamily") { (view: EPUBView, prop: String) in
+            // TODO: See if we can use model.css.update(with: settings)
+            // or something to dynamically add font family declarations?
                 view.preferences = view.preferences.merging(EPUBPreferences(
                     fontFamily: FontFamily(rawValue: prop)
                 ))

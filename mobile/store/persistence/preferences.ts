@@ -11,7 +11,7 @@ import {
 
 export async function readGlobalPreferences(): Promise<null | Omit<
   PreferencesState,
-  "bookPreferences"
+  "bookPreferences" | "customFonts"
 >> {
   const stored = await AsyncStorage.getItem("preferences")
   if (!stored) return null

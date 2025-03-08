@@ -22,6 +22,7 @@ import { fontSizes } from "./ui/tokens/fontSizes"
 import { spacing } from "./ui/tokens/spacing"
 import { PlusIcon } from "lucide-react-native"
 import { Link } from "expo-router"
+import { FontLoader } from "./FontLoader"
 
 type Props = {
   bookId?: number
@@ -330,6 +331,10 @@ export function ReadingSettings({ bookId }: Props) {
             { label: "Bookerly", value: "Bookerly" },
             { label: "Literata", value: "Literata" },
             { label: "OpenDyslexic", value: "OpenDyslexic" },
+            ...globalPreferences.customFonts.map((font) => ({
+              label: font.name,
+              value: font.name,
+            })),
           ]}
           style={{
             inputIOS: {
@@ -341,6 +346,7 @@ export function ReadingSettings({ bookId }: Props) {
           }}
         />
       </View>
+      <FontLoader />
     </View>
   )
 }

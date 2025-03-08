@@ -48,6 +48,12 @@ export type BookPreferences = {
   }
 }
 
+export type CustomFont = {
+  uri: string
+  name: string
+  type: "ttf" | "otf"
+}
+
 export type PreferencesState = {
   darkMode: boolean | "auto"
   colorThemes: ColorTheme[]
@@ -57,6 +63,7 @@ export type PreferencesState = {
   layout: LayoutPreferences
   readaloudColor: HighlightTint
   bookPreferences: Record<number, BookPreferences>
+  customFonts: CustomFont[]
 }
 
 export const defaultPreferences: Omit<PreferencesState, "bookPreferences"> = {
@@ -113,6 +120,7 @@ export const defaultPreferences: Omit<PreferencesState, "bookPreferences"> = {
     animation: true,
   },
   readaloudColor: "yellow",
+  customFonts: [],
 }
 
 const initialState: PreferencesState = {
@@ -206,6 +214,12 @@ export const preferencesSlice = createSlice({
     customThemeSaved(state, action: PayloadAction<{ theme: ColorTheme }>) {
       state.colorThemes.push(action.payload.theme)
     },
+    customFontLoaded(state, action: PayloadAction<{ fontUrl: string }>) {
+      const { fontUrl } = action.payload
+
+      const font = parseCustomFont(fontUrl)
+      state.customFonts.push(font)
+    },
   },
   extraReducers(builder) {
     builder.addCase(
@@ -220,3 +234,16 @@ export const preferencesSlice = createSlice({
     )
   },
 })
+
+export function parseCustomFont(fontUrl: string): CustomFont {
+  const segments = fontUrl.split("/")
+  const filename = segments[segments.length - 1]!
+  const extDot = filename.lastIndexOf(".")
+  const name = filename.slice(0, extDot)
+  const ext = filename.slice(extDot + 1)
+  return {
+    uri: fontUrl,
+    name,
+    type: ext as "ttf" | "otf",
+  }
+}
