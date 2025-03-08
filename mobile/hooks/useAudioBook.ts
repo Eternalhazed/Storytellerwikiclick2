@@ -7,8 +7,12 @@ import TrackPlayer, {
   useTrackPlayerEvents,
 } from "react-native-track-player"
 import { useAppSelector } from "../store/appState"
-import { getIsAudioLoading } from "../store/selectors/bookshelfSelectors"
+import {
+  getCurrentlyPlayingBook,
+  getIsAudioLoading,
+} from "../store/selectors/bookshelfSelectors"
 import { BookshelfTrack } from "../store/slices/bookshelfSlice"
+import { getBookPlayerSpeed } from "../store/selectors/preferencesSelectors"
 
 const events = [Event.PlaybackState, Event.PlaybackActiveTrackChanged]
 
@@ -49,6 +53,12 @@ export function useAudioBook() {
   const { position, duration } = useProgress()
 
   const { state: playerState } = usePlaybackState()
+
+  const book = useAppSelector(getCurrentlyPlayingBook)
+  const currentSpeed = useAppSelector(
+    (state) => (book && getBookPlayerSpeed(state, book.id)) ?? 1,
+  )
+
   const isPlaying = playerState === State.Playing
 
   const total = useMemo(() => {
@@ -66,9 +76,12 @@ export function useAudioBook() {
     )
   }, [currentTrack, currentTrackIndex, position, tracks])
 
+  const rateAdjustedRemaining = remaining / currentSpeed
   const percentComplete = Math.round(((total - remaining) / total) * 100)
-  const remainingHours = Math.floor(remaining / 3600)
-  const remainingMinutes = Math.floor(remaining / 60 - remainingHours * 60)
+  const remainingHours = Math.floor(rateAdjustedRemaining / 3600)
+  const remainingMinutes = Math.floor(
+    rateAdjustedRemaining / 60 - remainingHours * 60,
+  )
   const remainingTime = `${remainingHours} hours ${remainingMinutes} minutes`
 
   return {
