@@ -1,13 +1,5 @@
 import { router } from "expo-router"
-import {
-  Image,
-  Platform,
-  Pressable,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from "react-native"
-import { ScrollView } from "react-native-gesture-handler"
+import { Image, Platform, Pressable, StyleSheet, View } from "react-native"
 import { ChevronDownIcon } from "../../icons/ChevronDownIcon"
 import { useAppDispatch, useAppSelector } from "../../store/appState"
 import { UIText } from "../../components/UIText"
@@ -44,7 +36,6 @@ import { fontSizes } from "../../components/ui/tokens/fontSizes"
 const events = [Event.PlaybackState, Event.PlaybackActiveTrackChanged]
 
 export default function PlayerScreen() {
-  const dimensions = useWindowDimensions()
   const book = useAppSelector(getCurrentlyPlayingBook)
   const timestampedLocator = useAppSelector(
     (state) => book && getLocator(state, book.id),
@@ -153,20 +144,10 @@ export default function PlayerScreen() {
         <Toolbar mode="audio" activeBookmarks={activeBookmarks} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Native modals have dark backgrounds on iOS, set the status bar to light content. */}
-        {/* <StatusBar style="light" /> */}
+      <View style={styles.scrollContent}>
         {isLoading && <LoadingView />}
         <Image
-          style={[
-            styles.cover,
-            {
-              width: Math.min(
-                dimensions.width - spacing[3],
-                dimensions.height - 520,
-              ),
-            },
-          ]}
+          style={[styles.cover]}
           source={{ uri: getLocalAudioBookCoverUrl(book.id) }}
         />
         <View style={styles.details}>
@@ -232,7 +213,7 @@ export default function PlayerScreen() {
             <NextIcon />
           </Pressable>
         </View>
-      </ScrollView>
+      </View>
     </View>
   )
 }
@@ -243,6 +224,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     alignItems: "center",
+    flex: 1,
+    height: "100%",
+    marginBottom: spacing[2],
   },
   topbar: {
     paddingTop: 12,
@@ -254,10 +238,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   cover: {
-    marginVertical: spacing[2],
+    marginVertical: spacing[1],
     marginHorizontal: "auto",
     aspectRatio: 1,
     borderRadius: 4,
+    flexShrink: 1,
+    flexGrow: 1,
   },
   trackCount: {
     alignSelf: "center",
