@@ -17,8 +17,12 @@ export async function ensureFontsDirectory() {
 }
 
 export async function listCustomFontUrls() {
-  const filenames = await FileSystem.readDirectoryAsync(
-    getCustomFontsDirectoryUrl(),
-  )
-  return filenames.map((f) => `${getCustomFontsDirectoryUrl()}${f}`)
+  try {
+    const filenames = await FileSystem.readDirectoryAsync(
+      getCustomFontsDirectoryUrl(),
+    )
+    return filenames.map((f) => `${getCustomFontsDirectoryUrl()}${f}`)
+  } catch {
+    return []
+  }
 }

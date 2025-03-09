@@ -196,6 +196,29 @@ public class ReadiumModule: Module {
                 view.updatePreferences()
             }
 
+            Prop("customFonts") {(view: EPUBView, prop: [[String : String]]) in
+                let customFonts = prop.compactMap { (customFontDict: [String : String]) -> Highlight? in
+                    guard let uri = customFontDict["uri"] as? String else {
+                        return nil
+                    }
+                    guard let name = customFontDict["name"] as? String else {
+                        return nil
+                    }
+                    guard let type = customFontDict["type"] as? String else {
+                        return nil
+                    }
+                    return CustomFont(uri: uri, name: name, type: type)
+                }
+                view.customFonts = customFonts
+
+                if view.navigator == nil {
+                    return
+                }
+
+                view.destroyNavigator()
+                view.initializeNavigator()
+            }
+
             Prop("fontFamily") { (view: EPUBView, prop: String) in
             // TODO: See if we can use model.css.update(with: settings)
             // or something to dynamically add font family declarations?

@@ -10,6 +10,12 @@ struct Highlight {
     var locator: Locator
 }
 
+struct CustomFont {
+    var uri: String
+    var name: String
+    var type: String
+}
+
 // This view will be used as a native component. Make sure to inherit from `ExpoView`
 // to apply the proper styling (e.g. border radius and shadows).
 class EPUBView: ExpoView {
@@ -35,10 +41,11 @@ class EPUBView: ExpoView {
         lineHeight: 1.4,
         paragraphSpacing: 0.5
     )
+    public var customFonts: [CustomFont] = []
 
     private var didTapWork: DispatchWorkItem?
 
-    func initializeNavigator() {
+    public func initializeNavigator() {
         if self.navigator != nil {
             return
         }
@@ -129,6 +136,10 @@ class EPUBView: ExpoView {
             }
             self?.onHighlightTap(["decoration": event.decoration.id, "x": rect.midX, "y": rect.minY])
         }
+    }
+
+    public func destroyNavigator() {
+        self.navigator?.view.removeFromSuperview()
     }
 
     public func updatePreferences() {
