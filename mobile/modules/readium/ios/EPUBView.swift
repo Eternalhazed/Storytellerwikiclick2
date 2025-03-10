@@ -46,10 +46,6 @@ class EPUBView: ExpoView {
     private var didTapWork: DispatchWorkItem?
 
     public func initializeNavigator() {
-        if self.navigator != nil {
-            return
-        }
-
         guard let bookId = self.bookId, let locator = self.initialLocation else {
             return
         }
@@ -60,6 +56,66 @@ class EPUBView: ExpoView {
         }
 
         let resources = Bundle.main.resourceURL!
+        
+        let fontFamilyDeclarations = [
+            CSSFontFamilyDeclaration(
+                fontFamily: FontFamily(rawValue: "Bookerly"),
+                fontFaces: [
+                    CSSFontFace(
+                        file: resources.appendingPathComponent("Bookerly.ttf"),
+                        style: .normal, weight: .standard(.normal)
+                    ),
+                    CSSFontFace(
+                        file: resources.appendingPathComponent("Bookerly Bold.ttf"),
+                        style: .normal, weight: .standard(.bold)
+                    ),
+                    CSSFontFace(
+                        file: resources.appendingPathComponent("Bookerly Italic.ttf"),
+                        style: .italic, weight: .standard(.normal)
+                    ),
+                ]
+            ).eraseToAnyHTMLFontFamilyDeclaration(),
+            CSSFontFamilyDeclaration(
+                fontFamily: FontFamily(rawValue: "OpenDyslexic"),
+                fontFaces: [
+                    CSSFontFace(
+                        file: resources.appendingPathComponent("OpenDyslexic-Regular.otf"),
+                        style: .normal, weight: .standard(.normal)
+                    ),
+                    CSSFontFace(
+                        file: resources.appendingPathComponent("OpenDyslexic-Bold.otf"),
+                        style: .normal, weight: .standard(.bold)
+                    ),
+                    CSSFontFace(
+                        file: resources.appendingPathComponent("OpenDyslexic-Italic.otf"),
+                        style: .italic, weight: .standard(.normal)
+                    ),
+                    CSSFontFace(
+                        file: resources.appendingPathComponent("OpenDyslexic-Bold-Italic.otf"),
+                        style: .italic, weight: .standard(.bold)
+                    ),
+                ]
+            ).eraseToAnyHTMLFontFamilyDeclaration(),
+            CSSFontFamilyDeclaration(
+                fontFamily: FontFamily(rawValue: "Literata"),
+                fontFaces: [
+                    CSSFontFace(
+                        file: resources.appendingPathComponent("Literata_500Medium.ttf"),
+                        style: .normal, weight: .standard(.normal)
+                    ),
+                ]
+            ).eraseToAnyHTMLFontFamilyDeclaration(),
+        ] + customFonts.map {
+            CSSFontFamilyDeclaration(
+                fontFamily: FontFamily(rawValue: $0.name),
+                fontFaces: [
+                    CSSFontFace(
+                        file: URL(fileURLWithPath: $0.uri),
+                        style: .normal,
+                        weight: .variable(200...900)
+                    )
+            ]).eraseToAnyHTMLFontFamilyDeclaration()
+        }
 
         guard let navigator = try? EPUBNavigatorViewController(
             publication: publication,
@@ -70,55 +126,7 @@ class EPUBView: ExpoView {
                     publisherStyles: false
                 ),
                 decorationTemplates: templates,
-                fontFamilyDeclarations: [
-                    CSSFontFamilyDeclaration(
-                        fontFamily: FontFamily(rawValue: "Bookerly"),
-                        fontFaces: [
-                            CSSFontFace(
-                                file: resources.appendingPathComponent("Bookerly.ttf"),
-                                style: .normal, weight: .standard(.normal)
-                            ),
-                            CSSFontFace(
-                                file: resources.appendingPathComponent("Bookerly Bold.ttf"),
-                                style: .normal, weight: .standard(.bold)
-                            ),
-                            CSSFontFace(
-                                file: resources.appendingPathComponent("Bookerly Italic.ttf"),
-                                style: .italic, weight: .standard(.normal)
-                            ),
-                        ]
-                    ).eraseToAnyHTMLFontFamilyDeclaration(),
-                    CSSFontFamilyDeclaration(
-                        fontFamily: FontFamily(rawValue: "OpenDyslexic"),
-                        fontFaces: [
-                            CSSFontFace(
-                                file: resources.appendingPathComponent("OpenDyslexic-Regular.otf"),
-                                style: .normal, weight: .standard(.normal)
-                            ),
-                            CSSFontFace(
-                                file: resources.appendingPathComponent("OpenDyslexic-Bold.otf"),
-                                style: .normal, weight: .standard(.bold)
-                            ),
-                            CSSFontFace(
-                                file: resources.appendingPathComponent("OpenDyslexic-Italic.otf"),
-                                style: .italic, weight: .standard(.normal)
-                            ),
-                            CSSFontFace(
-                                file: resources.appendingPathComponent("OpenDyslexic-Bold-Italic.otf"),
-                                style: .italic, weight: .standard(.bold)
-                            ),
-                        ]
-                    ).eraseToAnyHTMLFontFamilyDeclaration(),
-                    CSSFontFamilyDeclaration(
-                        fontFamily: FontFamily(rawValue: "Literata"),
-                        fontFaces: [
-                            CSSFontFace(
-                                file: resources.appendingPathComponent("Literata_500Medium.ttf"),
-                                style: .normal, weight: .standard(.normal)
-                            ),
-                        ]
-                    ).eraseToAnyHTMLFontFamilyDeclaration(),
-                ]
+                fontFamilyDeclarations: fontFamilyDeclarations
             ),
             httpServer: GCDHTTPServer.shared
         ) else {
