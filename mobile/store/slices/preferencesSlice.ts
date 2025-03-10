@@ -38,6 +38,12 @@ type AudioPreferences = {
   speed: number
 }
 
+type AutomaticRewindPreferences = {
+  enabled: boolean
+  afterInterruption: number
+  afterBreak: number
+}
+
 export type BookPreferences = {
   typography?: Partial<TypographyPreferences>
   layout?: Partial<LayoutPreferences>
@@ -64,6 +70,7 @@ export type PreferencesState = {
   readaloudColor: HighlightTint
   bookPreferences: Record<number, BookPreferences>
   customFonts: CustomFont[]
+  automaticRewind: AutomaticRewindPreferences
 }
 
 export const defaultPreferences: Omit<PreferencesState, "bookPreferences"> = {
@@ -109,7 +116,7 @@ export const defaultPreferences: Omit<PreferencesState, "bookPreferences"> = {
     scale: 1.0,
     lineHeight: 1.4,
     alignment: "justify",
-    fontFamily: "Bookerly",
+    fontFamily: "Literata",
   },
   layout: {
     margins: {
@@ -121,6 +128,11 @@ export const defaultPreferences: Omit<PreferencesState, "bookPreferences"> = {
   },
   readaloudColor: "yellow",
   customFonts: [],
+  automaticRewind: {
+    enabled: true,
+    afterInterruption: 3,
+    afterBreak: 10,
+  },
 }
 
 const initialState: PreferencesState = {
@@ -207,6 +219,17 @@ export const preferencesSlice = createSlice({
         typography,
         layout,
       } as WritableDraft<BookPreferences>)
+    },
+    bookTypographyPreferencesReset(
+      state,
+      action: PayloadAction<{ bookId: number }>,
+    ) {
+      const { bookId } = action.payload
+
+      const book = state.bookPreferences[bookId]
+      if (!book) return
+
+      book.typography = {}
     },
     typographyPreferencesReset(state) {
       state.typography = defaultPreferences.typography

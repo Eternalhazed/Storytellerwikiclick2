@@ -41,7 +41,7 @@ export function FontLoader() {
             borderColor: surface,
             borderWidth: 1,
             gap: spacing[2],
-            transform: [{ translateY: "-50%" }],
+            transform: [{ translateY: -100 }],
             backgroundColor: background,
           }}
         >

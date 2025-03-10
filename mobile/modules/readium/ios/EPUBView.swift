@@ -37,7 +37,7 @@ class EPUBView: ExpoView {
     public var bookmarks: [Locator] = []
     public var readaloudColor: UIColor = .yellow
     public var preferences: EPUBPreferences = EPUBPreferences(
-        fontFamily: FontFamily(rawValue: "Bookerly"),
+        fontFamily: FontFamily(rawValue: "Literata"),
         lineHeight: 1.4,
         paragraphSpacing: 0.5
     )
@@ -56,25 +56,8 @@ class EPUBView: ExpoView {
         }
 
         let resources = Bundle.main.resourceURL!
-        
+
         let fontFamilyDeclarations = [
-            CSSFontFamilyDeclaration(
-                fontFamily: FontFamily(rawValue: "Bookerly"),
-                fontFaces: [
-                    CSSFontFace(
-                        file: resources.appendingPathComponent("Bookerly.ttf"),
-                        style: .normal, weight: .standard(.normal)
-                    ),
-                    CSSFontFace(
-                        file: resources.appendingPathComponent("Bookerly Bold.ttf"),
-                        style: .normal, weight: .standard(.bold)
-                    ),
-                    CSSFontFace(
-                        file: resources.appendingPathComponent("Bookerly Italic.ttf"),
-                        style: .italic, weight: .standard(.normal)
-                    ),
-                ]
-            ).eraseToAnyHTMLFontFamilyDeclaration(),
             CSSFontFamilyDeclaration(
                 fontFamily: FontFamily(rawValue: "OpenDyslexic"),
                 fontFaces: [
