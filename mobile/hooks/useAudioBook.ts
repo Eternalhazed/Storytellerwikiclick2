@@ -55,7 +55,7 @@ export function useAudioBook() {
   const { state: playerState } = usePlaybackState()
 
   const book = useAppSelector(getCurrentlyPlayingBook)
-  const currentSpeed = useAppSelector(
+  const rate = useAppSelector(
     (state) => (book && getBookPlayerSpeed(state, book.id)) ?? 1,
   )
 
@@ -76,7 +76,7 @@ export function useAudioBook() {
     )
   }, [currentTrack, currentTrackIndex, position, tracks])
 
-  const rateAdjustedRemaining = remaining / currentSpeed
+  const rateAdjustedRemaining = remaining / rate
   const percentComplete = Math.round(((total - remaining) / total) * 100)
   const remainingHours = Math.floor(rateAdjustedRemaining / 3600)
   const remainingMinutes = Math.floor(
@@ -93,6 +93,7 @@ export function useAudioBook() {
     startPosition: 0,
     endPosition: duration,
     percentComplete: percentComplete,
+    rate: rate,
     remainingTime: remainingTime,
     track: {
       index: currentTrackIndex,
@@ -100,9 +101,15 @@ export function useAudioBook() {
       startPosition: 0,
       endPosition: duration,
       percentComplete: Math.round((position / duration) * 100),
-      formattedPosition: useMemo(() => formatTime(position), [position]),
+      formattedPosition: useMemo(
+        () => formatTime(position / rate),
+        [position, rate],
+      ),
       formattedStartPosition: useMemo(() => formatTime(0), []),
-      formattedEndPosition: useMemo(() => formatTime(duration), [duration]),
+      formattedEndPosition: useMemo(
+        () => formatTime(duration / rate),
+        [duration, rate],
+      ),
     },
     total: {
       trackCount: tracks.length,
@@ -112,11 +119,14 @@ export function useAudioBook() {
       percentComplete,
       formattedRemaining: remainingTime,
       formattedPosition: useMemo(
-        () => formatTime(total - remaining),
-        [total, remaining],
+        () => formatTime((total - remaining) / rate),
+        [total, remaining, rate],
       ),
       formattedStartPosition: useMemo(() => formatTime(0), []),
-      formattedEndPosition: useMemo(() => formatTime(total), [total]),
+      formattedEndPosition: useMemo(
+        () => formatTime(total / rate),
+        [rate, total],
+      ),
     },
   }
 }

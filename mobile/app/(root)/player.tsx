@@ -10,7 +10,7 @@ import TrackPlayer, {
   Event,
 } from "react-native-track-player"
 import { ProgressBar } from "../../components/ProgressBar"
-import { useAudioBook } from "../../hooks/useAudioBook"
+import { formatTime, useAudioBook } from "../../hooks/useAudioBook"
 import { PlayPause } from "../../components/PlayPause"
 import { PrevIcon } from "../../icons/PrevIcon"
 import { NextIcon } from "../../icons/NextIcon"
@@ -56,7 +56,7 @@ export default function PlayerScreen() {
   const [trackCount, setTrackCount] = useState(1)
 
   const dispatch = useAppDispatch()
-  const { isLoading, isPlaying, track, remainingTime } = useAudioBook()
+  const { isLoading, isPlaying, track, remainingTime, rate } = useAudioBook()
   const trackPositionRef = useRef(track.position)
   trackPositionRef.current = track.position
 
@@ -76,22 +76,12 @@ export default function PlayerScreen() {
   }, [track.position, locator, syncEagerProgress])
 
   const progressTime = useMemo(() => {
-    const relativeProgress = track.position - track.startPosition
-    const minutes = Math.floor(relativeProgress / 60)
-    const seconds = Math.floor(relativeProgress - minutes * 60)
-      .toString()
-      .padStart(2, "0")
-    return `${minutes}:${seconds}`
-  }, [track.position, track.startPosition])
+    return formatTime(eagerProgress / rate)
+  }, [eagerProgress, rate])
 
   const remainingProgressTime = useMemo(() => {
-    const remainingProgress = track.endPosition - track.position
-    const minutes = Math.floor(remainingProgress / 60)
-    const seconds = Math.floor(remainingProgress - minutes * 60)
-      .toString()
-      .padStart(2, "0")
-    return `-${minutes}:${seconds}`
-  }, [track.endPosition, track.position])
+    return "-" + formatTime((track.endPosition - eagerProgress) / rate)
+  }, [eagerProgress, rate, track.endPosition])
 
   useTrackPlayerEvents(events, async () => {
     setCurrentTrack(((await TrackPlayer.getActiveTrackIndex()) ?? 0) + 1)

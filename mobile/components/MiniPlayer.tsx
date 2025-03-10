@@ -36,7 +36,7 @@ export function MiniPlayer({ book }: Props) {
   const bookPrefs = useAppSelector((state) =>
     getBookPreferences(state, book.id),
   )
-  const { isPlaying, isLoading, track, total } = useAudioBook()
+  const { isPlaying, isLoading, track, total, rate } = useAudioBook()
   const trackPositionRef = useRef(track.position)
   trackPositionRef.current = track.position
 
@@ -117,8 +117,8 @@ export function MiniPlayer({ book }: Props) {
   )
 
   const formattedEagerProgress = useMemo(() => {
-    return formatTime(eagerProgress)
-  }, [eagerProgress])
+    return formatTime(eagerProgress / rate)
+  }, [eagerProgress, rate])
 
   const { title, formattedProgress } = useMemo(() => {
     if (bookPrefs?.detailView?.mode === "audio") {
