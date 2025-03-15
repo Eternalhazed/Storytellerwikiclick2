@@ -122,7 +122,7 @@ export async function installWhisper(settings: Settings) {
     await new Promise<void>((resolve, reject) => {
       const make = spawn(
         "make",
-        [`-j${Math.min(1, availableParallelism() - 1)}`],
+        [`-j${Math.max(1, availableParallelism() - 1)}`],
         {
           cwd: repoDir,
           shell: true,
