@@ -377,51 +377,78 @@ extension EPUBView: EPUBNavigatorDelegate {
         let jsFragmentsArray = "[\(joinedFragments)]"
 
         let scriptSource = """
-            globalThis.addDoubleTapListeners = function addDoubleTapListeners() {
-                let storytellerDoubleClickTimeout = null;
-                let storytellerTouchMoved = false;
-                for (const fragment of globalThis.storytellerFragments) {
-                    const element = document.getElementById(fragment);
-                    if (!element) continue;
-                    element.addEventListener('touchstart', (event) => {
-                        storytellerTouchMoved = false;
-                    });
-                    element.addEventListener('touchmove', (event) => {
-                        storytellerTouchMoved = true;
-                    });
-                    element.addEventListener('touchend', (event) => {
-                        if (storytellerTouchMoved || !document.getSelection().isCollapsed || event.changedTouches.length !== 1) return;
-
-                        event.bubbles = true
-                        event.clientX = event.changedTouches[0].clientX
-                        event.clientY = event.changedTouches[0].clientY
-                        const clone = new MouseEvent('click', event);
-                        event.stopImmediatePropagation();
-                        event.preventDefault();
-
-                        if (storytellerDoubleClickTimeout) {
-                            clearTimeout(storytellerDoubleClickTimeout);
-                            storytellerDoubleClickTimeout = null;
-                            window.webkit.messageHandlers.storytellerDoubleClick.postMessage(fragment);
-                            return
-                        }
-
-                        storytellerDoubleClickTimeout = setTimeout(() => {
-                            storytellerDoubleClickTimeout = null;
-                            element.parentElement.dispatchEvent(clone);
-                        }, 350);
-                    })
-                }
+            globalThis.storyteller = {};
+            storyteller.doubleClickTimeout = null;
+            storyteller.touchMoved = false;
+        
+            storyteller.touchStartHandler = (event) => {
+                storyteller.touchMoved = false;
             }
+        
+            storyteller.touchMoveHandler = (event) => {
+                storyteller.touchMoved = true;
+            }
+        
+            storyteller.touchEndHandler = (event) => {
+                if (storyteller.touchMoved || !document.getSelection().isCollapsed || event.changedTouches.length !== 1) return;
 
+                event.bubbles = true
+                event.clientX = event.changedTouches[0].clientX
+                event.clientY = event.changedTouches[0].clientY
+                const clone = new MouseEvent('click', event);
+                event.stopImmediatePropagation();
+                event.preventDefault();
+
+                if (storyteller.doubleClickTimeout) {
+                    clearTimeout(storyteller.doubleClickTimeout);
+                    storyteller.doubleClickTimeout = null;
+                    window.webkit.messageHandlers.storytellerDoubleClick.postMessage(event.currentTarget.id);
+                    return
+                }
+        
+                const element = event.currentTarget;
+
+                storyteller.doubleClickTimeout = setTimeout(() => {
+                    storyteller.doubleClickTimeout = null;
+                    element.parentElement.dispatchEvent(clone);
+                }, 350);
+            }
+        
+        
+            storyteller.observer = new IntersectionObserver((entries) => {
+                let firstEl = null
+                entries.map((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.addEventListener('touchstart', storyteller.touchStartHandler)
+                        entry.target.addEventListener('touchmove', storyteller.touchMoveHandler)
+                        entry.target.addEventListener('touchend', storyteller.touchEndHandler)
+                    } else {
+                        entry.target.removeEventListener('touchstart', storyteller.touchStartHandler)
+                        entry.target.removeEventListener('touchmove', storyteller.touchMoveHandler)
+                        entry.target.removeEventListener('touchend', storyteller.touchEndHandler)
+                    }
+        
+                    if (entry.intersectionRatio === 1) {
+                        if (!firstEl || entry.target.getBoundingClientRect().top < firstEl.getBoundingClientRect().top) {
+                            firstEl = entry.target
+                        }
+                    }
+                })
+                storyteller.firstVisibleFragment = firstEl
+            }, {
+                threshold: [0, 1],
+            })
+        
             document.addEventListener('selectionchange', () => {
                 if (document.getSelection().isCollapsed) {
                     window.webkit.messageHandlers.storytellerSelectionCleared.postMessage(null);
                 }
             });
 
-            globalThis.storytellerFragments = \(jsFragmentsArray);
-            globalThis.addDoubleTapListeners();
+            storyteller.fragmentIds = \(jsFragmentsArray);
+            storyteller.fragmentIds.map((id) => document.getElementById(id)).forEach((element) => {
+                storyteller.observer.observe(element)
+            })
         """
 
         userContentController.addUserScript(WKUserScript(source: scriptSource, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
@@ -463,32 +490,15 @@ extension EPUBView: EPUBNavigatorDelegate {
             let jsFragmentsArray = "[\(joinedFragments)]"
 
             navigator.evaluateJavaScript("""
-                globalThis.storytellerFragments = \(jsFragmentsArray);
-                globalThis.addDoubleTapListeners();
+                storyteller.fragmentIds = \(jsFragmentsArray);
+                storyteller.fragmentIds.map((id) => document.getElementById(id)).forEach((element) => {
+                    storyteller.observer.observe(element)
+                })
             """)
         }
 
         navigator.evaluateJavaScript("""
-            (function() {
-                function isEntirelyOnScreen(element) {
-                    const rects = element.getClientRects();
-                    return Array.from(rects).every((rect) => {
-                        const isVerticallyWithin = rect.bottom >= 0 && rect.top <= window.innerHeight;
-                        const isHorizontallyWithin = rect.right >= 0 && rect.left <= window.innerWidth;
-                        return isVerticallyWithin && isHorizontallyWithin;
-                    });
-                }
-
-                for (const fragment of globalThis.storytellerFragments) {
-                    const element = document.getElementById(fragment);
-                    if (!element) continue;
-                    if (isEntirelyOnScreen(element)) {
-                        return fragment;
-                    }
-                }
-
-                return null;
-            })();
+            storyteller.firstVisibleFragment?.id
         """) {
             switch $0 {
             case .failure(_):
