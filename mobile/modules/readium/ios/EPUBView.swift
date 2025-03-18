@@ -94,7 +94,7 @@ class EPUBView: ExpoView {
         // Don't go to a new location if it's the same as the current location, except with
         // different fragments. Prevents unnecessarily triggering renders and state updates
         // when the position hasn't actually changed
-        let locatorComp = navigator!.currentLocation.locations.fragments.isEmpty ?? false
+        let locatorComp = navigator!.currentLocation?.locations.fragments.isEmpty ?? false
             ? props!.locator.copy( locations: { $0.fragments = [] })
             : props!.locator;
 
@@ -460,20 +460,21 @@ extension EPUBView: EPUBNavigatorDelegate {
     }
 
     func navigator(_ navigator: VisualNavigator, didTapAt point: CGPoint) {
+        let navigator = navigator as! EPUBNavigatorViewController
         self.didTapWork = nil
         if point.x < self.bounds.maxX * 0.2 {
-            navigator!.evaluateJavaScript("""
+            navigator.evaluateJavaScript("""
                 storyteller.firstVisibleFragment = null;
             """) { _ in
-                _ = self.navigator.goBackward(animated: true) {}
+                _ = navigator.goBackward(animated: true) {}
             }
             return
         }
         if point.x > self.bounds.maxX * 0.8 {
-            navigator!.evaluateJavaScript("""
+            navigator.evaluateJavaScript("""
                 storyteller.firstVisibleFragment = null;
             """) { _ in
-                _ = self.navigator.goForward(animated: true) {}
+                _ = navigator.goForward(animated: true) {}
             }
             return
         }
