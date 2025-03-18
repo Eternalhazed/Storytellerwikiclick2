@@ -90,37 +90,37 @@ class EPUBView: ExpoView {
             initializeNavigator()
             return
         }
-        
+
         // Don't go to a new location if it's the same as the current location, except with
         // different fragments. Prevents unnecessarily triggering renders and state updates
         // when the position hasn't actually changed
-        let locatorComp = oldProps?.locator.locations.fragments.isEmpty ?? false
+        let locatorComp = navigator!.currentLocation.locations.fragments.isEmpty ?? false
             ? props!.locator.copy( locations: { $0.fragments = [] })
             : props!.locator;
 
-        if locatorComp != oldProps?.locator {
+        if locatorComp != navigator!.currentLocation {
             go(locator: props!.locator)
-        } else if props!.isPlaying != oldProps?.isPlaying {
-            if props!.isPlaying {
-                highlightFragment(locator: props!.locator)
-            } else {
-                clearHighlightedFragment()
-            }
         }
-        
+
+        if props!.isPlaying {
+            highlightFragment(locator: props!.locator)
+        } else {
+            clearHighlightedFragment()
+        }
+
         if props!.highlights != oldProps?.highlights {
             decorateHighlights()
         }
-        
+
         if props!.bookmarks != oldProps?.bookmarks {
             findOnPage(locator: props!.locator)
         }
-        
+
         if props!.readaloudColor != oldProps?.readaloudColor {
             clearHighlightedFragment()
             highlightFragment(locator: props!.locator)
         }
-        
+
         navigator!.submitPreferences(EPUBPreferences(
             backgroundColor: props!.background,
             fontFamily: props!.fontFamily,
@@ -231,11 +231,7 @@ class EPUBView: ExpoView {
         navigator!.evaluateJavaScript("""
             storyteller.firstVisibleFragment = null;
         """) { _ in
-            _ = self.navigator!.go(to: locator, animated: true) {
-                if self.props!.isPlaying {
-                    self.highlightFragment(locator: locator)
-                }
-            }
+            _ = self.navigator!.go(to: locator, animated: true)
         }
     }
 
@@ -384,15 +380,15 @@ extension EPUBView: EPUBNavigatorDelegate {
             globalThis.storyteller = {};
             storyteller.doubleClickTimeout = null;
             storyteller.touchMoved = false;
-        
+
             storyteller.touchStartHandler = (event) => {
                 storyteller.touchMoved = false;
             }
-        
+
             storyteller.touchMoveHandler = (event) => {
                 storyteller.touchMoved = true;
             }
-        
+
             storyteller.touchEndHandler = (event) => {
                 if (storyteller.touchMoved || !document.getSelection().isCollapsed || event.changedTouches.length !== 1) return;
 
@@ -409,7 +405,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                     window.webkit.messageHandlers.storytellerDoubleClick.postMessage(event.currentTarget.id);
                     return
                 }
-        
+
                 const element = event.currentTarget;
 
                 storyteller.doubleClickTimeout = setTimeout(() => {
@@ -417,7 +413,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                     element.parentElement.dispatchEvent(clone);
                 }, 350);
             }
-        
+
             storyteller.observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
@@ -429,7 +425,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                         entry.target.removeEventListener('touchmove', storyteller.touchMoveHandler)
                         entry.target.removeEventListener('touchend', storyteller.touchEndHandler)
                     }
-        
+
                     if (entry.intersectionRatio === 1) {
                         // TODO: Is this fast enough?
                         if (!storyteller.firstVisibleFragment || storyteller.fragmentIds.indexOf(entry.target.id) < storyteller.fragmentIds.indexOf(storyteller.firstVisibleFragment.id)) {
@@ -441,7 +437,7 @@ extension EPUBView: EPUBNavigatorDelegate {
             }, {
                 threshold: [0, 1],
             })
-        
+
             document.addEventListener('selectionchange', () => {
                 if (document.getSelection().isCollapsed) {
                     window.webkit.messageHandlers.storytellerSelectionCleared.postMessage(null);
@@ -466,11 +462,19 @@ extension EPUBView: EPUBNavigatorDelegate {
     func navigator(_ navigator: VisualNavigator, didTapAt point: CGPoint) {
         self.didTapWork = nil
         if point.x < self.bounds.maxX * 0.2 {
-            _ = navigator.goBackward(animated: true) {}
+            navigator!.evaluateJavaScript("""
+                storyteller.firstVisibleFragment = null;
+            """) { _ in
+                _ = self.navigator.goBackward(animated: true) {}
+            }
             return
         }
         if point.x > self.bounds.maxX * 0.8 {
-            _ = navigator.goForward(animated: true) {}
+            navigator!.evaluateJavaScript("""
+                storyteller.firstVisibleFragment = null;
+            """) { _ in
+                _ = self.navigator.goForward(animated: true) {}
+            }
             return
         }
 
@@ -479,7 +483,7 @@ extension EPUBView: EPUBNavigatorDelegate {
 
     func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
         let navigator = (navigator as! EPUBNavigatorViewController)
-        
+
         findOnPage(locator: locator)
 
         if locator.href != props!.locator.href {
@@ -495,7 +499,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                 })
             """)
         }
-        
+
         if props!.isPlaying {
             return
         }

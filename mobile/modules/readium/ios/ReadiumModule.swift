@@ -75,13 +75,6 @@ public class ReadiumModule: Module {
                     return
                 }
 
-                //if let currentLocation = view.navigator?.currentLocation {
-                //    let locatorComp = currentLocation.locations.fragments.isEmpty ? locator.copy( locations: { $0.fragments = [] }) : locator;
-                //    guard currentLocation != locatorComp else {
-                //        return
-                //    }
-                //}
-
                 view.pendingProps.locator = locator
             }
 
