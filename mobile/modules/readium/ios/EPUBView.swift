@@ -228,9 +228,13 @@ class EPUBView: ExpoView {
     }
 
     func go(locator: Locator) {
-        _ = navigator!.go(to: locator, animated: true) {
-            if self.props!.isPlaying {
-                self.highlightFragment(locator: locator)
+        navigator!.evaluateJavaScript("""
+            storyteller.firstVisibleFragment = null;
+        """) { _ in
+            _ = self.navigator!.go(to: locator, animated: true) {
+                if self.props!.isPlaying {
+                    self.highlightFragment(locator: locator)
+                }
             }
         }
     }
@@ -414,10 +418,8 @@ extension EPUBView: EPUBNavigatorDelegate {
                 }, 350);
             }
         
-        
             storyteller.observer = new IntersectionObserver((entries) => {
-                let firstEl = null
-                entries.map((entry) => {
+                entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         entry.target.addEventListener('touchstart', storyteller.touchStartHandler)
                         entry.target.addEventListener('touchmove', storyteller.touchMoveHandler)
@@ -429,12 +431,13 @@ extension EPUBView: EPUBNavigatorDelegate {
                     }
         
                     if (entry.intersectionRatio === 1) {
-                        if (!firstEl || entry.target.getBoundingClientRect().top < firstEl.getBoundingClientRect().top) {
-                            firstEl = entry.target
+                        // TODO: Is this fast enough?
+                        if (!storyteller.firstVisibleFragment || storyteller.fragmentIds.indexOf(entry.target.id) < storyteller.fragmentIds.indexOf(storyteller.firstVisibleFragment.id)) {
+                            console.log('found earlier fragment', entry.target.id)
+                            storyteller.firstVisibleFragment = entry.target
                         }
                     }
                 })
-                storyteller.firstVisibleFragment = firstEl
             }, {
                 threshold: [0, 1],
             })
@@ -475,12 +478,8 @@ extension EPUBView: EPUBNavigatorDelegate {
     }
 
     func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
-        if props!.isPlaying {
-            return
-        }
-        
         let navigator = (navigator as! EPUBNavigatorViewController)
-
+        
         findOnPage(locator: locator)
 
         if locator.href != props!.locator.href {
@@ -495,6 +494,10 @@ extension EPUBView: EPUBNavigatorDelegate {
                     storyteller.observer.observe(element)
                 })
             """)
+        }
+        
+        if props!.isPlaying {
+            return
         }
 
         navigator.evaluateJavaScript("""
