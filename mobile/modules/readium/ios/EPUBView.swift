@@ -64,6 +64,8 @@ class EPUBView: ExpoView {
 
     public var pendingProps: Props = Props()
     public var props: FinalizedProps?
+    
+    private var changingResource = false
 
     public func finalizeProps() {
         let oldProps = props
@@ -221,6 +223,12 @@ class EPUBView: ExpoView {
             }
             self?.onHighlightTap(["decoration": event.decoration.id, "x": rect.midX, "y": rect.minY])
         }
+        navigator.firstVisibleElementLocator {
+            guard let found = $0 else {
+                return
+            }
+            self.onLocatorChange(found.json)
+        }
     }
 
     public func destroyNavigator() {
@@ -228,6 +236,9 @@ class EPUBView: ExpoView {
     }
 
     func go(locator: Locator) {
+        if locator.href != navigator?.currentLocation?.href {
+            changingResource = true
+        }
         _ = self.navigator!.go(to: locator, animated: true)
     }
 
@@ -353,21 +364,6 @@ extension EPUBView: WKScriptMessageHandler {
                 self.onDoubleTouch(locator.json)
             case "storytellerSelectionCleared":
                 onSelection(["cleared": true])
-            case "storytellerFragmentChanged":
-                if props!.isPlaying {
-                    return
-                }
-                guard let fragment = message.body as? String else {
-                    onLocatorChange(navigator!.currentLocation!.json)
-                    return
-                }
-                onLocatorChange(
-                    navigator!.currentLocation!.copy(
-                        locations: {
-                            $0.otherLocations["fragments"] = [fragment]
-                        }
-                    ).json
-                )
             default:
                 return
         }
@@ -425,41 +421,6 @@ extension EPUBView: EPUBNavigatorDelegate {
                 }, 350);
             }
 
-            storyteller.scrollEndRegistry = new WeakMap()
-
-            /**
-             * Safely add a scrollend event listener. Will polyfill
-             * the event behavior in browsers that don't yet have
-             * support for scrollend.
-             */
-            storyteller.addScrollEndListener = (target, listener) => {
-                let registration = storyteller.scrollEndRegistry.get(target)
-                if (registration) {
-                    registration.listeners.push(listener)
-                    return
-                }
-
-                let timeout;
-
-                registration = {
-                scrollListener(event) {
-                        clearTimeout(timeout)
-                        timeout = setTimeout(() => {
-                        this.listeners.forEach((l) => l(event))
-                    }, 100)
-                },
-                    listeners: [listener],
-                }
-
-                // Need to bind the this param, since we're going to pass it to addEventListener
-                // to be called bare
-                registration.scrollListener = registration.scrollListener.bind(registration)
-
-                storyteller.scrollEndRegistry.set(target, registration)
-
-                target.addEventListener("scroll", registration.scrollListener)
-            }
-
             storyteller.observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
@@ -481,30 +442,43 @@ extension EPUBView: EPUBNavigatorDelegate {
                     window.webkit.messageHandlers.storytellerSelectionCleared.postMessage(null);
                 }
             });
-
-            storyteller.addScrollEndListener(document, () => {
-                (function() {
-                    function isEntirelyOnScreen(element) {
-                        const rects = element.getClientRects()
-                        return Array.from(rects).every((rect) => {
-                            const isVerticallyWithin = rect.bottom >= 0 && rect.top <= window.innerHeight;
-                            const isHorizontallyWithin = rect.right >= 0 && rect.left <= window.innerWidth;
-                            return isVerticallyWithin && isHorizontallyWithin;
-                        });
+                    
+            storyteller.isEntirelyOnScreen = function isEntirelyOnScreen(element) {
+                const rects = element.getClientRects()
+                return Array.from(rects).every((rect) => {
+                    const isVerticallyWithin = rect.bottom >= 0 && rect.top <= window.innerHeight;
+                    const isHorizontallyWithin = rect.right >= 0 && rect.left <= window.innerWidth;
+                    return isVerticallyWithin && isHorizontallyWithin;
+                });
+            }
+        
+            const originalFindLocator = readium.findFirstVisibleLocator
+            readium.findFirstVisibleLocator = function findFirstVisibleLocator() {
+                let firstVisibleFragmentId = null;
+        
+                for (const fragmentId of storyteller.fragmentIds) {
+                    const element = document.getElementById(fragmentId);
+                    if (!element) continue;
+                    if (storyteller.isEntirelyOnScreen(element)) {
+                        firstVisibleFragmentId = fragmentId
+                        break
                     }
-
-                    for (const fragmentId of storyteller.fragmentIds) {
-                        const element = document.getElementById(fragmentId);
-                        if (!element) continue;
-                        if (isEntirelyOnScreen(element)) {
-                            window.webkit.messageHandlers.storytellerFragmentChanged.postMessage(fragmentId)
-                            return
-                        }
-                    }
-
-                    window.webkit.messageHandlers.storytellerFragmentChanged.postMessage(null);
-                })()
-            })
+                }
+        
+                if (firstVisibleFragmentId === null) return originalFindLocator();
+        
+                return {
+                    href: "#",
+                    type: "application/xhtml+xml",
+                    locations: {
+                        cssSelector: `#${firstVisibleFragmentId}`,
+                        fragments: [firstVisibleFragmentId]
+                    },
+                    text: {
+                        highlight: document.getElementById(firstVisibleFragmentId).textContent,
+                    },
+                };
+            }
 
             storyteller.fragmentIds = \(jsFragmentsArray);
             storyteller.fragmentIds.map((id) => document.getElementById(id)).forEach((element) => {
@@ -542,7 +516,9 @@ extension EPUBView: EPUBNavigatorDelegate {
 
         findOnPage(locator: locator)
 
-        if locator.href != props!.locator.href {
+        if locator.href != props!.locator.href || changingResource {
+            changingResource = false
+            
             let fragments = BookService.instance.getFragments(for: props!.bookId, locator: locator)
 
             let joinedFragments = fragments.map(\.fragment).map { "\"\($0)\"" }.joined(separator: ",")
@@ -552,8 +528,22 @@ extension EPUBView: EPUBNavigatorDelegate {
                 storyteller.fragmentIds = \(jsFragmentsArray);
                 storyteller.fragmentIds.map((id) => document.getElementById(id)).forEach((element) => {
                     storyteller.observer.observe(element)
-                })
-            """)
+                });
+            """) { _ in
+                navigator.firstVisibleElementLocator {
+                    guard let found = $0 else {
+                        return
+                    }
+                    self.onLocatorChange(found.json)
+                }
+            }
+        } else {
+            navigator.firstVisibleElementLocator {
+                guard let found = $0 else {
+                    return
+                }
+                self.onLocatorChange(found.json)
+            }
         }
     }
 }
