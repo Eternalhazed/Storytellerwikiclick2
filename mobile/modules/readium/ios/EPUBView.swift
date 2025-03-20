@@ -410,6 +410,41 @@ extension EPUBView: EPUBNavigatorDelegate {
                 }, 350);
             }
 
+            storyteller.scrollEndRegistry = new WeakMap()
+
+            /**
+             * Safely add a scrollend event listener. Will polyfill
+             * the event behavior in browsers that don't yet have
+             * support for scrollend.
+             */
+            storyteller.addScrollEndListener = (target, listener) => {
+                let registration = storyteller.scrollEndRegistry.get(target)
+                if (registration) {
+                    registration.listeners.push(listener)
+                    return
+                }
+
+                let timeout;
+
+                registration = {
+                scrollListener(event) {
+                        clearTimeout(timeout)
+                        timeout = setTimeout(() => {
+                        this.listeners.forEach((l) => l(event))
+                    }, 100)
+                },
+                    listeners: [listener],
+                }
+
+                // Need to bind the this param, since we're going to pass it to addEventListener
+                // to be called bare
+                registration.scrollListener = registration.scrollListener.bind(registration)
+
+                storyteller.scrollEndRegistry.set(target, registration)
+
+                target.addEventListener("scroll", registration.scrollListener)
+            }
+
             storyteller.observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
@@ -431,6 +466,10 @@ extension EPUBView: EPUBNavigatorDelegate {
                     window.webkit.messageHandlers.storytellerSelectionCleared.postMessage(null);
                 }
             });
+
+            addScrollEndListener(document, () => {
+                console.log('scroll ended!')
+            })
 
             storyteller.fragmentIds = \(jsFragmentsArray);
             storyteller.fragmentIds.map((id) => document.getElementById(id)).forEach((element) => {
@@ -495,7 +534,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                         return isVerticallyWithin && isHorizontallyWithin;
                     });
                 }
-        
+
                 for (const fragmentId of storyteller.fragmentIds) {
                     const element = document.getElementById(fragmentId);
                     if (!element) continue;
@@ -503,7 +542,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                         return fragmentId;
                     }
                 }
-        
+
                 return null;
             })()
         """) {
