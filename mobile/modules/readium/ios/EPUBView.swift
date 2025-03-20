@@ -353,6 +353,21 @@ extension EPUBView: WKScriptMessageHandler {
                 self.onDoubleTouch(locator.json)
             case "storytellerSelectionCleared":
                 onSelection(["cleared": true])
+            case "storytellerFragmentChanged":
+                if props!.isPlaying {
+                    return
+                }
+                guard let fragment = message.body as? String else {
+                    onLocatorChange(navigator!.currentLocation!.json)
+                    return
+                }
+                onLocatorChange(
+                    navigator!.currentLocation!.copy(
+                        locations: {
+                            $0.otherLocations["fragments"] = [fragment]
+                        }
+                    ).json
+                )
             default:
                 return
         }
@@ -467,8 +482,28 @@ extension EPUBView: EPUBNavigatorDelegate {
                 }
             });
 
-            addScrollEndListener(document, () => {
-                console.log('scroll ended!')
+            storyteller.addScrollEndListener(document, () => {
+                (function() {
+                    function isEntirelyOnScreen(element) {
+                        const rects = element.getClientRects()
+                        return Array.from(rects).every((rect) => {
+                            const isVerticallyWithin = rect.bottom >= 0 && rect.top <= window.innerHeight;
+                            const isHorizontallyWithin = rect.right >= 0 && rect.left <= window.innerWidth;
+                            return isVerticallyWithin && isHorizontallyWithin;
+                        });
+                    }
+
+                    for (const fragmentId of storyteller.fragmentIds) {
+                        const element = document.getElementById(fragmentId);
+                        if (!element) continue;
+                        if (isEntirelyOnScreen(element)) {
+                            window.webkit.messageHandlers.storytellerFragmentChanged.postMessage(fragmentId)
+                            return
+                        }
+                    }
+
+                    window.webkit.messageHandlers.storytellerFragmentChanged.postMessage(null);
+                })()
             })
 
             storyteller.fragmentIds = \(jsFragmentsArray);
@@ -480,6 +515,7 @@ extension EPUBView: EPUBNavigatorDelegate {
         userContentController.addUserScript(WKUserScript(source: scriptSource, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         userContentController.add(self, name: "storytellerDoubleClick")
         userContentController.add(self, name: "storytellerSelectionCleared")
+        userContentController.add(self, name: "storytellerFragmentChanged")
     }
 
     func navigator(_ navigator: R2Navigator.Navigator, presentError error: R2Navigator.NavigatorError) {
@@ -518,51 +554,6 @@ extension EPUBView: EPUBNavigatorDelegate {
                     storyteller.observer.observe(element)
                 })
             """)
-        }
-
-        if props!.isPlaying {
-            return
-        }
-
-        navigator.evaluateJavaScript("""
-            (function() {
-                function isEntirelyOnScreen(element) {
-                    const rects = element.getClientRects()
-                    return Array.from(rects).every((rect) => {
-                        const isVerticallyWithin = rect.bottom >= 0 && rect.top <= window.innerHeight;
-                        const isHorizontallyWithin = rect.right >= 0 && rect.left <= window.innerWidth;
-                        return isVerticallyWithin && isHorizontallyWithin;
-                    });
-                }
-
-                for (const fragmentId of storyteller.fragmentIds) {
-                    const element = document.getElementById(fragmentId);
-                    if (!element) continue;
-                    if (isEntirelyOnScreen(element)) {
-                        return fragmentId;
-                    }
-                }
-
-                return null;
-            })()
-        """) {
-            switch $0 {
-            case .failure(_):
-                self.onLocatorChange(locator.json)
-            case .success(let anyValue):
-                guard let value = anyValue as? String else {
-                    self.onLocatorChange(locator.json)
-                    return
-                }
-
-                self.onLocatorChange(
-                    locator.copy(
-                        locations: {
-                            $0.otherLocations["fragments"] = [value]
-                        }
-                    ).json
-                )
-            }
         }
     }
 }
