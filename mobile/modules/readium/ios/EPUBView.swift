@@ -228,11 +228,7 @@ class EPUBView: ExpoView {
     }
 
     func go(locator: Locator) {
-        navigator!.evaluateJavaScript("""
-            storyteller.firstVisibleFragment = null;
-        """) { _ in
-            _ = self.navigator!.go(to: locator, animated: true)
-        }
+        _ = self.navigator!.go(to: locator, animated: true)
     }
 
     func decorateHighlights() {
@@ -425,14 +421,6 @@ extension EPUBView: EPUBNavigatorDelegate {
                         entry.target.removeEventListener('touchmove', storyteller.touchMoveHandler)
                         entry.target.removeEventListener('touchend', storyteller.touchEndHandler)
                     }
-
-                    if (entry.intersectionRatio === 1) {
-                        // TODO: Is this fast enough?
-                        if (!storyteller.firstVisibleFragment || storyteller.fragmentIds.indexOf(entry.target.id) < storyteller.fragmentIds.indexOf(storyteller.firstVisibleFragment.id)) {
-                            console.log('found earlier fragment', entry.target.id)
-                            storyteller.firstVisibleFragment = entry.target
-                        }
-                    }
                 })
             }, {
                 threshold: [0, 1],
@@ -463,19 +451,11 @@ extension EPUBView: EPUBNavigatorDelegate {
         let navigator = navigator as! EPUBNavigatorViewController
         self.didTapWork = nil
         if point.x < self.bounds.maxX * 0.2 {
-            navigator.evaluateJavaScript("""
-                storyteller.firstVisibleFragment = null;
-            """) { _ in
-                _ = navigator.goBackward(animated: true) {}
-            }
+            _ = navigator.goBackward(animated: true) {}
             return
         }
         if point.x > self.bounds.maxX * 0.8 {
-            navigator.evaluateJavaScript("""
-                storyteller.firstVisibleFragment = null;
-            """) { _ in
-                _ = navigator.goForward(animated: true) {}
-            }
+            _ = navigator.goForward(animated: true) {}
             return
         }
 
@@ -506,7 +486,26 @@ extension EPUBView: EPUBNavigatorDelegate {
         }
 
         navigator.evaluateJavaScript("""
-            storyteller.firstVisibleFragment?.id
+            (function() {
+                function isEntirelyOnScreen(element) {
+                    const rects = element.getClientRects()
+                    return Array.from(rects).every((rect) => {
+                        const isVerticallyWithin = rect.bottom >= 0 && rect.top <= window.innerHeight;
+                        const isHorizontallyWithin = rect.right >= 0 && rect.left <= window.innerWidth;
+                        return isVerticallyWithin && isHorizontallyWithin;
+                    });
+                }
+        
+                for (const fragmentId of storyteller.fragmentIds) {
+                    const element = document.getElementById(fragmentId);
+                    if (!element) continue;
+                    if (isEntirelyOnScreen(element)) {
+                        return fragmentId;
+                    }
+                }
+        
+                return null;
+            })()
         """) {
             switch $0 {
             case .failure(_):
