@@ -423,7 +423,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                     }
                 })
             }, {
-                threshold: [0, 1],
+                threshold: [0],
             })
 
             document.addEventListener('selectionchange', () => {
