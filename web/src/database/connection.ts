@@ -9,7 +9,10 @@ let db: Database | undefined
 
 const DATABASE_URL = join(DATA_DIR, "storyteller.db")
 
-const UUID_EXT_PATH = join(cwd(), "sqlite", "uuid.c")
+// Determine the correct library extension based on platform
+const IS_MAC = process.platform === "darwin"
+const LIB_EXT = IS_MAC ? "dylib" : "so"
+const UUID_EXT_PATH = join(cwd(), "sqlite", `uuid.c.${LIB_EXT}`)
 
 function createDatabase() {
   return new Db(
@@ -43,7 +46,10 @@ export function getDatabase(): Database {
   try {
     db.loadExtension(UUID_EXT_PATH)
   } catch (e) {
-    logger.error(e)
+    logger.error({
+      err: e,
+      msg: `Failed to load SQLite extension from: ${UUID_EXT_PATH}`,
+    })
   }
   return db
 }
