@@ -1,2 +1,2 @@
-undecided:
-  - "@storyteller/web"
+releases:
+  "@storyteller/web": patch
