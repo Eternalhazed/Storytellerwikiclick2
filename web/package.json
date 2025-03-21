@@ -21,7 +21,7 @@
     "@mantine/core": "^7.15.1",
     "@mantine/form": "^7.15.1",
     "@mantine/hooks": "^7.15.1",
-    "@smoores/epub": "workspace:*",
+    "@smoores/epub": "workspace:^",
     "@smoores/fs": "workspace:*",
     "@tabler/icons-react": "^3.26.0",
     "@zip.js/zip.js": "^2.7.40",

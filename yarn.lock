@@ -8288,7 +8288,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@smoores/epub@workspace:*, @smoores/epub@workspace:epub":
+"@smoores/epub@workspace:^, @smoores/epub@workspace:epub":
   version: 0.0.0-use.local
   resolution: "@smoores/epub@workspace:epub"
   dependencies:
@@ -8432,7 +8432,7 @@ __metadata:
     "@mantine/core": "npm:^7.15.1"
     "@mantine/form": "npm:^7.15.1"
     "@mantine/hooks": "npm:^7.15.1"
-    "@smoores/epub": "workspace:*"
+    "@smoores/epub": "workspace:^"
     "@smoores/fs": "workspace:*"
     "@tabler/icons-react": "npm:^3.26.0"
     "@tsconfig/strictest": "npm:^2.0.5"

@@ -58,6 +58,12 @@ export type Settings = {
   parallelTranscodes: number
   parallelTranscribes: number
   parallelWhisperBuild: number
+  // Add TTS settings to interface
+  ttsMaxChunkLength?: number
+  ttsVoice?: string
+  ttsRate?: number
+  ttsPitch?: number
+  ttsEngine?: string
 }
 
 export const SETTINGS_COLUMN_NAMES = {
@@ -91,6 +97,12 @@ export const SETTINGS_COLUMN_NAMES = {
   parallel_transcodes: "parallelTranscodes",
   parallel_transcribes: "parallelTranscribes",
   parallel_whisper_build: "parallelWhisperBuild",
+
+  tts_max_chunk_length: "ttsMaxChunkLength",
+  tts_voice: "ttsVoice",
+  tts_rate: "ttsRate",
+  tts_pitch: "ttsPitch",
+  tts_engine: "ttsEngine",
 } as const satisfies Record<string, keyof Settings>
 
 export function getSetting<Name extends keyof typeof SETTINGS_COLUMN_NAMES>(

@@ -37,6 +37,11 @@ const defaultSettings: Settings = {
   parallel_transcribes: 1,
   parallel_transcodes: 1,
   parallel_whisper_build: 1,
+  tts_max_chunk_length: 1000,
+  tts_voice: "",
+  tts_rate: 1,
+  tts_pitch: 1,
+  tts_engine: "none",
 }
 
 export const dynamic = "force-dynamic"

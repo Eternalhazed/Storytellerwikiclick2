@@ -50,6 +50,11 @@ export const GET = withHasPermission("settings_update")(() => {
     parallel_transcodes: settings.parallelTranscodes,
     parallel_transcribes: settings.parallelTranscribes,
     parallel_whisper_build: settings.parallelWhisperBuild,
+    tts_max_chunk_length: settings.ttsMaxChunkLength,
+    tts_voice: settings.ttsVoice,
+    tts_rate: settings.ttsRate,
+    tts_pitch: settings.ttsPitch,
+    tts_engine: settings.ttsEngine,
   }
 
   return NextResponse.json(response)
@@ -94,6 +99,11 @@ export const PUT = withHasPermission("settings_update")(async (request) => {
     parallelTranscodes: settings.parallel_transcodes,
     parallelTranscribes: settings.parallel_transcribes,
     parallelWhisperBuild: settings.parallel_whisper_build,
+    ttsMaxChunkLength: settings.tts_max_chunk_length,
+    ttsVoice: settings.tts_voice,
+    ttsRate: settings.tts_rate,
+    ttsPitch: settings.tts_pitch,
+    ttsEngine: settings.tts_engine,
   })
 
   return new Response(null, { status: 204 })

@@ -61,6 +61,11 @@ export function SettingsForm({ settings }: Props) {
     parallel_transcribes: settings.parallel_transcribes,
     parallel_transcodes: settings.parallel_transcodes,
     parallel_whisper_build: settings.parallel_whisper_build,
+    tts_max_chunk_length: settings.tts_max_chunk_length || 1000,
+    tts_voice: settings.tts_voice || "",
+    tts_rate: settings.tts_rate || 1,
+    tts_pitch: settings.tts_pitch || 1,
+    tts_engine: settings.tts_engine || "none",
   }
 
   const form = useForm({

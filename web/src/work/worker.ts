@@ -26,6 +26,11 @@ import {
   processAudiobook,
 } from "@/process/processAudio"
 import { getFullText, processEpub, readEpub } from "@/process/processEpub"
+import {
+  ProcessedBookForTTS,
+  processEpubForTTS,
+} from "@/process/processEpubForTTS"
+import { getTTSDirectory, getTTSChunksFilepath } from "@/assets/paths"
 import { getInitialPrompt } from "@/process/prompt"
 import { getSyncCache } from "@/synchronize/syncCache"
 import { Synchronizer } from "@/synchronize/synchronizer"
@@ -228,6 +233,16 @@ export default async function processBook({
         }
       }
 
+      if (task.type === ProcessingTaskType.TTS) {
+        logger.info(`Generating TTS chunks for book ${bookRefForLog}...`)
+
+        await generateTTS(bookUuid, settings, onProgress)
+
+        logger.info(
+          `Successfully generated TTS chunks for book ${bookRefForLog}`,
+        )
+      }
+
       if (task.type === ProcessingTaskType.TRANSCRIBE_CHAPTERS) {
         logger.info("Transcribing...")
         const epub = await readEpub(bookUuid)
@@ -335,4 +350,42 @@ export default async function processBook({
   }
   logger.info(`Completed synchronizing book ${bookRefForLog})`)
   port.postMessage({ type: "processingCompleted", bookUuid })
+}
+
+// Add this function to handle TTS processing
+async function generateTTS(
+  bookUuid: UUID,
+  settings: Settings,
+  onProgress?: (progress: number) => void,
+): Promise<ProcessedBookForTTS> {
+  // Create directory for TTS chunks
+  const ttsDirectory = getTTSDirectory(bookUuid)
+  await mkdir(ttsDirectory, { recursive: true })
+
+  // Process EPUB for TTS
+  // Use the database column name to access settings
+  const maxChunkLength = settings.ttsMaxChunkLength || 1000 // Use setting or default
+  logger.info(
+    `Starting TTS processing for book ${bookUuid} with max chunk length ${maxChunkLength}`,
+  )
+
+  try {
+    const processedBook = await processEpubForTTS(bookUuid, maxChunkLength)
+
+    // Save the processed chunks to a JSON file for later use
+    const ttsChunksFile = getTTSChunksFilepath(bookUuid, "tts-chunks.json")
+    await writeFile(ttsChunksFile, JSON.stringify(processedBook), "utf-8")
+
+    logger.info(`Successfully wrote TTS chunks to ${ttsChunksFile}`)
+
+    // Report progress as complete
+    onProgress?.(1)
+
+    return processedBook
+  } catch (error) {
+    logger.error(
+      `Error generating TTS chunks: ${error instanceof Error ? error.message : String(error)}`,
+    )
+    throw error
+  }
 }
