@@ -7,7 +7,8 @@ import {
 import { UUID } from "@/uuid"
 import { mkdir, writeFile } from "node:fs/promises"
 import path from "path"
-import { initializeOrpheus, textToSpeech } from "./providers/orpheus"
+// import { initializeOrpheus, textToSpeech } from "./providers/orpheus"
+import { initializeMLXAudio, textToSpeech } from "./providers/mlx_audio"
 
 // Type assertions for imported functions
 const getTTSDirectoryTyped = getTTSDirectory as PathGetter
@@ -21,7 +22,8 @@ export async function generateTTS(
   onProgress?: (progress: number) => void,
 ): Promise<ProcessedBookForTTS> {
   // Initialize Orpheus TTS engine (creates venv if needed)
-  await initializeOrpheus()
+  // await initializeOrpheus()
+  await initializeMLXAudio()
 
   // Create directory for TTS chunks
   const ttsDirectory = getTTSDirectoryTyped(bookUuid)
@@ -55,16 +57,23 @@ export async function generateTTS(
           `${chunk.chapterIndex}-${chunk.position}.mp3`,
         )
 
-        await textToSpeech(
-          chunk.text,
-          outputFile,
-          // { type: 'orpheus' },
-          // {
-          //   voice: settings.ttsVoice || "tara",
-          //   format: "mp3",
-          //   temperature: 0.7
-          // }
-        )
+        // await textToSpeech(
+        //   chunk.text,
+        //   outputFile,
+        //   // { type: 'orpheus' },
+        //   // {
+        //   //   voice: settings.ttsVoice || "tara",
+        //   //   format: "mp3",
+        //   //   temperature: 0.7
+        //   // }
+        // )
+        await textToSpeech(chunk.text, outputFile, {
+          model: "mlx-community/Kokoro-82M-4bit",
+          voice: "af_heart",
+          format: "mp3",
+          temperature: 0.7,
+          speed: 1.0,
+        })
 
         processedChunks++
         if (onProgress) {

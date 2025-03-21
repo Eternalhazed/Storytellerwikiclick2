@@ -10,16 +10,19 @@ import { convertWavToMp3 } from "../utils/audioFormat"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export interface OrpheusTTSConfig {
-  type: "orpheus"
+export interface MLXAudioConfig {
+  type: "mlx-audio"
   virtualEnvPath?: string
 }
 
 export interface TTSOptions {
+  model?: string
   voice?: string
+  speed?: number
+  langCode?: string
   temperature?: number
-  topP?: number
-  repetitionPenalty?: number
+  refAudio?: string
+  refText?: string
   format?: "wav" | "mp3"
 }
 
@@ -31,13 +34,13 @@ function getVenvPythonPath(baseDir: string): string {
   return path.join(baseDir, "venv", "bin", "python")
 }
 
-export async function initializeOrpheus(): Promise<void> {
-  const scriptDir = path.join(__dirname, "orpheus-tts-local")
+export async function initializeMLXAudio(): Promise<void> {
+  const scriptDir = path.join(__dirname, "mlx-audio")
   try {
     await createVirtualEnv(scriptDir)
     await installRequirements(scriptDir)
   } catch (error) {
-    logger.error("Failed to initialize Orpheus TTS:", error)
+    logger.error("Failed to initialize MLX Audio:", error)
     throw error
   }
 }
@@ -45,38 +48,42 @@ export async function initializeOrpheus(): Promise<void> {
 export async function textToSpeech(
   prompt: string,
   outputFile: string,
-  // config: OrpheusTTSConfig,
   options: TTSOptions = {},
 ): Promise<void> {
   // Set default options
   const {
-    voice = "tara",
-    temperature = 0.6,
-    topP = 0.9,
-    repetitionPenalty = 1.1,
+    model = "mlx-community/Kokoro-82M-4bit",
+    voice = "af_heart",
+    speed = 1.0,
+    langCode = "a",
     format = "wav",
   } = options
 
-  const scriptDir = path.join(__dirname, "orpheus-tts-local")
+  const scriptDir = path.join(__dirname, "mlx-audio")
 
   // Ensure output directory exists
   const outputDir = path.dirname(outputFile)
   await fs.promises.mkdir(outputDir, { recursive: true })
 
+  // Extract file prefix and format from output file
+  const filePrefix = outputFile.replace(/\.[^/.]+$/, "")
+
   // Construct arguments for Python script
   const pythonArgs = [
     "--text",
     prompt,
+    "--model",
+    model,
     "--voice",
     voice,
-    "--output",
-    outputFile,
-    "--temperature",
-    temperature.toString(),
-    "--top_p",
-    topP.toString(),
-    "--repetition_penalty",
-    repetitionPenalty.toString(),
+    "--speed",
+    speed.toString(),
+    "--lang_code",
+    langCode,
+    "--file_prefix",
+    filePrefix,
+    "--audio_format",
+    "wav", // Always output as WAV initially
   ]
 
   // Configure PythonShell options
@@ -89,18 +96,23 @@ export async function textToSpeech(
   }
 
   return new Promise((resolve, reject) => {
-    PythonShell.run("gguf_orpheus.py", pythonOptions)
+    PythonShell.run("generate.py", pythonOptions)
       .then(async (messages: string[]) => {
-        // Check if output file was created
-        if (!messages.some((msg) => msg.includes("Audio saved to"))) {
+        // Check if output file was created by looking for success message
+        logger.info(messages)
+        if (
+          !messages.some((msg) => msg.includes("Audio successfully generated"))
+        ) {
           reject(new Error("Failed to generate audio file"))
           return
         }
 
+        const wavFile = `${filePrefix}.wav`
+
         // If MP3 format is requested, convert WAV to MP3
-        if (format === "mp3" && outputFile.endsWith(".wav")) {
+        if (format === "mp3") {
           try {
-            await convertWavToMp3(outputFile, true)
+            await convertWavToMp3(wavFile, true)
           } catch (error) {
             logger.error("Error converting WAV to MP3:", error)
             reject(new Error(String(error)))
