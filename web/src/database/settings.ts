@@ -59,7 +59,6 @@ export type Settings = {
   parallelTranscribes: number
   parallelWhisperBuild: number
   // Add TTS settings to interface
-  ttsMaxChunkLength?: number
   ttsVoice?: string
   ttsRate?: number
   ttsPitch?: number
@@ -98,7 +97,6 @@ export const SETTINGS_COLUMN_NAMES = {
   parallel_transcribes: "parallelTranscribes",
   parallel_whisper_build: "parallelWhisperBuild",
 
-  tts_max_chunk_length: "ttsMaxChunkLength",
   tts_voice: "ttsVoice",
   tts_rate: "ttsRate",
   tts_pitch: "ttsPitch",

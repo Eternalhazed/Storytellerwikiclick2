@@ -1,4 +1,3 @@
-import { Settings } from "@/database/settings"
 import { getTTSChunksFilepath, getTTSDirectory } from "@/assets/paths"
 import { logger } from "@/logging"
 import {
@@ -19,7 +18,6 @@ type ChunksPathGetter = (bookUuid: UUID, filename: string) => string
 
 export async function generateTTS(
   bookUuid: UUID,
-  settings: Settings,
   onProgress?: (progress: number) => void,
 ): Promise<ProcessedBookForTTS> {
   // Initialize Orpheus TTS engine (creates venv if needed)
@@ -30,13 +28,8 @@ export async function generateTTS(
   await mkdir(path.resolve(ttsDirectory), { recursive: true })
 
   // Process EPUB for TTS
-  const maxChunkLength = Number(settings.ttsMaxChunkLength || 1000)
-  logger.info(
-    `Starting TTS processing for book ${bookUuid} with max chunk length ${maxChunkLength}`,
-  )
-
   try {
-    const processedBook = await processEpubForTTS(bookUuid, maxChunkLength)
+    const processedBook = await processEpubForTTS(bookUuid)
 
     // Save the processed chunks to a JSON file for later use
     const ttsChunksFile = getTTSChunksFilepathTyped(bookUuid, "tts-chunks.json")

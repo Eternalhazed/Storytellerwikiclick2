@@ -232,7 +232,7 @@ export default async function processBook({
       if (task.type === ProcessingTaskType.TTS) {
         logger.info(`Generating TTS chunks for book ${bookRefForLog}...`)
 
-        await generateTTS(bookUuid, settings, onProgress)
+        await generateTTS(bookUuid, onProgress)
 
         logger.info(
           `Successfully generated TTS chunks for book ${bookRefForLog}`,
