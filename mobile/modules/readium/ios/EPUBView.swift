@@ -64,7 +64,7 @@ class EPUBView: ExpoView {
 
     public var pendingProps: Props = Props()
     public var props: FinalizedProps?
-    
+
     private var changingResource = false
 
     public func finalizeProps() {
@@ -442,7 +442,7 @@ extension EPUBView: EPUBNavigatorDelegate {
                     window.webkit.messageHandlers.storytellerSelectionCleared.postMessage(null);
                 }
             });
-                    
+
             storyteller.isEntirelyOnScreen = function isEntirelyOnScreen(element) {
                 const rects = element.getClientRects()
                 return Array.from(rects).every((rect) => {
@@ -451,11 +451,11 @@ extension EPUBView: EPUBNavigatorDelegate {
                     return isVerticallyWithin && isHorizontallyWithin;
                 });
             }
-        
+
             const originalFindLocator = readium.findFirstVisibleLocator
             readium.findFirstVisibleLocator = function findFirstVisibleLocator() {
                 let firstVisibleFragmentId = null;
-        
+
                 for (const fragmentId of storyteller.fragmentIds) {
                     const element = document.getElementById(fragmentId);
                     if (!element) continue;
@@ -464,9 +464,9 @@ extension EPUBView: EPUBNavigatorDelegate {
                         break
                     }
                 }
-        
+
                 if (firstVisibleFragmentId === null) return originalFindLocator();
-        
+
                 return {
                     href: "#",
                     type: "application/xhtml+xml",
@@ -489,7 +489,6 @@ extension EPUBView: EPUBNavigatorDelegate {
         userContentController.addUserScript(WKUserScript(source: scriptSource, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         userContentController.add(self, name: "storytellerDoubleClick")
         userContentController.add(self, name: "storytellerSelectionCleared")
-        userContentController.add(self, name: "storytellerFragmentChanged")
     }
 
     func navigator(_ navigator: R2Navigator.Navigator, presentError error: R2Navigator.NavigatorError) {
@@ -518,7 +517,7 @@ extension EPUBView: EPUBNavigatorDelegate {
 
         if locator.href != props!.locator.href || changingResource {
             changingResource = false
-            
+
             let fragments = BookService.instance.getFragments(for: props!.bookId, locator: locator)
 
             let joinedFragments = fragments.map(\.fragment).map { "\"\($0)\"" }.joined(separator: ",")
