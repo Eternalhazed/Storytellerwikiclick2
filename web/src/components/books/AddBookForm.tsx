@@ -77,9 +77,10 @@ export function AddBookForm() {
 
     setUploadState(UploadState.UPLOADING)
     if (fileSource === "upload") {
-      if (epubFile === null || audioFiles === null) return
+      if (epubFile === null) return // Only check for EPUB file
       try {
-        await client.createBook(epubFile, audioFiles, (event) => {
+        // Pass optional audio files
+        await client.createBook(epubFile, audioFiles ?? [], (event) => {
           if (event.progress === 1) {
             setCurrentUploadIndex((p) => (p === null ? 0 : p + 1))
           }
@@ -91,10 +92,11 @@ export function AddBookForm() {
       }
     } else {
       try {
-        if (epubPath === null || audioPaths === null) return
+        if (epubPath === null) return // Only check for EPUB path
         await client.createBook(
           epubPath.path,
-          audioPaths.map((entry) => entry.path),
+          // Make audio paths optional
+          audioPaths?.map((entry) => entry.path) ?? [],
         )
       } catch (_) {
         setUploadState(UploadState.ERROR)
@@ -108,6 +110,10 @@ export function AddBookForm() {
   const canAddBook = usePermission("book_create")
 
   if (!canAddBook) return null
+
+  const canSubmit =
+    (fileSource === "upload" && epubFile !== null) ||
+    (fileSource === "server" && epubPath !== null)
 
   return (
     <Stack className="mt-8 max-w-[600px] rounded-md bg-gray-200 py-8">
@@ -386,13 +392,7 @@ export function AddBookForm() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={
-                    (fileSource === "upload" &&
-                      (epubFile === null || audioFiles === null)) ||
-                    (fileSource === "server" &&
-                      (epubPath === null || audioPaths === null)) ||
-                    uploadState !== UploadState.CLEAN
-                  }
+                  disabled={!canSubmit || uploadState !== UploadState.CLEAN}
                 >
                   Create
                 </Button>

@@ -41,3 +41,5 @@ migrate-dist
 # ignore all files in sqlite except for uuid.c
 sqlite/*
 !sqlite/uuid.c
+
+assets

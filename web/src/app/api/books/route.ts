@@ -57,13 +57,21 @@ export const GET = withHasPermission("book_list")(async (request) => {
 
 export const POST = withHasPermission("book_create")(async (request) => {
   if (request.headers.get("Content-Type") === "application/json") {
-    const { epub_path: epubPath, audio_paths: audioPaths } =
+    const { epub_path: epubPath, audio_paths: audioPaths = [] } =
       (await request.json()) as {
         epub_path: string
-        audio_paths: string[]
+        audio_paths?: string[]
       }
 
     try {
+      if (!epubPath) {
+        return NextResponse.json(
+          {
+            message: "Missing epubPath",
+          },
+          { status: 405 },
+        )
+      }
       const epub = await Epub.from(epubPath)
       const title = await epub.getTitle()
       const authors = await epub.getCreators()
@@ -80,14 +88,17 @@ export const POST = withHasPermission("book_create")(async (request) => {
         })),
       )
       await linkEpub(book.uuid, epubPath)
-      await linkAudio(book.uuid, audioPaths)
+
+      if (audioPaths.length > 0) {
+        await linkAudio(book.uuid, audioPaths)
+      }
 
       return NextResponse.json(book)
     } catch (e) {
       logger.error(e)
       return NextResponse.json(
         {
-          message: "Missing epubPath or audioPaths",
+          message: "Error processing epub",
         },
         { status: 405 },
       )
@@ -98,7 +109,7 @@ export const POST = withHasPermission("book_create")(async (request) => {
   if (!body) {
     return NextResponse.json(
       {
-        message: "Missing epubPath or audioPaths",
+        message: "Missing request body",
       },
       { status: 405 },
     )
@@ -134,10 +145,10 @@ export const POST = withHasPermission("book_create")(async (request) => {
     Readable.fromWeb(body).pipe(bus)
   })
 
-  if (!paths.epubFile || !paths.audioFiles.length) {
+  if (!paths.epubFile) {
     return NextResponse.json(
       {
-        message: "Missing epub_file or audio_files",
+        message: "Missing epub_file",
       },
       { status: 405 },
     )
@@ -160,7 +171,10 @@ export const POST = withHasPermission("book_create")(async (request) => {
     })),
   )
   await persistEpub(book.uuid, paths.epubFile)
-  await persistAudio(book.uuid, paths.audioFiles)
+
+  if (paths.audioFiles.length > 0) {
+    await persistAudio(book.uuid, paths.audioFiles)
+  }
 
   return NextResponse.json(book)
 })

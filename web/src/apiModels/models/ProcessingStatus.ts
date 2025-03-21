@@ -6,12 +6,15 @@ export enum ProcessingTaskType {
   SPLIT_CHAPTERS = "SPLIT_CHAPTERS",
   TRANSCRIBE_CHAPTERS = "TRANSCRIBE_CHAPTERS",
   SYNC_CHAPTERS = "SYNC_CHAPTERS",
+  TTS = "TTS",
 }
 
 export enum ProcessingTaskStatus {
   STARTED = "STARTED",
   COMPLETED = "COMPLETED",
   IN_ERROR = "IN_ERROR",
+  PROCESSING = "PROCESSING",
+  FAILED = "FAILED",
 }
 
 export type ProcessingStatus = {
