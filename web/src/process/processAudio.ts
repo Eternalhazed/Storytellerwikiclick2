@@ -372,6 +372,10 @@ export async function processAudiobook(
   await mkdir(processedAudioDirectory, { recursive: true })
 
   const filenames = await readdir(originalAudioDirectory)
+  if (!filenames.length) {
+    logger.info(`No audio files found in ${originalAudioDirectory}`)
+    return []
+  }
 
   const processedFilenames = await readdir(processedAudioDirectory)
   if (processedFilenames.length) return

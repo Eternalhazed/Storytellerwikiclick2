@@ -210,14 +210,22 @@ export default async function processBook({
       if (task.type === ProcessingTaskType.SPLIT_CHAPTERS) {
         logger.info("Pre-processing...")
         await processEpub(bookUuid)
-        await processAudiobook(
-          bookUuid,
-          settings.maxTrackLength ?? null,
-          settings.codec ?? null,
-          settings.bitrate ?? null,
-          new AsyncSemaphore(settings.parallelTranscodes),
-          onProgress,
-        )
+
+        // Check if original audio directory exists before processing audio
+        try {
+          await processAudiobook(
+            bookUuid,
+            settings.maxTrackLength ?? null,
+            settings.codec ?? null,
+            settings.bitrate ?? null,
+            new AsyncSemaphore(settings.parallelTranscodes),
+            onProgress,
+          )
+        } catch (e) {
+          logger.error(
+            `Error processing audio for book ${bookUuid}: ${e instanceof Error ? e.message : String(e)}`,
+          )
+        }
       }
 
       if (task.type === ProcessingTaskType.TRANSCRIBE_CHAPTERS) {
