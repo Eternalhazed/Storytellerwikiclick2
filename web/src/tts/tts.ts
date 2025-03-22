@@ -1,47 +1,63 @@
-import { getTTSChunksFilepath, getTTSDirectory } from "@/assets/paths"
+import { getTTSDirectory } from "@/assets/paths"
 import { logger } from "@/logging"
 import {
   ProcessedBookForTTS,
   processEpubForTTS,
 } from "@/process/processEpubForTTS"
 import { UUID } from "@/uuid"
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir } from "node:fs/promises"
 import path from "path"
 // import { initializeOrpheus, textToSpeech } from "./providers/orpheus"
 import { initializeMLXAudio, textToSpeech } from "./providers/mlx_audio"
 
 // Type assertions for imported functions
 const getTTSDirectoryTyped = getTTSDirectory as PathGetter
-const getTTSChunksFilepathTyped = getTTSChunksFilepath as ChunksPathGetter
 
 type PathGetter = (bookUuid: UUID) => string
-type ChunksPathGetter = (bookUuid: UUID, filename: string) => string
+
+export interface TTSGenerationOptions {
+  maxChunkSize?: number
+  voice?: string
+  model?: string
+  speed?: number
+  temperature?: number
+}
 
 export async function generateTTS(
   bookUuid: UUID,
+  options: TTSGenerationOptions = {},
   onProgress?: (progress: number) => void,
 ): Promise<ProcessedBookForTTS> {
-  // Initialize Orpheus TTS engine (creates venv if needed)
-  // await initializeOrpheus()
+  // Set default options
+  const {
+    maxChunkSize = 2000,
+    voice = "af_heart",
+    model = "mlx-community/Kokoro-82M-4bit",
+  } = options
+
+  // Initialize MLX Audio engine (creates venv if needed)
   await initializeMLXAudio()
 
   // Create directory for TTS chunks
   const ttsDirectory = getTTSDirectoryTyped(bookUuid)
   await mkdir(path.resolve(ttsDirectory), { recursive: true })
 
-  // Process EPUB for TTS
+  // Process EPUB for TTS with configurable chunk size
   try {
-    const processedBook = await processEpubForTTS(bookUuid)
+    logger.info(
+      `Processing EPUB with max chunk size of ${maxChunkSize} characters`,
+    )
+    const processedBook = await processEpubForTTS(bookUuid, maxChunkSize)
 
     // Save the processed chunks to a JSON file for later use
-    const ttsChunksFile = getTTSChunksFilepathTyped(bookUuid, "tts-chunks.json")
-    await writeFile(
-      path.resolve(ttsChunksFile),
-      JSON.stringify(processedBook),
-      "utf-8",
-    )
+    // const ttsChunksFile = getTTSChunksFilepathTyped(bookUuid, "tts-chunks.json")
+    // await writeFile(
+    //   path.resolve(ttsChunksFile),
+    //   JSON.stringify(processedBook),
+    //   "utf-8",
+    // )
 
-    logger.info(`Successfully wrote TTS chunks to ${ttsChunksFile}`)
+    // logger.info(`Successfully wrote TTS chunks to ${ttsChunksFile}`)
 
     // Generate TTS audio for each chunk
     const totalChunks = processedBook.chapters.reduce(
@@ -52,27 +68,14 @@ export async function generateTTS(
 
     for (const chapter of processedBook.chapters) {
       for (const chunk of chapter.chunks) {
-        const outputFile = getTTSChunksFilepathTyped(
-          bookUuid,
-          `${chunk.chapterIndex}-${chunk.position}.mp3`,
-        )
+        const outputDir = getTTSDirectoryTyped(bookUuid)
+        const filePrefix = `${chapter.index}_${chunk.position}`
 
-        // await textToSpeech(
-        //   chunk.text,
-        //   outputFile,
-        //   // { type: 'orpheus' },
-        //   // {
-        //   //   voice: settings.ttsVoice || "tara",
-        //   //   format: "mp3",
-        //   //   temperature: 0.7
-        //   // }
-        // )
-        await textToSpeech(chunk.text, outputFile, {
-          model: "mlx-community/Kokoro-82M-4bit",
-          voice: "af_heart",
+        await textToSpeech(chunk.text, path.resolve(outputDir), {
+          model,
+          voice,
           format: "mp3",
-          temperature: 0.7,
-          speed: 1.0,
+          filePrefix, // Use chapter and position to create unique filenames
         })
 
         processedChunks++

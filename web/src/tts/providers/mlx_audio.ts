@@ -1,10 +1,9 @@
-import { PythonShell, Options } from "python-shell"
-import path from "path"
 import { fileURLToPath } from "url"
+import path from "path"
 import fs from "fs"
+import { spawn } from "child_process"
 import { logger } from "@/logging"
 import { createVirtualEnv, installRequirements } from "../utils/virtualenv"
-import { convertWavToMp3 } from "../utils/audioFormat"
 
 // Get current directory using import.meta.url
 const __filename = fileURLToPath(import.meta.url)
@@ -13,6 +12,7 @@ const __dirname = path.dirname(__filename)
 export interface MLXAudioConfig {
   type: "mlx-audio"
   virtualEnvPath?: string
+  maxChunkSize?: number
 }
 
 export interface TTSOptions {
@@ -24,14 +24,8 @@ export interface TTSOptions {
   refAudio?: string
   refText?: string
   format?: "wav" | "mp3"
-}
-
-// Helper to get virtual environment python path
-function getVenvPythonPath(baseDir: string): string {
-  if (process.platform === "win32") {
-    return path.join(baseDir, "venv", "Scripts", "python.exe")
-  }
-  return path.join(baseDir, "venv", "bin", "python")
+  // Added to specify the filename prefix for the output
+  filePrefix?: string
 }
 
 export async function initializeMLXAudio(): Promise<void> {
@@ -47,83 +41,82 @@ export async function initializeMLXAudio(): Promise<void> {
 
 export async function textToSpeech(
   prompt: string,
-  outputFile: string,
+  outputDirectory: string,
   options: TTSOptions = {},
 ): Promise<void> {
+  // Check if the prompt is too long
+  if (prompt.length > 2000) {
+    logger.warn(
+      `Prompt length ${prompt.length} exceeds recommended maximum (2000 characters). This may affect speech quality or cause failures.`,
+    )
+  }
+
   // Set default options
   const {
     model = "mlx-community/Kokoro-82M-4bit",
     voice = "af_heart",
-    speed = 1.0,
-    langCode = "a",
-    format = "wav",
+    filePrefix = "audio", // Default file prefix
   } = options
 
   const scriptDir = path.join(__dirname, "mlx-audio")
 
+  // Get the correct Python executable from the virtual environment
+  const pythonPath =
+    process.platform === "win32"
+      ? path.join(scriptDir, "venv", "Scripts", "python.exe")
+      : path.join(scriptDir, "venv", "bin", "python")
+
   // Ensure output directory exists
-  const outputDir = path.dirname(outputFile)
-  await fs.promises.mkdir(outputDir, { recursive: true })
-
-  // Extract file prefix and format from output file
-  const filePrefix = outputFile.replace(/\.[^/.]+$/, "")
-
-  // Construct arguments for Python script
-  const pythonArgs = [
-    "--text",
-    prompt,
-    "--model",
-    model,
-    "--voice",
-    voice,
-    "--speed",
-    speed.toString(),
-    "--lang_code",
-    langCode,
-    "--file_prefix",
-    filePrefix,
-    "--audio_format",
-    "wav", // Always output as WAV initially
-  ]
-
-  // Configure PythonShell options
-  const pythonOptions: Options = {
-    mode: "text",
-    pythonPath: getVenvPythonPath(scriptDir),
-    pythonOptions: ["-u"],
-    scriptPath: scriptDir,
-    args: pythonArgs,
-  }
+  await fs.promises.mkdir(outputDirectory, { recursive: true })
 
   return new Promise((resolve, reject) => {
-    PythonShell.run("generate.py", pythonOptions)
-      .then(async (messages: string[]) => {
-        // Check if output file was created by looking for success message
-        logger.info(messages)
-        if (
-          !messages.some((msg) => msg.includes("Audio successfully generated"))
-        ) {
-          reject(new Error("Failed to generate audio file"))
-          return
-        }
+    // Use spawn instead of exec to avoid shell parsing issues
+    // Set the working directory to our output directory so files get saved there
+    const pythonProcess = spawn(
+      pythonPath,
+      [
+        "-m",
+        "mlx_audio.tts.generate",
+        "--text",
+        prompt,
+        "--model",
+        model,
+        "--voice",
+        voice,
+        "--audio_format",
+        "mp3",
+        "--file_prefix", // Use file_prefix to control the output filename
+        filePrefix,
+      ],
+      {
+        cwd: outputDirectory, // This is critical - sets the working directory for the Python process
+      },
+    )
 
-        const wavFile = `${filePrefix}.wav`
+    let stderrData = ""
 
-        // If MP3 format is requested, convert WAV to MP3
-        if (format === "mp3") {
-          try {
-            await convertWavToMp3(wavFile, true)
-          } catch (error) {
-            logger.error("Error converting WAV to MP3:", error)
-            reject(new Error(String(error)))
-            return
-          }
-        }
+    pythonProcess.stdout.on("data", (data) => {
+      const output = (data as Buffer).toString()
+      logger.info(`MLX Audio output: ${output}`)
+    })
 
-        resolve()
-      })
-      .catch((err: unknown) => {
-        reject(new Error(`Failed to run Python script: ${String(err)}`))
-      })
+    pythonProcess.stderr.on("data", (data) => {
+      const errorOutput = (data as Buffer).toString()
+      stderrData += errorOutput
+      logger.error(`stderr: ${errorOutput}`)
+    })
+
+    pythonProcess.on("close", (code) => {
+      if (code !== 0) {
+        reject(
+          new Error(
+            `Failed to run MLX Audio, exit code: ${code}\n${stderrData}`,
+          ),
+        )
+        return
+      }
+
+      resolve()
+    })
   })
 }
