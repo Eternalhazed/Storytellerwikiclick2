@@ -87,6 +87,7 @@ export async function textToSpeech(
         "mp3",
         "--file_prefix", // Use file_prefix to control the output filename
         filePrefix,
+        "--join_audio",
       ],
       {
         cwd: outputDirectory, // This is critical - sets the working directory for the Python process
