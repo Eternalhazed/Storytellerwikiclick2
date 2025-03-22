@@ -1,11 +1,11 @@
-import { getTTSDirectory } from "@/assets/paths"
+import { getTTSDirectory, getTTSChunksFilepath } from "@/assets/paths"
 import { logger } from "@/logging"
 import {
   ProcessedBookForTTS,
   processEpubForTTS,
 } from "@/process/processEpubForTTS"
 import { UUID } from "@/uuid"
-import { mkdir } from "node:fs/promises"
+import { mkdir, writeFile } from "node:fs/promises"
 import path from "path"
 // import { initializeOrpheus, textToSpeech } from "./providers/orpheus"
 import { initializeMLXAudio, textToSpeech } from "./providers/mlx_audio"
@@ -50,14 +50,14 @@ export async function generateTTS(
     const processedBook = await processEpubForTTS(bookUuid, maxChunkSize)
 
     // Save the processed chunks to a JSON file for later use
-    // const ttsChunksFile = getTTSChunksFilepathTyped(bookUuid, "tts-chunks.json")
-    // await writeFile(
-    //   path.resolve(ttsChunksFile),
-    //   JSON.stringify(processedBook),
-    //   "utf-8",
-    // )
+    const ttsChunksFile = getTTSChunksFilepath(bookUuid, "tts-chunks.json")
+    await writeFile(
+      path.resolve(ttsChunksFile),
+      JSON.stringify(processedBook),
+      "utf-8",
+    )
 
-    // logger.info(`Successfully wrote TTS chunks to ${ttsChunksFile}`)
+    logger.info(`Successfully wrote TTS chunks to ${ttsChunksFile}`)
 
     // Generate TTS audio for each chunk
     const totalChunks = processedBook.chapters.reduce(
