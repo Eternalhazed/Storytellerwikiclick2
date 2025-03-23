@@ -264,7 +264,7 @@ export function MiniPlayer({ book, automaticRewind }: Props) {
           <Button
             chromeless
             onPress={() => {
-              nextFragmentPressed()
+              dispatch(nextFragmentPressed())
             }}
           >
             <FastForward
