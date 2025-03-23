@@ -7,7 +7,11 @@ import {
 import { UUID } from "@/uuid"
 import { mkdir, writeFile, access, constants, readFile } from "node:fs/promises"
 import path from "path"
-// import { initializeOrpheus, textToSpeech } from "./providers/orpheus"
+import {
+  initializeEchogarden,
+  textToSpeech as echogardenTTS,
+} from "./providers/echogarden"
+import type { EchogardenTTSOptions } from "./providers/echogarden"
 import {
   initializeMLXAudio,
   MLXModel,
@@ -26,6 +30,8 @@ export interface TTSGenerationOptions {
   speed?: number
   temperature?: number
   forceRegenerate?: boolean
+  engine?: "mlx" | "echogarden"
+  echogardenOptions?: Partial<EchogardenTTSOptions>
 }
 
 /**
@@ -48,8 +54,12 @@ export async function generateTTS(
   // Set default options
   const { maxChunkSize, forceRegenerate = false } = options
 
-  // Initialize MLX Audio engine (creates venv if needed)
-  await initializeMLXAudio()
+  // Initialize selected engine
+  if (options.engine === "echogarden") {
+    await initializeEchogarden()
+  } else {
+    await initializeMLXAudio()
+  }
 
   // Use processed directory
   const processedDirectory = getProcessedDirectoryTyped(bookUuid)
@@ -116,15 +126,37 @@ export async function generateTTS(
           filePrefix,
         )
         // Generate the audio for this chunk
-        await textToSpeech(chunk.text, outputDir, MLXModel.KOKORO, {
-          filePrefix: expectedAudioPathWithoutExtension,
-          voice: "af_sky",
-          lang_code: "a",
-        })
-        // await textToSpeech(chunk.text, outputDir, MLXModel.ORPHEUS, {
-        //   filePrefix: expectedAudioPathWithoutExtension,
-        //   voice: "tara",
-        // })
+        if (options.engine === "echogarden") {
+          await echogardenTTS(
+            chunk.text,
+            outputDir,
+            {
+              filePrefix,
+              ...options.echogardenOptions,
+            },
+            (progress) => {
+              if (onProgress) {
+                // Calculate overall progress
+                const totalChunks = processedBook.chapters.reduce(
+                  (sum, ch) => sum + ch.chunks.length,
+                  0,
+                )
+                const currentProgress =
+                  (processedChunks +
+                    progress.segmentCount / chunk.text.length) /
+                  totalChunks
+                onProgress(currentProgress)
+              }
+            },
+          )
+        } else {
+          // Existing MLX Audio code
+          await textToSpeech(chunk.text, outputDir, MLXModel.KOKORO, {
+            filePrefix: expectedAudioPathWithoutExtension,
+            voice: "af_sky",
+            lang_code: "a",
+          })
+        }
 
         processedChunks++
         if (onProgress) {

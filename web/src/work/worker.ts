@@ -273,15 +273,30 @@ export default async function processBook({
       if (task.type === ProcessingTaskType.TTS) {
         logger.info(`Generating TTS chunks for book ${bookRefForLog}...`)
 
-        await generateTTS(
-          bookUuid,
-          {
-            maxChunkSize: 1000,
-            voice: "tara",
-            model: "mlx-community/orpheus-3b-0.1-ft-bf16",
+        // await generateTTS(
+        //   bookUuid,
+        //   {
+        //     maxChunkSize: 1000,
+        //     voice: "tara",
+        //     model: "mlx-community/orpheus-3b-0.1-ft-bf16",
+        //   },
+        //   onProgress,
+        // )
+
+        await generateTTS(bookUuid, {
+          engine: "echogarden",
+          echogardenOptions: {
+            voice: "Heart",
+            language: "en-US",
+            speed: 1.0,
+            pitch: 1.0,
+            kokoroModel: "82m-v1.0-fp32",
+            kokoroProvider: "cpu",
+            normalize: true,
+            targetPeak: -3,
+            bitrate: 192000,
           },
-          onProgress,
-        )
+        })
 
         logger.info(
           `Successfully generated TTS chunks for book ${bookRefForLog}`,
