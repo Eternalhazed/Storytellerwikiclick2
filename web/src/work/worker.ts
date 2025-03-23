@@ -152,6 +152,9 @@ export async function transcribeBook(
   return transcriptions
 }
 
+/**
+ * Determines which tasks still need to be completed
+ */
 export function determineRemainingTasks(
   bookUuid: UUID,
   processingTasks: ProcessingTask[],
@@ -172,24 +175,40 @@ export function determineRemainingTasks(
       }))
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const lastCompletedTaskIndex = sortedTasks.findLastIndex(
     (task) => task.status === ProcessingTaskStatus.COMPLETED,
   )
 
-  return (sortedTasks as Omit<ProcessingTask, "uuid">[])
-    .slice(lastCompletedTaskIndex + 1)
-    .concat(
-      Object.entries(PROCESSING_TASK_ORDER)
-        .sort(([, orderA], [, orderB]) => orderA - orderB)
-        .slice(sortedTasks.length)
-        .map(([type]) => ({
-          type: type as ProcessingTaskType,
-          status: ProcessingTaskStatus.STARTED,
-          progress: 0,
-          bookUuid,
-        })),
+  // Get remaining tasks from the current list
+  const remainingExistingTasks = sortedTasks.slice(lastCompletedTaskIndex + 1)
+
+  // Find the order of the last completed task (or -1 if none)
+  const lastCompletedOrder =
+    lastCompletedTaskIndex >= 0 && sortedTasks[lastCompletedTaskIndex]
+      ? PROCESSING_TASK_ORDER[sortedTasks[lastCompletedTaskIndex].type]
+      : -1
+
+  // Collect existing task types that are pending
+  const existingTypes = new Set(remainingExistingTasks.map((task) => task.type))
+
+  // Find missing tasks that should come after the last completed task
+  const missingTasks = Object.entries(PROCESSING_TASK_ORDER)
+    .filter(
+      ([type, order]) =>
+        !existingTypes.has(type as ProcessingTaskType) &&
+        order > lastCompletedOrder,
     )
+    .map(([type]) => ({
+      type: type as ProcessingTaskType,
+      status: ProcessingTaskStatus.STARTED,
+      progress: 0,
+      bookUuid,
+    }))
+
+  // Combine and sort all tasks
+  return [...remainingExistingTasks, ...missingTasks].sort(
+    (a, b) => PROCESSING_TASK_ORDER[a.type] - PROCESSING_TASK_ORDER[b.type],
+  )
 }
 
 export default async function processBook({
