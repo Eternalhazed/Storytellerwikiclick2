@@ -8,8 +8,10 @@ import { PlayPause } from "./PlayPause"
 import {
   BookshelfBook,
   bookshelfSlice,
+  nextFragmentPressed,
   playerPositionSeeked,
   playerTotalPositionSeeked,
+  previousFragmentPressed,
 } from "../store/slices/bookshelfSlice"
 import { UIText } from "./UIText"
 import { useState, useMemo, useEffect, useRef } from "react"
@@ -24,6 +26,7 @@ import { fontSizes } from "./ui/tokens/fontSizes"
 import { debounce } from "../debounce"
 import { FastForward, Rewind } from "lucide-react-native"
 import { useColorTheme } from "../hooks/useColorTheme"
+import { Button } from "./ui/Button"
 
 // Roughly the number of "positions" that fit in a
 // standard paperback book page
@@ -243,7 +246,14 @@ export function MiniPlayer({ book, automaticRewind }: Props) {
                   }
             }
           />
-          <Rewind color={foreground} fill={foreground} size={spacing[2.5]} />
+          <Button
+            chromeless
+            onPress={() => {
+              dispatch(previousFragmentPressed())
+            }}
+          >
+            <Rewind color={foreground} fill={foreground} size={spacing[2.5]} />
+          </Button>
           <View style={{ width: spacing[4] }}>
             <PlayPause
               isPlaying={isPlaying}
@@ -251,11 +261,18 @@ export function MiniPlayer({ book, automaticRewind }: Props) {
               automaticRewind={automaticRewind}
             />
           </View>
-          <FastForward
-            color={foreground}
-            fill={foreground}
-            size={spacing[2.5]}
-          />
+          <Button
+            chromeless
+            onPress={() => {
+              nextFragmentPressed()
+            }}
+          >
+            <FastForward
+              color={foreground}
+              fill={foreground}
+              size={spacing[2.5]}
+            />
+          </Button>
         </View>
 
         <View style={styles.details}>
