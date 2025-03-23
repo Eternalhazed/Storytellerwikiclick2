@@ -4,28 +4,28 @@ import fs from "fs"
 import { spawn } from "child_process"
 import { logger } from "@/logging"
 import { createVirtualEnv, installRequirements } from "../utils/virtualenv"
+import { KokoroTTSOptions, OrpheusTTSOptions } from "../types"
 
-// Get current directory using import.meta.url
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export interface MLXAudioConfig {
-  type: "mlx-audio"
-  virtualEnvPath?: string
-  maxChunkSize?: number
+export enum MLXModel {
+  KOKORO = "mlx-community/Kokoro-82M-4bit",
+  ORPHEUS = "mlx-community/orpheus-3b-0.1-ft-bf16",
 }
 
-export interface TTSOptions {
-  model?: string
-  voice?: string
-  speed?: number
-  langCode?: string
+type ModelOptions = {
+  [MLXModel.KOKORO]: KokoroTTSOptions
+  [MLXModel.ORPHEUS]: OrpheusTTSOptions
+}
+
+interface ModelDefaults {
+  voice: string
+  lang_code?: string
   temperature?: number
-  refAudio?: string
-  refText?: string
-  format?: "wav" | "mp3"
-  // Added to specify the filename prefix for the output
-  filePrefix?: string
+  top_p?: number
+  top_k?: number
+  repetition_penalty?: number
 }
 
 export async function initializeMLXAudio(): Promise<void> {
@@ -39,85 +39,87 @@ export async function initializeMLXAudio(): Promise<void> {
   }
 }
 
-export async function textToSpeech(
-  prompt: string,
+export async function textToSpeech<T extends MLXModel>(
+  text: string,
   outputDirectory: string,
-  options: TTSOptions = {},
+  model: T,
+  options: ModelOptions[T],
 ): Promise<void> {
-  // Check if the prompt is too long
-  if (prompt.length > 2000) {
-    logger.warn(
-      `Prompt length ${prompt.length} exceeds recommended maximum (2000 characters). This may affect speech quality or cause failures.`,
-    )
+  if (!options.filePrefix) {
+    throw new Error("filePrefix is required for MLX Audio output")
   }
 
-  // Set default options
-  const {
-    model = "mlx-community/Kokoro-82M-4bit",
-    voice = "af_heart",
-    filePrefix = "audio", // Default file prefix
-  } = options
+  // Model-specific defaults
+  const modelDefaults: Record<MLXModel, ModelDefaults> = {
+    [MLXModel.KOKORO]: {
+      voice: "af_heart",
+      lang_code: "en",
+    },
+    [MLXModel.ORPHEUS]: {
+      voice: "tara",
+      temperature: 0.6,
+      top_p: 0.9,
+      top_k: 50,
+      repetition_penalty: 1.1,
+    },
+  }
+
+  // Merge defaults with provided options
+  const mergedOptions = {
+    ...modelDefaults[model],
+    ...options,
+  }
 
   const scriptDir = path.join(__dirname, "mlx-audio")
+  const pythonPath = path.join(scriptDir, "venv", "bin", "python")
 
-  // Get the correct Python executable from the virtual environment
-  const pythonPath =
-    process.platform === "win32"
-      ? path.join(scriptDir, "venv", "Scripts", "python.exe")
-      : path.join(scriptDir, "venv", "bin", "python")
-
-  // Ensure output directory exists
   await fs.promises.mkdir(outputDirectory, { recursive: true })
 
+  // Base arguments that are always included
+  const baseArgs: Record<string, string | boolean> = {
+    text,
+    model,
+    audio_format: "mp3",
+    file_prefix: mergedOptions.filePrefix,
+    join_audio: true,
+  }
+
+  // Combine base args with model-specific options
+  const args = Object.entries({ ...baseArgs, ...mergedOptions })
+    .filter(([key]) => !["filePrefix"].includes(key)) // Remove filePrefix as it's handled by file_prefix
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) =>
+      typeof value === "boolean" ? `--${key}` : [`--${key}`, String(value)],
+    )
+    .flat()
+
+  logger.info(
+    `Generating TTS audio for ${model} with options: ${JSON.stringify(args)}`,
+  )
   return new Promise((resolve, reject) => {
-    // Use spawn instead of exec to avoid shell parsing issues
-    // Set the working directory to our output directory so files get saved there
-    const pythonProcess = spawn(
+    const process = spawn(
       pythonPath,
-      [
-        "-m",
-        "mlx_audio.tts.generate",
-        "--text",
-        prompt,
-        "--model",
-        model,
-        "--voice",
-        voice,
-        "--audio_format",
-        "mp3",
-        "--file_prefix", // Use file_prefix to control the output filename
-        filePrefix,
-        "--join_audio",
-      ],
-      {
-        cwd: outputDirectory, // This is critical - sets the working directory for the Python process
-      },
+      ["-m", "mlx_audio.tts.generate", ...args],
+      { cwd: outputDirectory },
     )
 
-    let stderrData = ""
+    let stderr = ""
 
-    pythonProcess.stdout.on("data", (data) => {
-      const output = (data as Buffer).toString()
-      logger.info(`MLX Audio output: ${output}`)
+    process.stdout.on("data", (data: Buffer) => {
+      logger.info(`MLX Audio: ${data.toString()}`)
     })
 
-    pythonProcess.stderr.on("data", (data) => {
-      const errorOutput = (data as Buffer).toString()
-      stderrData += errorOutput
-      logger.error(`stderr: ${errorOutput}`)
+    process.stderr.on("data", (data: Buffer) => {
+      stderr += data.toString()
+      logger.error(`MLX Audio error: ${data.toString()}`)
     })
 
-    pythonProcess.on("close", (code) => {
-      if (code !== 0) {
-        reject(
-          new Error(
-            `Failed to run MLX Audio, exit code: ${code}\n${stderrData}`,
-          ),
-        )
-        return
+    process.on("close", (code) => {
+      if (code === 0) {
+        resolve()
+      } else {
+        reject(new Error(`MLX Audio failed (${code}): ${stderr}`))
       }
-
-      resolve()
     })
   })
 }

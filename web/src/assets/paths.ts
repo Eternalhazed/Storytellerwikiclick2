@@ -42,10 +42,6 @@ export function getTranscriptionsFilepath(bookUuid: UUID, filename = "") {
   return join(getAudioDirectory(bookUuid), "transcriptions", filename)
 }
 
-export function getTTSDirectory(bookUuid: UUID) {
-  return join(getAudioDirectory(bookUuid), "tts")
-}
-
 export function getTTSChunksFilepath(bookUuid: UUID, filename = "") {
-  return join(getTTSDirectory(bookUuid), filename)
+  return join(getProcessedAudioFilepath(bookUuid), filename)
 }

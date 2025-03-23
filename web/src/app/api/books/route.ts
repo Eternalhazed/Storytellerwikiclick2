@@ -19,6 +19,10 @@ import { createWriteStream, mkdirSync } from "node:fs"
 import { Readable } from "node:stream"
 import { ReadableStream } from "node:stream/web"
 import { logger } from "@/logging"
+import {
+  ProcessingTaskStatus,
+  ProcessingTaskType,
+} from "@/apiModels/models/ProcessingStatus"
 
 export const dynamic = "force-dynamic"
 
@@ -49,6 +53,9 @@ export const GET = withHasPermission("book_list")(async (request) => {
           current_task: book.processingStatus.currentTask,
           is_processing: isProcessing(book.uuid),
           is_queued: isQueued(book.uuid),
+          tts_incomplete:
+            book.processingStatus.currentTask === ProcessingTaskType.TTS &&
+            book.processingStatus.status !== ProcessingTaskStatus.COMPLETED,
         },
       }),
     })),

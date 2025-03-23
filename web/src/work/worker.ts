@@ -4,6 +4,7 @@ import {
 } from "@/apiModels/models/ProcessingStatus"
 import { deleteProcessed } from "@/assets/assets"
 import {
+  AudioFile,
   getCustomEpubCover,
   getEpubCoverFilename,
   getProcessedAudioFiles,
@@ -34,9 +35,35 @@ import { UUID } from "@/uuid"
 import { getCurrentVersion } from "@/versions"
 import { AsyncSemaphore } from "@esfx/async-semaphore"
 import type { RecognitionResult } from "echogarden/dist/api/Recognition"
-import { mkdir, readFile, writeFile } from "node:fs/promises"
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises"
 import { MessagePort } from "node:worker_threads"
 import { generateTTS } from "@/tts/tts"
+
+async function findTTSAudioFiles(
+  bookUuid: UUID,
+): Promise<{ filename: string }[] | null> {
+  try {
+    const processedDirectory = getProcessedAudioFilepath(bookUuid)
+    const files = await readdir(processedDirectory)
+
+    // Get audio files with mp3 extension (common for TTS output)
+    const audioFiles = files.filter((file) =>
+      /\.(mp3|m4a|ogg|wav|flac)$/i.test(file),
+    )
+
+    if (audioFiles.length === 0) {
+      return null
+    }
+
+    // Map them to the format expected by transcribeTrack
+    return audioFiles.map((filename) => ({
+      filename,
+    }))
+  } catch (e: unknown) {
+    logger.error(`Failed to find TTS audio files: ${String(e)}`)
+    return null
+  }
+}
 
 export async function transcribeBook(
   bookUuid: UUID,
@@ -48,11 +75,25 @@ export async function transcribeBook(
   const semaphore = new AsyncSemaphore(settings.parallelTranscribes)
   const transcriptionsPath = getTranscriptionsFilepath(bookUuid)
   await mkdir(transcriptionsPath, { recursive: true })
-  const audioFiles = await getProcessedAudioFiles(bookUuid)
-  if (!audioFiles) {
-    throw new Error("Failed to transcribe book: found no processed audio files")
-  }
+  // Try to get processed audio files using the standard method
+  let audioFiles = await getProcessedAudioFiles(bookUuid)
 
+  // If standard method fails, try to find TTS-generated audio files
+  if (!audioFiles) {
+    logger.info(
+      "No standard processed audio files found, looking for TTS-generated files...",
+    )
+    audioFiles = (await findTTSAudioFiles(bookUuid)) as AudioFile[] | undefined
+
+    if (!audioFiles) {
+      throw new Error(
+        "Failed to transcribe book: found no processed audio files",
+      )
+    }
+    logger.info(
+      `Found ${audioFiles.length} TTS-generated audio files for transcription`,
+    )
+  }
   if (
     !settings.transcriptionEngine ||
     settings.transcriptionEngine === "whisper.cpp"
@@ -235,9 +276,9 @@ export default async function processBook({
         await generateTTS(
           bookUuid,
           {
-            maxChunkSize: 2000,
-            voice: "af_heart",
-            model: "mlx-community/Kokoro-82M-4bit",
+            maxChunkSize: 1000,
+            voice: "tara",
+            model: "mlx-community/orpheus-3b-0.1-ft-bf16",
           },
           onProgress,
         )

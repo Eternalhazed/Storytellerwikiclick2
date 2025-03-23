@@ -105,3 +105,33 @@ export function updateTaskStatus(taskUuid: UUID, status: ProcessingTaskStatus) {
     uuid: taskUuid,
   })
 }
+
+export function resetProcessingTasks(
+  bookUuid: UUID,
+  taskTypes: ProcessingTaskType[] = [],
+) {
+  const db = getDatabase()
+
+  if (taskTypes.length === 0) {
+    // Reset all tasks for the book
+    db.prepare<{ bookUuid: UUID }>(
+      `
+      UPDATE processing_task
+      SET progress = 0.0, status = 'STARTED'
+      WHERE book_uuid = $bookUuid
+      `,
+    ).run({
+      bookUuid,
+    })
+  } else {
+    // Reset only specific task types
+    const placeholders = taskTypes.map(() => "?").join(",")
+    db.prepare(
+      `
+      UPDATE processing_task
+      SET progress = 0.0, status = 'STARTED'
+      WHERE book_uuid = ? AND type IN (${placeholders})
+      `,
+    ).run(bookUuid, ...taskTypes)
+  }
+}

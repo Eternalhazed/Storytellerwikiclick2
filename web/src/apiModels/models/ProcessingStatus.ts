@@ -23,4 +23,5 @@ export type ProcessingStatus = {
   status: ProcessingTaskStatus
   is_processing: boolean
   is_queued: boolean
+  tts_incomplete?: boolean
 }

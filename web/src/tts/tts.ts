@@ -1,17 +1,21 @@
-import { getTTSDirectory, getTTSChunksFilepath } from "@/assets/paths"
+import { getProcessedAudioFilepath, getTTSChunksFilepath } from "@/assets/paths"
 import { logger } from "@/logging"
 import {
   ProcessedBookForTTS,
   processEpubForTTS,
 } from "@/process/processEpubForTTS"
 import { UUID } from "@/uuid"
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir, writeFile, access, constants, readFile } from "node:fs/promises"
 import path from "path"
 // import { initializeOrpheus, textToSpeech } from "./providers/orpheus"
-import { initializeMLXAudio, textToSpeech } from "./providers/mlx_audio"
+import {
+  initializeMLXAudio,
+  MLXModel,
+  textToSpeech,
+} from "./providers/mlx_audio"
 
 // Type assertions for imported functions
-const getTTSDirectoryTyped = getTTSDirectory as PathGetter
+const getProcessedDirectoryTyped = getProcessedAudioFilepath as PathGetter
 
 type PathGetter = (bookUuid: UUID) => string
 
@@ -21,6 +25,19 @@ export interface TTSGenerationOptions {
   model?: string
   speed?: number
   temperature?: number
+  forceRegenerate?: boolean
+}
+
+/**
+ * Check if a file exists
+ */
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath, constants.F_OK)
+    return true
+  } catch {
+    return false
+  }
 }
 
 export async function generateTTS(
@@ -29,35 +46,40 @@ export async function generateTTS(
   onProgress?: (progress: number) => void,
 ): Promise<ProcessedBookForTTS> {
   // Set default options
-  const {
-    maxChunkSize = 2000,
-    voice = "af_heart",
-    model = "mlx-community/Kokoro-82M-4bit",
-  } = options
+  const { maxChunkSize, forceRegenerate = false } = options
 
   // Initialize MLX Audio engine (creates venv if needed)
   await initializeMLXAudio()
 
-  // Create directory for TTS chunks
-  const ttsDirectory = getTTSDirectoryTyped(bookUuid)
-  await mkdir(path.resolve(ttsDirectory), { recursive: true })
+  // Use processed directory
+  const processedDirectory = getProcessedDirectoryTyped(bookUuid)
+  await mkdir(path.resolve(processedDirectory), { recursive: true })
 
   // Process EPUB for TTS with configurable chunk size
   try {
-    logger.info(
-      `Processing EPUB with max chunk size of ${maxChunkSize} characters`,
-    )
-    const processedBook = await processEpubForTTS(bookUuid, maxChunkSize)
-
-    // Save the processed chunks to a JSON file for later use
+    let processedBook: ProcessedBookForTTS
     const ttsChunksFile = getTTSChunksFilepath(bookUuid, "tts-chunks.json")
-    await writeFile(
-      path.resolve(ttsChunksFile),
-      JSON.stringify(processedBook),
-      "utf-8",
-    )
+    const ttsChunksFilePath = path.resolve(ttsChunksFile)
 
-    logger.info(`Successfully wrote TTS chunks to ${ttsChunksFile}`)
+    // Check if we already have processed chunks
+    const chunksExist = await fileExists(ttsChunksFilePath)
+
+    if (!forceRegenerate && chunksExist) {
+      // Load existing chunks if available
+      logger.info("Loading existing TTS chunks from file")
+      const chunksData = await readFile(ttsChunksFilePath, "utf-8")
+      processedBook = JSON.parse(chunksData) as ProcessedBookForTTS
+    } else {
+      // Process the EPUB if chunks don't exist or force regenerate is true
+      logger.info(
+        `Processing EPUB with max chunk size of ${maxChunkSize} characters`,
+      )
+      processedBook = await processEpubForTTS(bookUuid, maxChunkSize)
+
+      // Save the processed chunks to a JSON file for later use
+      await writeFile(ttsChunksFilePath, JSON.stringify(processedBook), "utf-8")
+      logger.info(`Successfully wrote TTS chunks to ${ttsChunksFile}`)
+    }
 
     // Generate TTS audio for each chunk
     const totalChunks = processedBook.chapters.reduce(
@@ -65,24 +87,56 @@ export async function generateTTS(
       0,
     )
     let processedChunks = 0
+    let skippedChunks = 0
 
     for (const chapter of processedBook.chapters) {
       for (const chunk of chapter.chunks) {
-        const outputDir = getTTSDirectoryTyped(bookUuid)
+        const outputDir = processedDirectory
         const filePrefix = `${chapter.index}_${chunk.position}`
 
-        await textToSpeech(chunk.text, path.resolve(outputDir), {
-          model,
-          voice,
-          format: "mp3",
-          filePrefix, // Use chapter and position to create unique filenames
+        // Check if the audio file already exists
+        // The MLX Audio script creates files with format "{file_prefix}.mp3" when join_audio is true
+        const expectedAudioPath = path.resolve(outputDir, `${filePrefix}.mp3`)
+        const audioFileExists = await fileExists(expectedAudioPath)
+
+        if (!forceRegenerate && audioFileExists) {
+          // Skip if the file already exists and we're not forcing regeneration
+          logger.info(`Skipping existing audio file: ${expectedAudioPath}`)
+          skippedChunks++
+          processedChunks++
+
+          if (onProgress) {
+            onProgress(processedChunks / totalChunks)
+          }
+          continue
+        }
+
+        const expectedAudioPathWithoutExtension = path.resolve(
+          outputDir,
+          filePrefix,
+        )
+        // Generate the audio for this chunk
+        await textToSpeech(chunk.text, outputDir, MLXModel.KOKORO, {
+          filePrefix: expectedAudioPathWithoutExtension,
+          voice: "af_sky",
+          lang_code: "a",
         })
+        // await textToSpeech(chunk.text, outputDir, MLXModel.ORPHEUS, {
+        //   filePrefix: expectedAudioPathWithoutExtension,
+        //   voice: "tara",
+        // })
 
         processedChunks++
         if (onProgress) {
           onProgress(processedChunks / totalChunks)
         }
       }
+    }
+
+    if (skippedChunks > 0) {
+      logger.info(
+        `Skipped ${skippedChunks} existing audio chunks out of ${totalChunks} total chunks`,
+      )
     }
 
     return processedBook

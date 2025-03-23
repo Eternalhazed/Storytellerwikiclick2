@@ -10,7 +10,6 @@ import {
   getOriginalAudioFilepath,
   getProcessedAudioFilepath,
   getTranscriptionsFilepath,
-  getTTSDirectory,
 } from "./paths"
 
 export async function linkEpub(bookUuid: UUID, origin: string) {
@@ -82,7 +81,6 @@ export async function deleteProcessed(bookUuid: UUID) {
     rm(getProcessedAudioFilepath(bookUuid), { recursive: true, force: true }),
     rm(getTranscriptionsFilepath(bookUuid), { recursive: true, force: true }),
     rm(getSyncCachePath(bookUuid), { force: true }),
-    rm(getTTSDirectory(bookUuid), { recursive: true, force: true }),
   ])
 }
 

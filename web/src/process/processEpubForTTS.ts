@@ -151,19 +151,34 @@ function createSentenceBasedChunks(
       }
     }
 
-    // Add a space between paragraphs in the same chunk
+    // Add a period and space between paragraphs in the same chunk
+    // Only add if the current chunk doesn't already end with a period
     if (currentChunk.length > 0) {
-      currentChunk += " "
+      if (!currentChunk.trim().endsWith(".")) {
+        currentChunk += ". "
+      } else {
+        currentChunk += " "
+      }
     }
   }
 
   // Don't forget to add the final chunk if there's anything left
   if (currentChunk.length > 0) {
-    chunks.push({
-      text: currentChunk.trim(), // Trim to remove any trailing spaces
-      chapterIndex,
-      position: position++,
-    })
+    // Ensure the final chunk ends with a period if it doesn't already
+    const trimmedChunk = currentChunk.trim()
+    if (!trimmedChunk.endsWith(".")) {
+      chunks.push({
+        text: trimmedChunk + ".",
+        chapterIndex,
+        position: position++,
+      })
+    } else {
+      chunks.push({
+        text: trimmedChunk,
+        chapterIndex,
+        position: position++,
+      })
+    }
   }
 
   return chunks
