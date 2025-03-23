@@ -58,11 +58,24 @@ export type Settings = {
   parallelTranscodes: number
   parallelTranscribes: number
   parallelWhisperBuild: number
-  // Add TTS settings to interface
+
+  // TTS Settings
+  ttsEngine?: "mlx" | "echogarden"
   ttsVoice?: string
-  ttsRate?: number
+
+  // Echogarden specific
+  ttsLanguage?: string
+  ttsSpeed?: number
   ttsPitch?: number
-  ttsEngine?: string
+  ttsNormalize?: boolean
+  ttsTargetPeak?: number
+  ttsBitrate?: number
+
+  // MLX specific
+  ttsModel?: string
+  ttsTemperature?: number
+  ttsTopP?: number
+  ttsTopK?: number
 }
 
 export const SETTINGS_COLUMN_NAMES = {
@@ -97,10 +110,23 @@ export const SETTINGS_COLUMN_NAMES = {
   parallel_transcribes: "parallelTranscribes",
   parallel_whisper_build: "parallelWhisperBuild",
 
-  tts_voice: "ttsVoice",
-  tts_rate: "ttsRate",
-  tts_pitch: "ttsPitch",
+  // TTS Settings
   tts_engine: "ttsEngine",
+  tts_voice: "ttsVoice",
+
+  // Echogarden specific
+  tts_language: "ttsLanguage",
+  tts_pitch: "ttsPitch",
+  tts_normalize: "ttsNormalize",
+  tts_target_peak: "ttsTargetPeak",
+  tts_bitrate: "ttsBitrate",
+  tts_speed: "ttsSpeed",
+
+  // MLX specific
+  tts_model: "ttsModel",
+  tts_temperature: "ttsTemperature",
+  tts_top_p: "ttsTopP",
+  tts_top_k: "ttsTopK",
 } as const satisfies Record<string, keyof Settings>
 
 export function getSetting<Name extends keyof typeof SETTINGS_COLUMN_NAMES>(

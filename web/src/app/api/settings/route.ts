@@ -50,10 +50,18 @@ export const GET = withHasPermission("settings_update")(() => {
     parallel_transcodes: settings.parallelTranscodes,
     parallel_transcribes: settings.parallelTranscribes,
     parallel_whisper_build: settings.parallelWhisperBuild,
-    tts_voice: settings.ttsVoice,
-    tts_rate: settings.ttsRate,
-    tts_pitch: settings.ttsPitch,
     tts_engine: settings.ttsEngine,
+    tts_voice: settings.ttsVoice,
+    tts_language: settings.ttsLanguage,
+    tts_model: settings.ttsModel,
+    tts_temperature: settings.ttsTemperature,
+    tts_target_peak: settings.ttsTargetPeak,
+    tts_normalize: settings.ttsNormalize,
+    tts_pitch: settings.ttsPitch,
+    tts_bitrate: settings.ttsBitrate,
+    tts_speed: settings.ttsSpeed,
+    tts_top_k: settings.ttsTopK,
+    tts_top_p: settings.ttsTopP,
   }
 
   return NextResponse.json(response)
@@ -98,10 +106,18 @@ export const PUT = withHasPermission("settings_update")(async (request) => {
     parallelTranscodes: settings.parallel_transcodes,
     parallelTranscribes: settings.parallel_transcribes,
     parallelWhisperBuild: settings.parallel_whisper_build,
-    ttsVoice: settings.tts_voice,
-    ttsRate: settings.tts_rate,
-    ttsPitch: settings.tts_pitch,
     ttsEngine: settings.tts_engine,
+    ttsTopK: settings.tts_top_k,
+    ttsTopP: settings.tts_top_p,
+    ttsVoice: settings.tts_voice,
+    ttsLanguage: settings.tts_language,
+    ttsModel: settings.tts_model,
+    ttsTemperature: settings.tts_temperature,
+    ttsTargetPeak: settings.tts_target_peak,
+    ttsNormalize: settings.tts_normalize,
+    ttsPitch: settings.tts_pitch,
+    ttsBitrate: settings.tts_bitrate,
+    ttsSpeed: settings.tts_speed,
   })
 
   return new Response(null, { status: 204 })

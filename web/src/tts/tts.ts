@@ -51,6 +51,13 @@ export async function generateTTS(
   options: TTSGenerationOptions = {},
   onProgress?: (progress: number) => void,
 ): Promise<ProcessedBookForTTS> {
+  // Log the full settings object to debug
+  logger.info("TTS Settings:", {
+    engine: options.engine,
+    model: options.model,
+    ttsOptions: options.echogardenOptions || {},
+  })
+
   // Set default options
   const { maxChunkSize, forceRegenerate = false } = options
 
@@ -150,7 +157,6 @@ export async function generateTTS(
             },
           )
         } else {
-          // Existing MLX Audio code
           await textToSpeech(chunk.text, outputDir, MLXModel.KOKORO, {
             filePrefix: expectedAudioPathWithoutExtension,
             voice: "af_sky",

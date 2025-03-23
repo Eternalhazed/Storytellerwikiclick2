@@ -18,6 +18,11 @@ import {
   TextInput,
 } from "@mantine/core"
 
+export enum MLXModel {
+  KOKORO = "mlx-community/Kokoro-82M-4bit",
+  ORPHEUS = "mlx-community/orpheus-3b-0.1-ft-bf16",
+}
+
 interface Props {
   settings: Settings
 }
@@ -61,10 +66,24 @@ export function SettingsForm({ settings }: Props) {
     parallel_transcribes: settings.parallel_transcribes,
     parallel_transcodes: settings.parallel_transcodes,
     parallel_whisper_build: settings.parallel_whisper_build,
-    tts_voice: settings.tts_voice || "",
-    tts_rate: settings.tts_rate || 1,
-    tts_pitch: settings.tts_pitch || 1,
-    tts_engine: settings.tts_engine || "none",
+
+    // TTS Settings
+    tts_engine: process.platform === "darwin" ? "mlx" : "echogarden",
+
+    // Echogarden specific
+    tts_voice: settings.tts_voice || "Heart",
+    tts_language: "en-US",
+    tts_pitch: 1.0,
+    tts_normalize: true,
+    tts_target_peak: -3,
+    tts_bitrate: 192000,
+    tts_speed: 1.0,
+
+    // MLX specific
+    tts_model: MLXModel.KOKORO,
+    tts_temperature: 0.6,
+    tts_top_p: 0.9,
+    tts_top_k: 50,
   }
 
   const form = useForm({
@@ -406,6 +425,97 @@ export function SettingsForm({ settings }: Props) {
           label="Number of CPU cores to allocate for building whisper.cpp locally"
           {...form.getInputProps("parallel_whisper_build")}
         />
+      </Fieldset>
+      <Fieldset legend="Text-to-Speech Settings">
+        <NativeSelect
+          label="TTS Engine"
+          description="Select the text-to-speech engine to use"
+          {...form.getInputProps("tts_engine")}
+        >
+          <option value="mlx">MLX Audio (Apple Silicon)</option>
+          <option value="echogarden">Echogarden (CPU)</option>
+        </NativeSelect>
+
+        {form.values.tts_engine === "echogarden" && (
+          <>
+            <TextInput
+              label="Voice"
+              description="Voice to use for TTS (e.g. 'Heart', 'Sky')"
+              defaultValue={"Heart"}
+              {...form.getInputProps("tts_voice")}
+            />
+
+            <TextInput
+              label="Language"
+              description="Language code (e.g. 'en-US')"
+              {...form.getInputProps("tts_language")}
+            />
+
+            <NumberInput
+              label="Speed"
+              description="Speech rate multiplier (0.5 to 2.0)"
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              {...form.getInputProps("tts_speed")}
+            />
+
+            <NumberInput
+              label="Pitch"
+              description="Voice pitch multiplier (0.5 to 2.0)"
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              {...form.getInputProps("tts_pitch")}
+            />
+
+            <Checkbox
+              label="Normalize Audio"
+              description="Normalize audio output levels"
+              {...form.getInputProps("tts_normalize", { type: "checkbox" })}
+            />
+
+            <NumberInput
+              label="Target Peak (dB)"
+              description="Target peak level for normalization"
+              {...form.getInputProps("tts_target_peak")}
+            />
+
+            <NumberInput
+              label="Bitrate"
+              description="Audio bitrate in bits per second"
+              min={32000}
+              max={320000}
+              step={1000}
+              {...form.getInputProps("tts_bitrate")}
+            />
+          </>
+        )}
+
+        {form.values.tts_engine === "mlx" && (
+          <>
+            <NativeSelect
+              label="Model"
+              description="MLX Audio model to use"
+              {...form.getInputProps("tts_model")}
+            >
+              <option value={MLXModel.KOKORO}>Kokoro (smaller, faster)</option>
+              <option value={MLXModel.ORPHEUS}>
+                Orpheus (larger, higher quality)
+              </option>
+            </NativeSelect>
+            <TextInput
+              label="Voice"
+              {...form.getInputProps("tts_voice")}
+              defaultValue={"af-heart"}
+            />
+            <TextInput
+              label="Language Code"
+              {...form.getInputProps("tts_language")}
+              defaultValue={"a"}
+            />
+          </>
+        )}
       </Fieldset>
       <Fieldset legend="Email settings">
         <TextInput label="SMTP host" {...form.getInputProps("smtp_host")} />

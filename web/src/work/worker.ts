@@ -38,6 +38,7 @@ import type { RecognitionResult } from "echogarden/dist/api/Recognition"
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises"
 import { MessagePort } from "node:worker_threads"
 import { generateTTS } from "@/tts/tts"
+import { MLXModel } from "@/tts/providers/mlx_audio"
 
 async function findTTSAudioFiles(
   bookUuid: UUID,
@@ -273,30 +274,51 @@ export default async function processBook({
       if (task.type === ProcessingTaskType.TTS) {
         logger.info(`Generating TTS chunks for book ${bookRefForLog}...`)
 
-        // await generateTTS(
-        //   bookUuid,
-        //   {
-        //     maxChunkSize: 1000,
-        //     voice: "tara",
-        //     model: "mlx-community/orpheus-3b-0.1-ft-bf16",
-        //   },
-        //   onProgress,
-        // )
-
-        await generateTTS(bookUuid, {
-          engine: "echogarden",
-          echogardenOptions: {
-            voice: "Heart",
-            language: "en-US",
-            speed: 1.0,
-            pitch: 1.0,
-            kokoroModel: "82m-v1.0-fp32",
-            kokoroProvider: "cpu",
-            normalize: true,
-            targetPeak: -3,
-            bitrate: 192000,
-          },
+        logger.info("TTS Settings from database:", {
+          engine: settings.ttsEngine ?? "(not set)",
+          model: settings.ttsModel ?? "(not set)",
+          voice: settings.ttsVoice ?? "(not set)",
+          language: settings.ttsLanguage ?? "(not set)",
+          temperature: settings.ttsTemperature ?? "(not set)",
+          topP: settings.ttsTopP ?? "(not set)",
+          topK: settings.ttsTopK ?? "(not set)",
+          speed: settings.ttsSpeed ?? "(not set)",
+          pitch: settings.ttsPitch ?? "(not set)",
+          normalize: settings.ttsNormalize ?? "(not set)",
+          targetPeak: settings.ttsTargetPeak ?? "(not set)",
+          bitrate: settings.ttsBitrate ?? "(not set)",
         })
+
+        const engine =
+          settings.ttsEngine ??
+          (process.platform === "darwin" ? "mlx" : "echogarden")
+
+        logger.info(`Selected TTS engine: ${engine}`)
+
+        await generateTTS(
+          bookUuid,
+          {
+            engine,
+            ...(engine === "echogarden" && {
+              echogardenOptions: {
+                voice: settings.ttsVoice ?? "Heart",
+                language: settings.ttsLanguage ?? "en-US",
+                speed: settings.ttsSpeed ?? 1.0,
+                pitch: settings.ttsPitch ?? 1.0,
+                normalize: settings.ttsNormalize ?? true,
+                targetPeak: settings.ttsTargetPeak ?? -3,
+                bitrate: settings.ttsBitrate ?? 192000,
+              },
+            }),
+            ...(engine === "mlx" && {
+              model: settings.ttsModel ?? MLXModel.KOKORO,
+              temperature: settings.ttsTemperature ?? 0.6,
+              topP: settings.ttsTopP ?? 0.9,
+              topK: settings.ttsTopK ?? 50,
+            }),
+          },
+          onProgress,
+        )
 
         logger.info(
           `Successfully generated TTS chunks for book ${bookRefForLog}`,
