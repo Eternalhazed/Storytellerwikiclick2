@@ -27,8 +27,7 @@
     "fix:format": "prettier --write .",
     "fix:lint": "eslint --fix .",
     "fix": "concurrently -P 'npm:fix:*'",
-    "setup:orpheus": "./setup-orpheus.sh",
-    "postinstall": "yarn setup:orpheus && husky",
+    "postinstall": "husky",
     "test:epub": "yarn workspace @smoores/epub test",
     "test:web": "yarn workspace @storyteller/web test:all",
     "test": "concurrently -P 'npm:test:*'"
