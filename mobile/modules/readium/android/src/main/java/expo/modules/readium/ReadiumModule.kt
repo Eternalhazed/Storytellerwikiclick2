@@ -109,7 +109,7 @@ class ReadiumModule : Module() {
         AsyncFunction("getPreviousFragment") Coroutine { bookId: Long, locatorMap: Map<String, Any> ->
             val locatorJson = JSONObject(locatorMap)
             val locator = Locator.fromJSON(locatorJson) ?: return@Coroutine null
-            val previous = bookService.getNextFragment(bookId, locator) ?: return@Coroutine null
+            val previous = bookService.getPreviousFragment(bookId, locator) ?: return@Coroutine null
             mutableMapOf(
                 "href" to previous.href,
                 "fragment" to previous.fragment,

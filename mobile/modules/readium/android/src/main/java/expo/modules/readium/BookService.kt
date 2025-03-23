@@ -194,51 +194,29 @@ class BookService(private val context: Context) {
         return fragment
     }
 
-    fun getPreviousFragment(bookId: Long, locator: Locator): TextFragment? {
+    suspend fun getPreviousFragment(bookId: Long, locator: Locator): TextFragment? {
         val currentFragment = locator.locations.fragments.firstOrNull() ?: return null
         val mediaOverlayStore = this.mediaOverlays[bookId] ?: return null
-
-        val currentOverlay = mediaOverlayStore[locator.href] ?: return null
-        val fragments = currentOverlay.fragments()
-        val currentIndex = fragments.indexOfFirst {
-            it.fragment == currentFragment
-        }
-        val prevIndex = currentIndex - 1
-        if (prevIndex == -1) {
-            val currentOverlayIndex = mediaOverlayStore.keys.indexOfFirst {
-                it == locator.href
-            }
-            val prevOverlayIndex = currentOverlayIndex - 1
-            if (prevOverlayIndex == -1) return null
-
-            val prevOverlay = mediaOverlayStore.values.toList()[prevOverlayIndex]
-            return prevOverlay.fragments().lastOrNull()
-        }
-        val prevFragment = fragments[prevIndex]
-        return prevFragment
+        val mediaOverlays = mediaOverlayStore.values
+        val textFragments = mediaOverlays.flatMap { it.fragments() }
+        val currentIndex = textFragments.indexOfFirst { it.href == locator.href && it.fragment == currentFragment } ?: return null
+        if (currentIndex == 0) return null
+        val previousIndex = currentIndex.dec()
+        val previousFragment = textFragments[previousIndex]
+        previousFragment.locator = buildFragmentLocator(bookId, previousFragment.href, previousFragment.fragment)
+        return previousFragment
     }
 
-    fun getNextFragment(bookId: Long, locator: Locator): TextFragment? {
+    suspend fun getNextFragment(bookId: Long, locator: Locator): TextFragment? {
         val currentFragment = locator.locations.fragments.firstOrNull() ?: return null
         val mediaOverlayStore = this.mediaOverlays[bookId] ?: return null
-
-        val currentOverlay = mediaOverlayStore[locator.href] ?: return null
-        val fragments = currentOverlay.fragments()
-        val currentIndex = fragments.indexOfFirst {
-            it.fragment == currentFragment
-        }
-        val nextIndex = currentIndex + 1
-        if (fragments.size == nextIndex) {
-            val currentOverlayIndex = mediaOverlayStore.keys.indexOfFirst {
-                it == locator.href
-            }
-            val nextOverlayIndex = currentOverlayIndex + 1
-            if (nextOverlayIndex == mediaOverlayStore.keys.size) return null
-
-            val nextOverlay = mediaOverlayStore.values.toList()[nextOverlayIndex]
-            return nextOverlay.fragments().firstOrNull()
-        }
-        val nextFragment = fragments[nextIndex]
+        val mediaOverlays = mediaOverlayStore.values
+        val textFragments = mediaOverlays.flatMap { it.fragments() }
+        val currentIndex = textFragments.indexOfFirst { it.href == locator.href && it.fragment == currentFragment } ?: return null
+        if (currentIndex == textFragments.size - 1) return null
+        val nextIndex = currentIndex.inc()
+        val nextFragment = textFragments[nextIndex]
+        nextFragment.locator = buildFragmentLocator(bookId, nextFragment.href, nextFragment.fragment)
         return nextFragment
     }
 
