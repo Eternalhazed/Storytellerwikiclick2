@@ -44,9 +44,3 @@ sqlite/*
 
 assets/audio
 assets/text
-
-src/tts/providers/orpheus-tts-local/*
-!src/tts/providers/orpheus-tts-local/.gitkeep
-
-src/tts/providers/mlx-audio/*
-!src/tts/providers/mlx-audio/.gitkeep
