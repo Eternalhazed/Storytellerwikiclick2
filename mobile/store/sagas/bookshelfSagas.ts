@@ -1120,12 +1120,21 @@ export function* fragmentSkipSaga() {
 
       if (!navigateTo) return
 
-      yield put(
-        bookshelfSlice.actions.bookRelocated({
-          bookId: book.id,
-          locator: { locator: navigateTo.locator, timestamp: Date.now() },
-        }),
+      const clip = (yield call(
+        getClip,
+        book.id,
+        navigateTo.locator,
+      )) as Awaited<ReturnType<typeof getClip>>
+
+      const tracks = (yield call(TrackPlayer.getQueue)) as BookshelfTrack[]
+
+      const trackIndex = tracks.findIndex(
+        (track) => track.relativeUrl === clip.relativeUrl,
       )
+
+      if (trackIndex !== -1) {
+        yield call(TrackPlayer.skip, trackIndex, clip.start)
+      }
     },
   )
 }
