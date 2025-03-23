@@ -1,13 +1,5 @@
 -- Add TTS engine setting
-INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_engine',
-  CASE WHEN (SELECT value FROM settings WHERE name = 'tts_engine') IS NULL THEN
-    CASE instr(lower(hex(randomblob(8))), 'darwin')
-      WHEN 0 THEN '"echogarden"'
-      ELSE '"mlx"'
-    END
-  ELSE (SELECT value FROM settings WHERE name = 'tts_engine')
-  END
-);
+INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_engine', '"echogarden"');
 
 -- Add basic voice setting (used by both engines)
 INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_voice', '"Heart"');
