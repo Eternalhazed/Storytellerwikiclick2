@@ -4,6 +4,7 @@ import { logger } from "@/logging"
 import { BaseTTSOptions } from "../types"
 import path from "path"
 import fs from "fs/promises"
+import { Timeline, TimelineEntry } from "echogarden/dist/utilities/Timeline"
 
 export interface EchogardenTTSOptions extends BaseTTSOptions {
   // Engine-specific options
@@ -57,9 +58,17 @@ export async function textToSpeech(
     throw new Error("filePrefix is required for Echogarden output")
   }
 
+  // Add input validation
+  if (!text || text.trim() === "") {
+    throw new Error("Empty or invalid input text provided to Echogarden TTS")
+  }
+
+  // Log text length for debugging
+  logger.info(`Processing text with length ${text.length} characters`)
+
   // Default options
   const defaultOptions = {
-    kokoroModel: "82m-v1.0-fp32" as const,
+    kokoroModel: "82m-v1.0-quantized" as const,
     kokoroProvider: "cpu" as const,
     speed: 1.0,
     pitch: 1.0,
@@ -144,7 +153,7 @@ export async function textToSpeech(
     }
 
     // Generate speech
-    const { audio } = await Echogarden.synthesize(
+    const { audio, timeline } = await Echogarden.synthesize(
       text,
       synthesisOptions,
       onSegment,
@@ -161,8 +170,104 @@ export async function textToSpeech(
       // @ts-expect-error - audio is a RawAudio object
       await fs.writeFile(outputPath, audio)
     }
+
+    const transcribeFormat = convertTimelineToTranscribeFormat(timeline, text)
+
+    // Save the timeline result
+    const timelineOutputPath = path.join(
+      outputDirectory,
+      `${options.filePrefix}.json`,
+    )
+    await fs.writeFile(timelineOutputPath, JSON.stringify(transcribeFormat))
   } catch (error) {
     logger.error("Echogarden TTS error:", error)
     throw error
+  }
+}
+
+interface TranscribeFormatWord {
+  type: string
+  text: string
+  startTime: number
+  endTime: number
+  score: number
+  startOffsetUtf16: number
+  endOffsetUtf16: number
+}
+
+function extractWords(timeline: Timeline): TimelineEntry[] {
+  const words: TimelineEntry[] = []
+
+  // Process each entry in the timeline
+  for (let i = 0; i < timeline.length; i++) {
+    const entry = timeline[i]
+
+    if (!entry) continue
+
+    // If it's a word entry, add it to our results
+    if (entry.type === "word") {
+      words.push(entry)
+    }
+
+    // If the entry has a nested timeline, process it recursively
+    if (entry.timeline && Array.isArray(entry.timeline)) {
+      words.push(...extractWords(entry.timeline))
+    }
+  }
+
+  return words
+}
+
+/**
+ * Converts the Echogarden TTS timeline format to the format expected by the transcribe function
+ */
+function convertTimelineToTranscribeFormat(
+  timeline: Timeline,
+  originalText: string,
+): {
+  transcript: string
+  wordTimeline: TranscribeFormatWord[]
+} {
+  // Extract the full transcript
+  const transcript = originalText
+
+  // Function to extract all word entries from the timeline
+
+  // Extract all words from the timeline
+  const allWords = extractWords(timeline)
+
+  // Process words to add offset information
+  let currentOffset = 0
+  const wordTimeline: TranscribeFormatWord[] = allWords.map((word) => {
+    const trimmedWord = word.text.trim()
+
+    // Find where this word appears in the transcript starting from the current offset
+    const wordIndex = transcript.indexOf(trimmedWord, currentOffset)
+
+    // If found, update the offset for next search
+    const startOffset = wordIndex !== -1 ? wordIndex : currentOffset
+    const endOffset =
+      wordIndex !== -1
+        ? wordIndex + trimmedWord.length
+        : currentOffset + trimmedWord.length
+
+    if (wordIndex !== -1) {
+      currentOffset = endOffset
+    }
+
+    return {
+      type: "word",
+      text: trimmedWord,
+      startTime: word.startTime,
+      endTime: word.endTime,
+      score: 1.0, // TTS doesn't have confidence scores, so we use 1.0
+      startOffsetUtf16: startOffset,
+      endOffsetUtf16: endOffset,
+    }
+  })
+
+  return {
+    transcript,
+    wordTimeline,
   }
 }
