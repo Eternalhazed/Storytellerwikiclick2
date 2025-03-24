@@ -27,7 +27,6 @@ check:
         - "**/*.tsx"
         - yarn.lock
   script:
-    - apt update && apt install -y --no-install-recommends ffmpeg
     - yarn
     - yarn check
     - yarn build:docs
