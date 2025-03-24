@@ -1,3 +1,5 @@
+"use server"
+
 import * as Echogarden from "echogarden"
 import { VoiceGender } from "echogarden"
 import { logger } from "@/logging"

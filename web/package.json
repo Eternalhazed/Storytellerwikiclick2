@@ -11,10 +11,10 @@
     "test:all": "yarn build:sqlite-ext && STORYTELLER_DATA_DIR=src/__fixtures__/__output__ tsx --test src/__tests__/*.test.ts src/*/__tests__/*.test.ts",
     "build": "yarn build:sqlite-ext && yarn build:worker && yarn build:migrate && next build",
     "build:sqlite-ext": "./build-sqlite-ext.sh",
-    "build:worker": "esbuild src/work/worker.ts --bundle --platform=node --loader:.node=file --sourcemap=inline --format=cjs --external:winax --external:@echogarden/vosk --out-extension:.js=.cjs --define:import.meta.url=import_meta_url --inject:./src/work/import.meta.url-polyfill.js --outdir=work-dist/",
+    "build:worker": "esbuild src/work/worker.ts --bundle --platform=node --loader:.node=file --sourcemap=inline --format=cjs --external:winax --external:@echogarden/vosk --out-extension:.js=.cjs --define:import.meta.url=import_meta_url --inject:./src/work/import.meta.url-polyfill.js --outdir=work-dist/ && yarn copy:tts-files && yarn copy:stt-files && yarn copy:tts-files",
     "copy:tts-files": "cp -r src/tts/providers/* work-dist/",
     "copy:stt-files": "cp -r src/stt/providers/* work-dist/",
-    "build:migrate": "esbuild src/database/migrate.ts --bundle --platform=node --loader:.node=file --sourcemap=inline --format=cjs --out-extension:.js=.cjs --define:import.meta.url=import_meta_url --inject:./src/work/import.meta.url-polyfill.js --outdir=migrate-dist/ && yarn copy:tts-files",
+    "build:migrate": "esbuild src/database/migrate.ts --bundle --platform=node --loader:.node=file --sourcemap=inline --format=cjs --out-extension:.js=.cjs --define:import.meta.url=import_meta_url --inject:./src/work/import.meta.url-polyfill.js --outdir=migrate-dist/",
     "start": "./start.sh"
   },
   "dependencies": {
@@ -74,6 +74,7 @@
     "@types/wav": "^1",
     "autoprefixer": "^10.4.20",
     "esbuild": "^0.23.0",
+    "node-loader": "^2.1.0",
     "postcss": "^8.4.49",
     "postcss-preset-mantine": "^1.17.0",
     "postcss-simple-vars": "^7.0.1",

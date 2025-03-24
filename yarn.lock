@@ -8463,6 +8463,7 @@ __metadata:
     mime-types: "npm:^2.1.35"
     music-metadata: "npm:^7.14.0"
     next: "npm:^15.1.2"
+    node-loader: "npm:^2.1.0"
     nodemailer: "npm:^6.9.13"
     path: "npm:^0.12.7"
     pino: "npm:^9.5.0"
@@ -19671,7 +19672,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loader-utils@npm:^2.0.0":
+"loader-utils@npm:^2.0.0, loader-utils@npm:^2.0.3":
   version: 2.0.4
   resolution: "loader-utils@npm:2.0.4"
   dependencies:
@@ -22113,6 +22114,17 @@ __metadata:
   version: 0.4.0
   resolution: "node-int64@npm:0.4.0"
   checksum: 10c0/a6a4d8369e2f2720e9c645255ffde909c0fbd41c92ea92a5607fc17055955daac99c1ff589d421eee12a0d24e99f7bfc2aabfeb1a4c14742f6c099a51863f31a
+  languageName: node
+  linkType: hard
+
+"node-loader@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "node-loader@npm:2.1.0"
+  dependencies:
+    loader-utils: "npm:^2.0.3"
+  peerDependencies:
+    webpack: ^5.0.0
+  checksum: 10c0/9f641336a0f22ca9b239c101e0343c4111ece400bb40bcbbf92f48e062c5ba4cc657d0c321b8806d1d79edd0910b17507af84c6b0a7d00735f808263b262876b
   languageName: node
   linkType: hard
 
