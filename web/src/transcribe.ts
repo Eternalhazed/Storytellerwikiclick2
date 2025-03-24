@@ -1,5 +1,5 @@
 import { RecognitionResult, recognize, setGlobalOption } from "echogarden"
-import { join } from "node:path"
+import path, { join } from "node:path"
 import { WHISPER_BUILD_DIR } from "./directories"
 import { mkdir, stat } from "node:fs/promises"
 import simpleGit, { CheckRepoActions, GitConfigScope } from "simple-git"
@@ -8,6 +8,10 @@ import { promisify } from "node:util"
 import { WhisperCppModelId } from "echogarden/dist/recognition/WhisperCppSTT"
 import { Settings, WhisperModel } from "./database/settings"
 import { logger } from "./logging"
+import {
+  initializeMLXWhisper,
+  transcribeWithMLX,
+} from "./stt/providers/mlx_whisper"
 
 const exec = promisify(execCb)
 
@@ -172,140 +176,212 @@ export async function transcribeTrack(
   locale: Intl.Locale,
   settings: Settings,
 ): Promise<Pick<RecognitionResult, "transcript" | "wordTimeline">> {
-  if (
-    !settings.transcriptionEngine ||
-    settings.transcriptionEngine === "whisper.cpp"
-  ) {
-    const whisperOptions = await installWhisper(settings)
+  if (process.platform === "darwin") {
+    try {
+      await initializeMLXWhisper()
+      logger.info(`Transcribing ${trackPath} with MLX Whisper`)
+
+      const outputDir = path.dirname(trackPath)
+      const outputName = path.basename(trackPath, path.extname(trackPath))
+
+      const result = await transcribeWithMLX(trackPath, {
+        model: `mlx-community/whisper-${settings.whisperModel ?? "tiny"}`,
+        language: locale.language,
+        wordTimestamps: "True",
+        outputDir,
+        outputName,
+        outputFormat: "json" as const,
+        temperature: 0,
+        // Fix the type issue by being explicit about undefined
+        initialPrompt: initialPrompt ?? undefined,
+        task: "transcribe" as const,
+      })
+
+      if (!result.text) {
+        throw new Error("MLX Whisper returned empty transcription")
+      }
+
+      logger.info(`Successfully transcribed ${trackPath}`)
+
+      const transcript = result.text
+      let currentOffset = 0
+
+      return {
+        transcript: transcript,
+        wordTimeline: result.segments.flatMap((segment) => {
+          return (
+            segment.words?.map((word) => {
+              const trimmedWord = word.word.trim()
+
+              // Find where this word appears in the transcript
+              const wordIndex = transcript.indexOf(trimmedWord, currentOffset)
+
+              // If found, update the offset for next search
+              const startOffset = wordIndex
+              const endOffset = wordIndex + trimmedWord.length
+
+              if (wordIndex !== -1) {
+                currentOffset = wordIndex + trimmedWord.length
+              }
+
+              return {
+                type: "word" as const,
+                text: trimmedWord,
+                startTime: word.start,
+                endTime: word.end,
+                score: word.probability,
+                startOffsetUtf16: startOffset >= 0 ? startOffset : 0,
+                endOffsetUtf16: endOffset >= 0 ? endOffset : 0,
+              }
+            }) ?? []
+          )
+        }),
+      }
+    } catch (error) {
+      logger.error("MLX Whisper transcription failed:", error)
+      // Fall back to whisper.cpp
+      logger.info("Falling back to whisper.cpp")
+      return transcribeTrack(trackPath, initialPrompt, locale, {
+        ...settings,
+        transcriptionEngine: "whisper.cpp",
+      })
+    }
+  } else {
+    if (
+      !settings.transcriptionEngine ||
+      settings.transcriptionEngine === "whisper.cpp"
+    ) {
+      const whisperOptions = await installWhisper(settings)
+
+      logger.info(`Transcribing audio file ${trackPath}`)
+
+      const { transcript, wordTimeline } = await recognize(trackPath, {
+        engine: "whisper.cpp",
+        language: locale.language,
+        whisperCpp: {
+          ...(initialPrompt && { prompt: initialPrompt }),
+          enableFlashAttention: true,
+          model: getWhisperCppModelId(
+            locale.language,
+            settings.whisperModel ?? "tiny",
+          ),
+          ...whisperOptions,
+        },
+      })
+      return { transcript, wordTimeline }
+    }
 
     logger.info(`Transcribing audio file ${trackPath}`)
 
+    if (settings.transcriptionEngine === "google-cloud") {
+      if (!settings.googleCloudApiKey) {
+        throw new Error(
+          "Failed to start transcription with engine google-cloud: missing API key",
+        )
+      }
+
+      const { transcript, wordTimeline } = await recognize(trackPath, {
+        engine: "google-cloud",
+        language: locale.toString(),
+        googleCloud: {
+          apiKey: settings.googleCloudApiKey,
+        },
+      })
+      return { transcript, wordTimeline }
+    }
+
+    if (settings.transcriptionEngine === "microsoft-azure") {
+      if (!settings.azureServiceRegion) {
+        throw new Error(
+          "Failed to start transcription with engine microsoft-azure: missing service region",
+        )
+      }
+      if (!settings.azureSubscriptionKey) {
+        throw new Error(
+          "Failed to start transcription with engine microsoft-azure: missing subscription key",
+        )
+      }
+
+      const { transcript, wordTimeline } = await recognize(trackPath, {
+        engine: "microsoft-azure",
+        language: locale.toString(),
+        microsoftAzure: {
+          serviceRegion: settings.azureServiceRegion,
+          subscriptionKey: settings.azureSubscriptionKey,
+        },
+      })
+      return { transcript, wordTimeline }
+    }
+
+    if (settings.transcriptionEngine === "amazon-transcribe") {
+      if (!settings.amazonTranscribeRegion) {
+        throw new Error(
+          "Failed to start transcription with engine amazon-transcribe: missing region",
+        )
+      }
+      if (!settings.amazonTranscribeAccessKeyId) {
+        throw new Error(
+          "Failed to start transcription with engine amazon-transcribe: missing access key id",
+        )
+      }
+      if (!settings.amazonTranscribeSecretAccessKey) {
+        throw new Error(
+          "Failed to start transcription with engine amazon-transcribe: missing access secret access key",
+        )
+      }
+
+      const { transcript, wordTimeline } = await recognize(trackPath, {
+        engine: "amazon-transcribe",
+        language: locale.toString(),
+        amazonTranscribe: {
+          region: settings.amazonTranscribeRegion,
+          accessKeyId: settings.amazonTranscribeAccessKeyId,
+          secretAccessKey: settings.amazonTranscribeSecretAccessKey,
+        },
+      })
+      return { transcript, wordTimeline }
+    }
+
+    if (settings.transcriptionEngine === "openai-cloud") {
+      if (!settings.openAiApiKey) {
+        throw new Error(
+          "Failed to start transcription with engine openai-cloud: missing api key",
+        )
+      }
+
+      const { transcript, wordTimeline } = await recognize(trackPath, {
+        engine: "openai-cloud",
+        language: locale.language,
+        openAICloud: {
+          ...(initialPrompt && { prompt: initialPrompt }),
+          apiKey: settings.openAiApiKey,
+          ...(settings.openAiOrganization && {
+            organization: settings.openAiOrganization,
+          }),
+          ...(settings.openAiBaseUrl && { baseURL: settings.openAiBaseUrl }),
+          ...(settings.openAiBaseUrl &&
+            settings.openAiModelName && { model: settings.openAiModelName }),
+        },
+      })
+      return { transcript, wordTimeline }
+    }
+
+    if (!settings.deepgrapmApiKey) {
+      throw new Error(
+        "Failed to start transcription with engine deepgram: missing api key",
+      )
+    }
+
     const { transcript, wordTimeline } = await recognize(trackPath, {
-      engine: "whisper.cpp",
+      engine: "deepgram",
       language: locale.language,
-      whisperCpp: {
-        ...(initialPrompt && { prompt: initialPrompt }),
-        enableFlashAttention: true,
-        model: getWhisperCppModelId(
-          locale.language,
-          settings.whisperModel ?? "tiny",
-        ),
-        ...whisperOptions,
+      deepgram: {
+        apiKey: settings.deepgrapmApiKey,
+        ...(settings.deepgramModel && { model: settings.deepgramModel }),
+        punctuate: true,
       },
     })
+
     return { transcript, wordTimeline }
   }
-
-  logger.info(`Transcribing audio file ${trackPath}`)
-
-  if (settings.transcriptionEngine === "google-cloud") {
-    if (!settings.googleCloudApiKey) {
-      throw new Error(
-        "Failed to start transcription with engine google-cloud: missing API key",
-      )
-    }
-
-    const { transcript, wordTimeline } = await recognize(trackPath, {
-      engine: "google-cloud",
-      language: locale.toString(),
-      googleCloud: {
-        apiKey: settings.googleCloudApiKey,
-      },
-    })
-    return { transcript, wordTimeline }
-  }
-
-  if (settings.transcriptionEngine === "microsoft-azure") {
-    if (!settings.azureServiceRegion) {
-      throw new Error(
-        "Failed to start transcription with engine microsoft-azure: missing service region",
-      )
-    }
-    if (!settings.azureSubscriptionKey) {
-      throw new Error(
-        "Failed to start transcription with engine microsoft-azure: missing subscription key",
-      )
-    }
-
-    const { transcript, wordTimeline } = await recognize(trackPath, {
-      engine: "microsoft-azure",
-      language: locale.toString(),
-      microsoftAzure: {
-        serviceRegion: settings.azureServiceRegion,
-        subscriptionKey: settings.azureSubscriptionKey,
-      },
-    })
-    return { transcript, wordTimeline }
-  }
-
-  if (settings.transcriptionEngine === "amazon-transcribe") {
-    if (!settings.amazonTranscribeRegion) {
-      throw new Error(
-        "Failed to start transcription with engine amazon-transcribe: missing region",
-      )
-    }
-    if (!settings.amazonTranscribeAccessKeyId) {
-      throw new Error(
-        "Failed to start transcription with engine amazon-transcribe: missing access key id",
-      )
-    }
-    if (!settings.amazonTranscribeSecretAccessKey) {
-      throw new Error(
-        "Failed to start transcription with engine amazon-transcribe: missing access secret access key",
-      )
-    }
-
-    const { transcript, wordTimeline } = await recognize(trackPath, {
-      engine: "amazon-transcribe",
-      language: locale.toString(),
-      amazonTranscribe: {
-        region: settings.amazonTranscribeRegion,
-        accessKeyId: settings.amazonTranscribeAccessKeyId,
-        secretAccessKey: settings.amazonTranscribeSecretAccessKey,
-      },
-    })
-    return { transcript, wordTimeline }
-  }
-
-  if (settings.transcriptionEngine === "openai-cloud") {
-    if (!settings.openAiApiKey) {
-      throw new Error(
-        "Failed to start transcription with engine openai-cloud: missing api key",
-      )
-    }
-
-    const { transcript, wordTimeline } = await recognize(trackPath, {
-      engine: "openai-cloud",
-      language: locale.language,
-      openAICloud: {
-        ...(initialPrompt && { prompt: initialPrompt }),
-        apiKey: settings.openAiApiKey,
-        ...(settings.openAiOrganization && {
-          organization: settings.openAiOrganization,
-        }),
-        ...(settings.openAiBaseUrl && { baseURL: settings.openAiBaseUrl }),
-        ...(settings.openAiBaseUrl &&
-          settings.openAiModelName && { model: settings.openAiModelName }),
-      },
-    })
-    return { transcript, wordTimeline }
-  }
-
-  if (!settings.deepgrapmApiKey) {
-    throw new Error(
-      "Failed to start transcription with engine deepgram: missing api key",
-    )
-  }
-
-  const { transcript, wordTimeline } = await recognize(trackPath, {
-    engine: "deepgram",
-    language: locale.language,
-    deepgram: {
-      apiKey: settings.deepgrapmApiKey,
-      ...(settings.deepgramModel && { model: settings.deepgramModel }),
-      punctuate: true,
-    },
-  })
-
-  return { transcript, wordTimeline }
 }

@@ -24,6 +24,7 @@ import { logger } from "@/logging"
 import {
   getTranscriptionFilename,
   getTranscriptions,
+  persistProcessedFilesList,
   processAudiobook,
 } from "@/process/processAudio"
 import { getFullText, processEpub, readEpub } from "@/process/processEpub"
@@ -39,27 +40,38 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises"
 import { MessagePort } from "node:worker_threads"
 import { generateTTS } from "@/tts/tts"
 import { MLXModel } from "@/tts/providers/mlx_audio"
+import path from "path"
 
-async function findTTSAudioFiles(
-  bookUuid: UUID,
-): Promise<{ filename: string }[] | null> {
+async function findTTSAudioFiles(bookUuid: UUID): Promise<AudioFile[] | null> {
   try {
     const processedDirectory = getProcessedAudioFilepath(bookUuid)
     const files = await readdir(processedDirectory)
 
-    // Get audio files with mp3 extension (common for TTS output)
-    const audioFiles = files.filter((file) =>
+    // Get audio files with audio extensions
+    const audioFilenames = files.filter((file) =>
       /\.(mp3|m4a|ogg|wav|flac)$/i.test(file),
     )
 
-    if (audioFiles.length === 0) {
+    if (audioFilenames.length === 0) {
       return null
     }
 
-    // Map them to the format expected by transcribeTrack
-    return audioFiles.map((filename) => ({
-      filename,
-    }))
+    // Convert to AudioFile format
+    const audioFiles = audioFilenames.map((filename: string) => {
+      // Add explicit typing to filename
+      const extension = path.extname(filename)
+      const bare_filename = filename.slice(
+        0,
+        filename.length - extension.length,
+      )
+      return {
+        filename,
+        bare_filename,
+        extension,
+      } as AudioFile
+    })
+
+    return audioFiles
   } catch (e: unknown) {
     logger.error(`Failed to find TTS audio files: ${String(e)}`)
     return null
@@ -84,17 +96,24 @@ export async function transcribeBook(
     logger.info(
       "No standard processed audio files found, looking for TTS-generated files...",
     )
-    audioFiles = (await findTTSAudioFiles(bookUuid)) as AudioFile[] | undefined
+    const foundFiles = await findTTSAudioFiles(bookUuid)
 
-    if (!audioFiles) {
+    if (foundFiles && foundFiles.length > 0) {
+      audioFiles = foundFiles // Now correctly typed
+      logger.info(
+        `Found ${foundFiles.length} TTS-generated audio files for transcription - registering them in audio index`,
+      )
+      // Register the found files in the audio index
+      await persistProcessedFilesList(bookUuid, foundFiles)
+    }
+
+    if (!audioFiles || audioFiles.length === 0) {
       throw new Error(
         "Failed to transcribe book: found no processed audio files",
       )
     }
-    logger.info(
-      `Found ${audioFiles.length} TTS-generated audio files for transcription`,
-    )
   }
+
   if (
     !settings.transcriptionEngine ||
     settings.transcriptionEngine === "whisper.cpp"
@@ -339,8 +358,17 @@ export default async function processBook({
           onProgress,
         )
 
+        // Register the generated audio files for the next steps
+        const registeredFiles = await registerTTSAudioFiles(bookUuid)
+
+        if (registeredFiles.length === 0) {
+          throw new Error(
+            "TTS task completed but no audio files were found to register",
+          )
+        }
+
         logger.info(
-          `Successfully generated TTS chunks for book ${bookRefForLog}`,
+          `Successfully generated and registered ${registeredFiles.length} TTS audio files for book ${bookRefForLog}`,
         )
       }
 
@@ -451,4 +479,53 @@ export default async function processBook({
   }
   logger.info(`Completed synchronizing book ${bookRefForLog})`)
   port.postMessage({ type: "processingCompleted", bookUuid })
+}
+
+/**
+ * Register TTS-generated audio files in the audio index
+ */
+async function registerTTSAudioFiles(bookUuid: UUID): Promise<AudioFile[]> {
+  try {
+    const processedDirectory = getProcessedAudioFilepath(bookUuid)
+    const files = await readdir(processedDirectory)
+
+    // Filter audio files with extensions
+    const ttsAudioFiles = files
+      .filter((file) => /\.(mp3|m4a|ogg|wav|flac)$/i.test(file))
+      .map((filename) => {
+        // Extract the base filename without extension
+        const extension = path.extname(filename)
+        const bare_filename = filename.slice(
+          0,
+          filename.length - extension.length,
+        )
+        return {
+          filename,
+          bare_filename,
+          extension,
+        } as AudioFile
+      })
+
+    if (ttsAudioFiles.length > 0) {
+      logger.info(
+        `Found ${ttsAudioFiles.length} TTS-generated audio files to register in audio index`,
+      )
+
+      // Update the audio index
+      await persistProcessedFilesList(bookUuid, ttsAudioFiles)
+
+      logger.info(
+        `Successfully registered ${ttsAudioFiles.length} audio files for book ${bookUuid}`,
+      )
+      return ttsAudioFiles
+    } else {
+      logger.warn(
+        `No audio files found to register in directory: ${processedDirectory}`,
+      )
+      return []
+    }
+  } catch (e) {
+    logger.error(`Failed to register TTS audio files: ${String(e)}`)
+    return []
+  }
 }
