@@ -46,6 +46,20 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
+/**
+ * Format file prefix to ensure proper sorting in the synchronizer
+ *
+ * This function pads numbers with zeros to ensure consistent sorting
+ */
+function formatFilePrefix(chapterIndex: number, chunkPosition: number): string {
+  // Pad chapter index with zeros
+  const paddedChapterIndex = String(chapterIndex).padStart(5, "0")
+  // Pad chunk position with zeros
+  const paddedChunkPosition = String(chunkPosition).padStart(5, "0")
+
+  return `${paddedChapterIndex}_${paddedChunkPosition}`
+}
+
 export async function generateTTS(
   bookUuid: UUID,
   options: TTSGenerationOptions = {},
@@ -108,11 +122,11 @@ export async function generateTTS(
 
     for (const chapter of processedBook.chapters) {
       for (const chunk of chapter.chunks) {
+        // Use the new formatting function for consistent file naming
+        const filePrefix = formatFilePrefix(chapter.index, chunk.position)
         const outputDir = processedDirectory
-        const filePrefix = `${chapter.index}_${chunk.position}`
 
         // Check if the audio file already exists
-        // The MLX Audio script creates files with format "{file_prefix}.mp3" when join_audio is true
         const expectedAudioPath = path.resolve(outputDir, `${filePrefix}.mp3`)
         const audioFileExists = await fileExists(expectedAudioPath)
 
@@ -171,6 +185,9 @@ export async function generateTTS(
       }
     }
 
+    logger.info(
+      `Generated or verified ${processedChunks - skippedChunks} audio chunks`,
+    )
     if (skippedChunks > 0) {
       logger.info(
         `Skipped ${skippedChunks} existing audio chunks out of ${totalChunks} total chunks`,
