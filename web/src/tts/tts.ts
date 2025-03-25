@@ -1,11 +1,23 @@
-import { getProcessedAudioFilepath, getTTSChunksFilepath } from "@/assets/paths"
+import {
+  getProcessedAudioFilepath,
+  getTranscriptionsFilepath,
+  getTTSChunksFilepath,
+} from "@/assets/paths"
 import { logger } from "@/logging"
 import {
   ProcessedBookForTTS,
   processEpubForTTS,
 } from "@/process/processEpubForTTS"
 import { UUID } from "@/uuid"
-import { mkdir, writeFile, access, constants, readFile } from "node:fs/promises"
+import {
+  mkdir,
+  writeFile,
+  access,
+  constants,
+  readFile,
+  readdir,
+  copyFile,
+} from "node:fs/promises"
 import path from "path"
 import {
   initializeEchogarden,
@@ -58,6 +70,46 @@ function formatFilePrefix(chapterIndex: number, chunkPosition: number): string {
   const paddedChunkPosition = String(chunkPosition).padStart(5, "0")
 
   return `${paddedChapterIndex}_${paddedChunkPosition}`
+}
+
+/**
+ * Copy generated transcription JSON files from processed folder to transcriptions folder
+ */
+async function copyTranscriptionFiles(bookUuid: UUID): Promise<void> {
+  try {
+    const processedDirectory = getProcessedDirectoryTyped(bookUuid)
+    const transcriptionsDirectory = getTranscriptionsFilepath(bookUuid)
+
+    // Create transcriptions directory if it doesn't exist
+    await mkdir(transcriptionsDirectory, { recursive: true })
+
+    // Get all JSON files in processed directory
+    const files = await readdir(processedDirectory)
+    const jsonFiles = files.filter((file) => file.endsWith(".json"))
+
+    if (jsonFiles.length === 0) {
+      logger.warn(
+        `No JSON transcription files found in processed directory for book ${bookUuid}`,
+      )
+      return
+    }
+
+    // Copy each JSON file to transcriptions directory
+    for (const jsonFile of jsonFiles) {
+      const sourcePath = path.join(processedDirectory, jsonFile)
+      const destPath = path.join(transcriptionsDirectory, jsonFile)
+      await copyFile(sourcePath, destPath)
+    }
+
+    logger.info(
+      `Successfully copied ${jsonFiles.length} transcription files to transcriptions directory`,
+    )
+  } catch (error) {
+    logger.error(
+      `Error copying transcription files: ${error instanceof Error ? error.message : String(error)}`,
+    )
+    // Don't throw error as this is a post-processing step
+  }
 }
 
 export async function generateTTS(
@@ -291,6 +343,10 @@ export async function generateTTS(
         `Skipped ${skippedChunks} existing audio chunks out of ${totalChunks} total chunks`,
       )
     }
+
+    // Copy transcription files (if any) to transcriptions directory
+    // Echogarden generates transcription files automatically
+    await copyTranscriptionFiles(bookUuid)
 
     return processedBook
   } catch (error) {
