@@ -2,7 +2,7 @@ import {
   ProcessingTaskStatus,
   ProcessingTaskType,
 } from "@/apiModels/models/ProcessingStatus"
-import { deleteProcessed } from "@/assets/assets"
+import { deleteProcessed, originalAudioExists } from "@/assets/assets"
 import {
   AudioFile,
   getCustomEpubCover,
@@ -260,11 +260,43 @@ export default async function processBook({
   // book reference to use in log
   const bookRefForLog = `"${book.title}" (uuid: ${bookUuid})`
 
+  // Check if user uploaded audio files
+  const userUploadedAudio = await originalAudioExists(bookUuid)
+
   logger.info(
     `Found ${remainingTasks.length} remaining tasks for book ${bookRefForLog}`,
   )
 
   for (const task of remainingTasks) {
+    // Skip TTS task if user uploaded audio
+    if (userUploadedAudio && task.type === ProcessingTaskType.TTS) {
+      logger.info(
+        `Skipping TTS task for book ${bookRefForLog} because user-uploaded audio was detected`,
+      )
+      // Mark as completed so the next tasks can run
+      port.postMessage({
+        type: "taskTypeUpdated",
+        bookUuid,
+        payload: {
+          taskUuid: task.uuid,
+          taskType: task.type,
+          taskStatus: ProcessingTaskStatus.COMPLETED,
+        },
+      })
+
+      const taskUuid: UUID = await new Promise((resolve) => {
+        port.once("message", resolve)
+      })
+
+      port.postMessage({
+        type: "taskCompleted",
+        bookUuid,
+        payload: { taskUuid },
+      })
+
+      continue // Skip to next task
+    }
+
     port.postMessage({
       type: "taskTypeUpdated",
       bookUuid,
@@ -288,27 +320,6 @@ export default async function processBook({
     }
 
     try {
-      if (task.type === ProcessingTaskType.SPLIT_CHAPTERS) {
-        logger.info("Pre-processing...")
-        await processEpub(bookUuid)
-
-        // Check if original audio directory exists before processing audio
-        try {
-          await processAudiobook(
-            bookUuid,
-            settings.maxTrackLength ?? null,
-            settings.codec ?? null,
-            settings.bitrate ?? null,
-            new AsyncSemaphore(settings.parallelTranscodes),
-            onProgress,
-          )
-        } catch (e) {
-          logger.error(
-            `Error processing audio for book ${bookUuid}: ${e instanceof Error ? e.message : String(e)}`,
-          )
-        }
-      }
-
       if (task.type === ProcessingTaskType.TTS) {
         logger.info(`Generating TTS chunks for book ${bookRefForLog}...`)
 
@@ -393,6 +404,27 @@ export default async function processBook({
           settings,
           onProgress,
         )
+      }
+
+      if (task.type === ProcessingTaskType.SPLIT_CHAPTERS) {
+        logger.info("Pre-processing...")
+        await processEpub(bookUuid)
+
+        // Check if original audio directory exists before processing audio
+        try {
+          await processAudiobook(
+            bookUuid,
+            settings.maxTrackLength ?? null,
+            settings.codec ?? null,
+            settings.bitrate ?? null,
+            new AsyncSemaphore(settings.parallelTranscodes),
+            onProgress,
+          )
+        } catch (e) {
+          logger.error(
+            `Error processing audio for book ${bookUuid}: ${e instanceof Error ? e.message : String(e)}`,
+          )
+        }
       }
 
       if (task.type === ProcessingTaskType.SYNC_CHAPTERS) {

@@ -117,7 +117,7 @@ export function BookStatus({ book }: Props) {
                 void client.processBook(book.uuid)
               }}
             >
-              {needsTTS ? "Generate audio" : "Start processing"}
+              Process book
             </Button>
           ) : (
             <Text>Unprocessed</Text>
