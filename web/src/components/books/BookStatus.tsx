@@ -117,7 +117,7 @@ export function BookStatus({ book }: Props) {
                 void client.processBook(book.uuid)
               }}
             >
-              Process book
+              Start processing
             </Button>
           ) : (
             <Text>Unprocessed</Text>
