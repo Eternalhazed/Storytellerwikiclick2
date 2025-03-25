@@ -6,8 +6,8 @@ import {
 } from "@/apiModels/models/ProcessingStatus"
 
 export const PROCESSING_TASK_ORDER = {
-  [ProcessingTaskType.SPLIT_CHAPTERS]: 0,
-  [ProcessingTaskType.TTS]: 1,
+  [ProcessingTaskType.TTS]: 0,
+  [ProcessingTaskType.SPLIT_CHAPTERS]: 1,
   [ProcessingTaskType.TRANSCRIBE_CHAPTERS]: 2,
   [ProcessingTaskType.SYNC_CHAPTERS]: 3,
 }
