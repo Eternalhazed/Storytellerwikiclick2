@@ -17,13 +17,13 @@ void describe("determineRemainingTasks", () => {
 
     assert.deepStrictEqual(output, [
       {
-        type: ProcessingTaskType.SPLIT_CHAPTERS,
+        type: ProcessingTaskType.TTS,
         status: ProcessingTaskStatus.STARTED,
         progress: 0,
         bookUuid: uuid,
       },
       {
-        type: ProcessingTaskType.TTS,
+        type: ProcessingTaskType.SPLIT_CHAPTERS,
         status: ProcessingTaskStatus.STARTED,
         progress: 0,
         bookUuid: uuid,
@@ -59,12 +59,6 @@ void describe("determineRemainingTasks", () => {
     const output = determineRemainingTasks(uuid, input)
 
     assert.deepStrictEqual(output, [
-      {
-        type: ProcessingTaskType.TTS,
-        status: ProcessingTaskStatus.STARTED,
-        progress: 0,
-        bookUuid: uuid,
-      },
       {
         type: ProcessingTaskType.TRANSCRIBE_CHAPTERS,
         status: ProcessingTaskStatus.STARTED,
@@ -113,12 +107,6 @@ void describe("determineRemainingTasks", () => {
     const output = determineRemainingTasks(uuid, input)
 
     assert.deepStrictEqual(output, [
-      {
-        type: ProcessingTaskType.TTS,
-        status: ProcessingTaskStatus.STARTED,
-        progress: 0,
-        bookUuid: uuid,
-      },
       {
         uuid: transcribeUuid,
         type: ProcessingTaskType.TRANSCRIBE_CHAPTERS,
