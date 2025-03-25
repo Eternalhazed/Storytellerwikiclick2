@@ -1,7 +1,7 @@
 "use server"
 
 import * as Echogarden from "echogarden"
-import { VoiceGender } from "echogarden"
+import { VoiceGender, SynthesisOptions } from "echogarden"
 import { logger } from "@/logging"
 import { BaseTTSOptions } from "../types"
 import path from "path"
@@ -10,11 +10,11 @@ import { Timeline, TimelineEntry } from "echogarden/dist/utilities/Timeline"
 
 export interface EchogardenTTSOptions extends BaseTTSOptions {
   // Engine-specific options
-  kokoroModel?: "82m-v1.0-fp32" | "82m-v1.0-quantized"
-  kokoroProvider?: "cpu" | "dml" | "cuda"
+  kokoroModel: "82m-v1.0-fp32" | "82m-v1.0-quantized"
+  kokoroProvider: "cpu" | "dml" | "cuda"
 
   // Voice options
-  voice?: string
+  voice: string
   language?: string
   voiceGender?: VoiceGender // Updated to use correct type
 
@@ -30,6 +30,8 @@ export interface EchogardenTTSOptions extends BaseTTSOptions {
   normalize?: boolean
   targetPeak?: number
   maxGainIncrease?: number
+
+  splitToSentences: boolean
 }
 
 export async function initializeEchogarden(): Promise<void> {
@@ -62,8 +64,18 @@ export async function textToSpeech(
 
   // Add input validation
   if (!text || text.trim() === "") {
-    throw new Error("Empty or invalid input text provided to Echogarden TTS")
+    logger.warn("Empty text chunk detected, skipping TTS generation")
+    return // Skip this chunk instead of throwing error
   }
+
+  if (text.trim().length < 3) {
+    logger.warn(`Text too short (${text.length} chars), adding padding spaces`)
+    text = text + "    " // Add padding to very short text
+  }
+
+  logger.debug(
+    `Processing text (${text.length} chars): "${text.substring(0, 50)}${text.length > 50 ? "..." : ""}"`,
+  )
 
   // Log text length for debugging
   logger.info(`Processing text with length ${text.length} characters`)
@@ -71,21 +83,23 @@ export async function textToSpeech(
   // Default options
   const defaultOptions = {
     kokoroModel: "82m-v1.0-quantized" as const,
-    kokoroProvider: "cpu" as const,
+    kokoroProvider: "cuda" as const,
     speed: 1.0,
     pitch: 1.0,
     pitchVariation: 1.0,
     normalize: true,
     targetPeak: -3,
     maxGainIncrease: 30,
-    bitrate: 192,
+    splitToSentences: false,
   }
 
   // Merge with provided options
-  const mergedOptions = {
+  const mergedOptions: EchogardenTTSOptions = {
     ...defaultOptions,
     ...options,
   }
+
+  logger.info(`Echogarden TTS options: ${JSON.stringify(mergedOptions)}`)
 
   try {
     let segmentCount = 0
@@ -114,7 +128,7 @@ export async function textToSpeech(
     }
 
     // Generate speech
-    const synthesisOptions = {
+    const synthesisOptions: SynthesisOptions = {
       engine: "kokoro" as const,
 
       // Only include optional properties if they're defined
@@ -138,18 +152,17 @@ export async function textToSpeech(
       // Output format
       outputAudioFormat: {
         codec: "mp3" as const,
-        bitrate: mergedOptions.bitrate || 192,
       },
 
       // Post-processing - simplified without unnecessary conditionals
       postProcessing: {
-        normalizeAudio: mergedOptions.normalize,
-        targetPeak: mergedOptions.targetPeak,
-        maxGainIncrease: mergedOptions.maxGainIncrease,
+        normalizeAudio: mergedOptions.normalize ?? true,
+        targetPeak: mergedOptions.targetPeak ?? -3,
+        maxGainIncrease: mergedOptions.maxGainIncrease ?? 30,
       },
 
       // Fixed options
-      splitToSentences: true,
+      splitToSentences: mergedOptions.splitToSentences,
       sentenceEndPause: 0.75,
       segmentEndPause: 1.0,
     }

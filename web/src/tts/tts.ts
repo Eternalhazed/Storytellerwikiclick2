@@ -69,7 +69,7 @@ export async function generateTTS(
   logger.info("TTS Settings:", {
     engine: options.engine,
     model: options.model,
-    ttsOptions: options.echogardenOptions || {},
+    echogardenOptions: options.echogardenOptions || {},
   })
 
   // Set default options
@@ -146,30 +146,128 @@ export async function generateTTS(
           outputDir,
           filePrefix,
         )
-        // Generate the audio for this chunk
+
         if (options.engine === "echogarden") {
-          await echogardenTTS(
-            chunk.text,
-            outputDir,
-            {
+          try {
+            // Create complete options object with filePrefix
+            const echogardenFullOptions: EchogardenTTSOptions = {
+              // Set required defaults
+              kokoroModel: "82m-v1.0-quantized",
+              kokoroProvider: "cuda",
+              voice: "Heart",
+              splitToSentences: false,
               filePrefix,
-              ...options.echogardenOptions,
-            },
-            (progress) => {
-              if (onProgress) {
-                // Calculate overall progress
-                const totalChunks = processedBook.chapters.reduce(
-                  (sum, ch) => sum + ch.chunks.length,
-                  0,
-                )
-                const currentProgress =
-                  (processedChunks +
-                    progress.segmentCount / chunk.text.length) /
-                  totalChunks
-                onProgress(currentProgress)
+              // Spread user options
+              ...(options.echogardenOptions || {}),
+            }
+
+            await echogardenTTS(
+              chunk.text,
+              outputDir,
+              echogardenFullOptions,
+              (progress) => {
+                if (onProgress) {
+                  // Calculate overall progress
+                  const totalChunks = processedBook.chapters.reduce(
+                    (sum, ch) => sum + ch.chunks.length,
+                    0,
+                  )
+                  const currentProgress =
+                    (processedChunks +
+                      progress.segmentCount / chunk.text.length) /
+                    totalChunks
+                  onProgress(currentProgress)
+                }
+              },
+            )
+          } catch (error: unknown) {
+            logger.error(
+              `Error generating TTS for chunk ${filePrefix}: ${error instanceof Error ? error.message : String(error)}`,
+            )
+            logger.debug(
+              `Problematic text: "${chunk.text.substring(0, 100)}..."`,
+            )
+
+            logger.info("Attempting to fallback on CPU")
+            try {
+              // Create full options object with CPU provider
+              const fallbackOptions: EchogardenTTSOptions = {
+                kokoroModel: "82m-v1.0-fp32",
+                kokoroProvider: "cpu",
+                voice: "Heart",
+                splitToSentences: false,
+                filePrefix,
+                // Spread any existing user options
+                ...(options.echogardenOptions || {}),
               }
-            },
-          )
+
+              await echogardenTTS(
+                chunk.text,
+                outputDir,
+                fallbackOptions,
+                (progress) => {
+                  if (onProgress) {
+                    // Calculate overall progress
+                    const totalChunks = processedBook.chapters.reduce(
+                      (sum, ch) => sum + ch.chunks.length,
+                      0,
+                    )
+                    const currentProgress =
+                      (processedChunks +
+                        progress.segmentCount / chunk.text.length) /
+                      totalChunks
+                    onProgress(currentProgress)
+                  }
+                },
+              )
+              // Don't modify original options
+            } catch (fallbackError: unknown) {
+              logger.error(
+                `Fallback to CPU TTS generation failed: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`,
+              )
+
+              logger.info(
+                "Attempting to fallback to synthesizing individual sentences",
+              )
+
+              // Create sentence-by-sentence options
+              const sentenceOptions: EchogardenTTSOptions = {
+                kokoroModel: "82m-v1.0-fp32",
+                kokoroProvider: "cuda",
+                voice: "Heart",
+                splitToSentences: true,
+                filePrefix,
+                // Spread any existing user options
+                ...(options.echogardenOptions || {}),
+              }
+
+              try {
+                await echogardenTTS(
+                  chunk.text,
+                  outputDir,
+                  sentenceOptions,
+                  (progress) => {
+                    if (onProgress) {
+                      // Calculate overall progress
+                      const totalChunks = processedBook.chapters.reduce(
+                        (sum, ch) => sum + ch.chunks.length,
+                        0,
+                      )
+                      const currentProgress =
+                        (processedChunks +
+                          progress.segmentCount / chunk.text.length) /
+                        totalChunks
+                      onProgress(currentProgress)
+                    }
+                  },
+                )
+              } catch (sentenceError) {
+                logger.info("Skipping chunk due to TTS generation failure:")
+                logger.info(chunk.text)
+              }
+            }
+            continue
+          }
         } else {
           await textToSpeech(chunk.text, outputDir, MLXModel.KOKORO, {
             filePrefix: expectedAudioPathWithoutExtension,
