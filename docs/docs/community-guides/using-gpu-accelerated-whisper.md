@@ -1,8 +1,15 @@
-# Using GPU Accelerated Whisper
+# Using CoreML for hardware-accelerated transcription on macOS
 
 You can compile `whisper.cpp` locally to take advantage of GPU acceleration
 avaliable on your machine. This can speed up the process of transcribing audio
 files compared to the default CPU implementation without using a cloud service.
+
+The overall goal is to run `whisper.cpp`’s built-in web server directly on your
+macOS computer (“bare metal”), while running Storyteller in a Docker container,
+as usual. We’ll build the bare metal `whisper.cpp` with CoreML support, so that
+it can use the integrated GPU/AI chip in your Mac device for much faster
+transcription times. Then we’ll point Storyteller at the bare metal
+`whisper.cpp` server to use for its transcription.
 
 ## 0. Pre-requisites
 
@@ -13,9 +20,6 @@ be installed using homebrew as so
 brew install cmake git ffmpeg
 ```
 
-For different acceleration options you will need to install additional
-dependencies.
-
 ## 1. Downloading whisper.cpp
 
 First download the project by running the following:
@@ -25,10 +29,10 @@ git clone https://github.com/ggerganov/whisper.cpp.git
 cd whisper.cpp
 ```
 
-## 2. Downloading a model
+## 2. Building a model
 
-You will also need to download a model file. You can do this by running one of
-the following commands,
+You will also need to build a model file. You can do this by running one of the
+following commands:
 
 ```bash
 make -j tiny.en
@@ -44,6 +48,11 @@ make -j large-v2
 make -j large-v3
 make -j large-v3-turbo
 ```
+
+If you’re not sure which model you need, start with `tiny` for English and
+`large-v3-turbo` for languages other than English. If you have any issues with
+your books aligned with the `tiny` model, then try upgrading to `large-v3-turbo`
+for English, as well.
 
 ## 3. Compiling with GPU Acceleration
 
@@ -97,17 +106,19 @@ Next you will need to convert the model to the CoreML format, this can be done
 by running the following,
 
 ```bash
-./models/generate-coreml-model.sh $OPTION
+export MODEL_NAME=tiny # use the model you built in the previous step
+./models/generate-coreml-model.sh $MODEL_NAME
 ```
 
-where `$OPTION` is the option you chose above, for example `base` or `large-v1`.
+where `$MODEL_NAME` is the option you chose above, for example `tiny` or
+`large-v3-turbo`.
 
 ## 4. Running the whisper.cpp server
 
 To run the server you can run the following,
 
 ```bash
-./build/bin/whisper-server -m models/ggml-$OPTION.bin \
+./build/bin/whisper-server -m models/ggml-$MODEL_NAME.bin \
   --host 0.0.0.0 \
   --inference-path /audio/transcriptions \
   --convert
@@ -115,7 +126,7 @@ To run the server you can run the following,
 
 The options are as follows:
 
-- `-m models/ggml-$OPTION.bin` specifies the model to use.
+- `-m models/ggml-$MODEL_NAME.bin` specifies the model to use.
 - `--host 0.0.0.0` allows it to be accessed from other devices on the network.
 - `--inference-path /audio/transcriptions` match up the inference URL with what
   Storyteller expects.
@@ -130,7 +141,7 @@ the following,
 - "API Key" to any string as the local whisper server does not require an API
   key.
 - "Base URL" to the URL of the whisper.cpp server, for example
-  `http://192.168.1.19:8080`
+  `http://192.168.1.19:8080`.
 
 ![Transcription settings screenshot](/img/gpu-accelerated-whisper-transcription-settings.png)
 
@@ -146,8 +157,8 @@ otherwise you can try the following.
 
 #### Running Storyteller in Docker
 
-If you are running Storyteller in Docker using Docker on Desktop on macOS or
-windows you can access the host on `host.docker.internal`.
+If you are running Storyteller in Docker using Docker Desktop on macOS or
+Windows you can access the host on `host.docker.internal`.
 
 If you are using linux you can either run the container with,
 
