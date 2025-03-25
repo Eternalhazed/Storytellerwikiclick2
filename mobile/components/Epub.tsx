@@ -28,6 +28,7 @@ import {
 import { Group } from "./ui/Group"
 import { ChevronLeft } from "lucide-react-native"
 import { spacing } from "./ui/tokens/spacing"
+import { SubtlePlayPause } from "./SubtlePlayPause"
 
 type Props = {
   book: BookshelfBook
@@ -132,6 +133,9 @@ export function Epub({ book, locator }: Props) {
             setActiveBookmarks(event.nativeEvent.activeBookmarks)
           }}
           onLocatorChange={(event) => {
+            if (isPlaying) {
+              return
+            }
             // If this is the very first time we're mounting this
             // component, we actually want to ignore the "locator changed"
             // event, which will just be trying to reset to the beginning
@@ -180,7 +184,7 @@ export function Epub({ book, locator }: Props) {
           isPlaying={isPlaying}
         />
       </View>
-      {showInterface && (
+      {showInterface ? (
         <>
           <Group style={[styles.backButton, { top: insets.top + 6 }]}>
             <Link href="/" replace asChild>
@@ -192,6 +196,8 @@ export function Epub({ book, locator }: Props) {
           </Group>
           <MiniPlayer book={book} automaticRewind={!locatorIsFromEpub} />
         </>
+      ) : (
+        <SubtlePlayPause automaticRewind={!locatorIsFromEpub} />
       )}
     </View>
   )

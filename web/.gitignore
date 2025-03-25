@@ -44,3 +44,5 @@ sqlite/*
 
 assets/audio
 assets/text
+
+whisper-builds/
