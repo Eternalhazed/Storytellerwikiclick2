@@ -2,7 +2,7 @@
 
 import { Settings } from "@/apiModels"
 import { useApiClient } from "@/hooks/useApiClient"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "@mantine/form"
 import {
   Box,
@@ -12,11 +12,16 @@ import {
   Fieldset,
   Group,
   List,
+  Loader,
   NativeSelect,
   NumberInput,
   PasswordInput,
+  Select,
   TextInput,
+  Title,
 } from "@mantine/core"
+import { SynthesisVoice } from "echogarden"
+import { getMlxVoiceOptions, kokoroLanguages } from "./tts_voices_mlx_kokoro"
 
 export enum MLXModel {
   KOKORO = "mlx-community/Kokoro-82M-4bit",
@@ -30,6 +35,17 @@ interface Props {
 export function SettingsForm({ settings }: Props) {
   const [saved, setSaved] = useState(false)
   const clearSavedTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const [echogardenVoices, setEchogardenVoices] = useState<
+    Array<{ value: string; label: string }>
+  >([
+    { value: "Heart", label: "Heart (female)" },
+    { value: "Sky", label: "Sky (male)" },
+    { value: "Air", label: "Air (female)" },
+    { value: "Water", label: "Water (male)" },
+    { value: "Forest", label: "Forest (male)" },
+  ])
+  const [loadingVoices, setLoadingVoices] = useState(false)
 
   const client = useApiClient()
 
@@ -67,29 +83,124 @@ export function SettingsForm({ settings }: Props) {
     parallel_transcodes: settings.parallel_transcodes,
     parallel_whisper_build: settings.parallel_whisper_build,
 
-    // TTS Settings
-    tts_engine: process.platform === "darwin" ? "mlx" : "echogarden",
+    // TTS Settings - engine selection
+    tts_engine: settings.tts_engine,
 
-    // Echogarden specific
-    tts_voice: settings.tts_voice || "Heart",
-    tts_language: "en-US",
-    tts_pitch: 1.0,
-    tts_normalize: true,
-    tts_target_peak: -3,
-    tts_bitrate: 192000,
-    tts_speed: 1.0,
+    // TTS voice - using different defaults based on engine
+    tts_voice: settings.tts_voice || "Heart", // will be overridden based on engine
 
-    // MLX specific
-    tts_model: MLXModel.KOKORO,
-    tts_temperature: 0.6,
-    tts_top_p: 0.9,
-    tts_top_k: 50,
+    // Common TTS settings
+    tts_language: settings.tts_language || "en-US",
+
+    // Echogarden specific settings
+    tts_pitch: settings.tts_pitch || 1.0,
+    tts_normalize: settings.tts_normalize,
+    tts_target_peak: settings.tts_target_peak || -3,
+    tts_bitrate: settings.tts_bitrate || 192000,
+    tts_speed: settings.tts_speed || 1.0,
+
+    // MLX specific settings
+    tts_model: settings.tts_model || MLXModel.KOKORO,
+    tts_temperature: settings.tts_temperature || 0.6,
+    tts_top_p: settings.tts_top_p || 0.9,
+    tts_top_k: settings.tts_top_k || 50,
   }
 
   const form = useForm({
     mode: "controlled",
     initialValues,
   })
+
+  useEffect(() => {
+    if (
+      form.values.tts_engine === "mlx" &&
+      form.values.tts_model === (MLXModel.KOKORO as string)
+    ) {
+      // When changing language, we need to update the voice selection
+      const availableVoices = getMlxVoiceOptions(
+        form.values.tts_model,
+        form.values.tts_language,
+      )
+      const currentVoiceExists = availableVoices.some(
+        (v) => v.value === form.values.tts_voice,
+      )
+
+      // Check that we have voices before accessing index 0
+      if (!currentVoiceExists && availableVoices.length > 0) {
+        // TypeScript now knows availableVoices[0] exists
+        const firstVoice = availableVoices[0]
+        if (firstVoice) {
+          form.setFieldValue("tts_voice", firstVoice.value)
+        } else {
+          form.setFieldValue("tts_voice", "af_heart")
+        }
+      }
+    }
+  }, [form, form.values.tts_language, form.values.tts_model])
+
+  // Load available Echogarden voices when the form loads
+  useEffect(() => {
+    async function loadEchogardenVoices() {
+      if (form.values.tts_engine === "echogarden") {
+        setLoadingVoices(true)
+        try {
+          // Fetch available voices via API endpoint
+          const response = await fetch("/api/tts/voices/echogarden")
+          if (response.ok) {
+            const voices = (await response.json()) as SynthesisVoice[]
+            if (Array.isArray(voices) && voices.length > 0) {
+              // First, organize all voices by language code
+              const voicesByLanguage = new Map<string, SynthesisVoice[]>()
+
+              voices.forEach((voice) => {
+                // TypeScript knows voice.languages might be undefined
+                // so we need to check it exists first
+                if (voice.languages.length > 0) {
+                  // Now we know voice.languages is an array with at least one element
+                  const primaryLanguage = voice.languages[0]
+                  // Need to check primaryLanguage is a string to satisfy TypeScript
+                  if (typeof primaryLanguage === "string") {
+                    // Initialize array for this language if it doesn't exist
+                    if (!voicesByLanguage.has(primaryLanguage)) {
+                      voicesByLanguage.set(primaryLanguage, [])
+                    }
+
+                    // Add this voice to its language array - now TypeScript knows primaryLanguage is a string
+                    const voicesForLanguage =
+                      voicesByLanguage.get(primaryLanguage)
+                    if (voicesForLanguage) {
+                      voicesForLanguage.push(voice)
+                    }
+                  }
+                }
+              })
+
+              // Get selected language code (or default to en-US)
+              const selectedLanguage = form.values.tts_language || "en-US"
+
+              // Get voices for the matching language
+              const languageVoices =
+                voicesByLanguage.get(selectedLanguage) || []
+
+              // Convert to select options
+              const voiceOptions = languageVoices.map((voice) => ({
+                value: voice.name,
+                label: `${voice.name} (${voice.gender === "female" ? "Female" : "Male"})`,
+              }))
+
+              setEchogardenVoices(voiceOptions)
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load Echogarden voices:", error)
+        } finally {
+          setLoadingVoices(false)
+        }
+      }
+    }
+
+    void loadEchogardenVoices()
+  }, [form.values.tts_engine, form.values.tts_language])
 
   const state = form.getValues()
 
@@ -427,30 +538,76 @@ export function SettingsForm({ settings }: Props) {
         />
       </Fieldset>
       <Fieldset legend="Text-to-Speech Settings">
+        <Box className="mb-3 text-sm opacity-70">
+          <p>
+            Text-to-Speech (TTS) settings control how Storyteller generates
+            speech from text. Two engines are available:
+          </p>
+          <List>
+            <List.Item>
+              <strong>MLX Audio</strong>: High-quality TTS for Apple Silicon
+              Macs. Uses machine learning models optimized for Apple M-series
+              chips.
+            </List.Item>
+            <List.Item>
+              <strong>Echogarden</strong>: Cross-platform TTS that works on all
+              systems.
+            </List.Item>
+          </List>
+        </Box>
+
         <NativeSelect
           label="TTS Engine"
           description="Select the text-to-speech engine to use"
           {...form.getInputProps("tts_engine")}
         >
           <option value="mlx">MLX Audio (Apple Silicon)</option>
-          <option value="echogarden">Echogarden (CPU)</option>
+          <option value="echogarden">Echogarden</option>
         </NativeSelect>
 
+        {/* Echogarden-specific settings */}
         {form.values.tts_engine === "echogarden" && (
           <>
-            <TextInput
-              label="Voice"
-              description="Voice to use for TTS (e.g. 'Heart', 'Sky')"
-              defaultValue={"Heart"}
-              {...form.getInputProps("tts_voice")}
-            />
+            <Title order={5} mt={15} mb={10}>
+              Echogarden Voice Settings
+            </Title>
 
-            <TextInput
+            <Select
               label="Language"
-              description="Language code (e.g. 'en-US')"
+              description="Language for speech generation"
+              data={[
+                { value: "en-US", label: "English (US)" },
+                { value: "en-GB", label: "English (UK)" },
+                { value: "es-ES", label: "Spanish" },
+                { value: "fr-FR", label: "French" },
+                { value: "hi-IN", label: "Hindi" },
+                { value: "it-IT", label: "Italian" },
+                { value: "pt-BR", label: "Portuguese (Brazil)" },
+                { value: "zh-CN", label: "Chinese (Mandarin)" },
+              ]}
               {...form.getInputProps("tts_language")}
             />
 
+            {loadingVoices ? (
+              <Group>
+                <Loader size="sm" />
+                <span>
+                  Loading available voices for {form.values.tts_language}...
+                </span>
+              </Group>
+            ) : (
+              <Select
+                label="Voice"
+                description={`Voices available for ${form.values.tts_language}`}
+                data={echogardenVoices}
+                searchable
+                {...form.getInputProps("tts_voice")}
+              />
+            )}
+
+            <Title order={5} mt={15} mb={10}>
+              Echogarden Speech Settings
+            </Title>
             <NumberInput
               label="Speed"
               description="Speech rate multiplier (0.5 to 2.0)"
@@ -471,48 +628,63 @@ export function SettingsForm({ settings }: Props) {
 
             <Checkbox
               label="Normalize Audio"
-              description="Normalize audio output levels"
+              description="Automatically adjust audio levels for consistency"
               {...form.getInputProps("tts_normalize", { type: "checkbox" })}
             />
 
-            <NumberInput
-              label="Target Peak (dB)"
-              description="Target peak level for normalization"
-              {...form.getInputProps("tts_target_peak")}
-            />
-
-            <NumberInput
-              label="Bitrate"
-              description="Audio bitrate in bits per second"
-              min={32000}
-              max={320000}
-              step={1000}
-              {...form.getInputProps("tts_bitrate")}
-            />
+            {form.values.tts_normalize && (
+              <NumberInput
+                label="Target Peak (dB)"
+                description="Target peak level for normalization (negative values, -6 to -1)"
+                min={-20}
+                max={-1}
+                step={0.5}
+                {...form.getInputProps("tts_target_peak")}
+              />
+            )}
           </>
         )}
 
+        {/* MLX-specific settings */}
         {form.values.tts_engine === "mlx" && (
           <>
+            <Title order={5} mt={15} mb={10}>
+              MLX Audio Settings
+            </Title>
+
             <NativeSelect
               label="Model"
               description="MLX Audio model to use"
               {...form.getInputProps("tts_model")}
             >
               <option value={MLXModel.KOKORO}>Kokoro (smaller, faster)</option>
-              <option value={MLXModel.ORPHEUS}>
-                Orpheus (larger, higher quality)
-              </option>
             </NativeSelect>
-            <TextInput
+
+            {form.values.tts_model === (MLXModel.KOKORO as string) ? (
+              <Select
+                label="Language"
+                description="Language for speech synthesis"
+                data={kokoroLanguages}
+                {...form.getInputProps("tts_language")}
+              />
+            ) : (
+              <TextInput
+                label="Language Code"
+                description="For Orpheus, this setting is not used"
+                {...form.getInputProps("tts_language")}
+                disabled
+              />
+            )}
+
+            <Select
               label="Voice"
+              description="Voice to use for speech synthesis"
+              data={getMlxVoiceOptions(
+                form.values.tts_model,
+                form.values.tts_language,
+              )}
+              searchable
               {...form.getInputProps("tts_voice")}
-              defaultValue={"af-heart"}
-            />
-            <TextInput
-              label="Language Code"
-              {...form.getInputProps("tts_language")}
-              defaultValue={"a"}
             />
           </>
         )}

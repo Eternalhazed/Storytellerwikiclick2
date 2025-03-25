@@ -1,5 +1,6 @@
 -- Add TTS engine setting
 INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_engine', '"echogarden"');
+INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_model', '"82m-v1.0-quantized"');
 
 -- Add basic voice setting (used by both engines)
 INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_voice', '"Heart"');

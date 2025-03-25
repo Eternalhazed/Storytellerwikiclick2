@@ -341,11 +341,6 @@ export default async function processBook({
               echogardenOptions: {
                 voice: settings.ttsVoice ?? "Heart",
                 language: settings.ttsLanguage ?? "en-US",
-                speed: settings.ttsSpeed ?? 1.0,
-                pitch: settings.ttsPitch ?? 1.0,
-                normalize: settings.ttsNormalize ?? true,
-                targetPeak: settings.ttsTargetPeak ?? -3,
-                bitrate: settings.ttsBitrate ?? 192000,
               },
             }),
             ...(engine === "mlx" && {
@@ -354,6 +349,7 @@ export default async function processBook({
               topP: settings.ttsTopP ?? 0.9,
               topK: settings.ttsTopK ?? 50,
             }),
+            maxChunkSize: 2000,
           },
           onProgress,
         )
