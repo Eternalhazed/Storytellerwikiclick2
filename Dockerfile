@@ -6,6 +6,7 @@ COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn/releases ./.yarn/releases
 COPY .yarn/cache ./.yarn/cache
 COPY web/package.json ./web/package.json
+COPY web/build-sqlite-ext.sh ./web/build-sqlite-ext.sh
 
 COPY fs/package.json ./fs/package.json
 COPY epub/package.json ./epub/package.json
