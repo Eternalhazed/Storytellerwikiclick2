@@ -359,6 +359,8 @@ export default async function processBook({
               temperature: settings.ttsTemperature ?? 0.6,
               topP: settings.ttsTopP ?? 0.9,
               topK: settings.ttsTopK ?? 50,
+              speed: settings.ttsSpeed ?? 1.0,
+              voice: settings.ttsVoice ?? "af_heart",
             }),
             maxChunkSize: 2000,
           },

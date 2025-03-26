@@ -321,10 +321,11 @@ export async function generateTTS(
             continue
           }
         } else {
+          const voice = options.voice || "af_heart"
           await textToSpeech(chunk.text, outputDir, MLXModel.KOKORO, {
             filePrefix: expectedAudioPathWithoutExtension,
-            voice: "af_sky",
-            lang_code: "a",
+            voice: voice,
+            lang_code: voice.charAt(0),
           })
         }
 
