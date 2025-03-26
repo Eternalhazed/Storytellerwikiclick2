@@ -6,6 +6,15 @@ import { logger } from "@/logging"
 
 const execAsync = promisify(exec)
 
+async function getPythonVersion(command: string): Promise<string | null> {
+  try {
+    const { stdout } = await execAsync(`${command} --version`)
+    return stdout.trim()
+  } catch {
+    return null
+  }
+}
+
 // Helper to get virtual environment python path
 export function getVenvPythonPath(baseDir: string): string {
   if (process.platform === "win32") {
@@ -29,16 +38,36 @@ export async function createVirtualEnv(scriptDir: string): Promise<void> {
     return
   }
 
+  const pythonCommands = [
+    "python3.12",
+    "python3.11",
+    "python3.10",
+    "python3.9",
+    "python3.8",
+    "python3", // fallback
+  ]
+
   logger.info("Creating virtual environment...")
-  try {
-    await execAsync(`python3 -m venv "${venvPath}"`)
-    logger.info("Virtual environment created successfully")
-  } catch (error) {
-    logger.error("Error creating virtual environment:", error)
-    throw error
+
+  for (const cmd of pythonCommands) {
+    const version = await getPythonVersion(cmd)
+    if (version) {
+      try {
+        logger.info(`Using ${version} to create virtual environment`)
+        await execAsync(`${cmd} -m venv "${venvPath}"`)
+        logger.info("Virtual environment created successfully")
+        return
+      } catch (error: unknown) {
+        logger.warn(
+          `Failed to create venv with ${cmd}: ${JSON.stringify(error)}`,
+        )
+        // Continue to next version
+        continue
+      }
+    }
   }
 
-  return
+  throw new Error("No compatible Python version found (3.8-3.12)")
 }
 
 export async function installRequirements(scriptDir: string): Promise<void> {
