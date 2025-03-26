@@ -349,9 +349,11 @@ export async function generateTTS(
       )
     }
 
-    // Copy transcription files (if any) to transcriptions directory
-    // Echogarden generates transcription files automatically
-    await copyTranscriptionFiles(bookUuid)
+    if (process.platform !== "darwin") {
+      // Copy transcription files (if any) to transcriptions directory
+      // Echogarden generates transcription files automatically
+      await copyTranscriptionFiles(bookUuid)
+    }
 
     return processedBook
   } catch (error) {
