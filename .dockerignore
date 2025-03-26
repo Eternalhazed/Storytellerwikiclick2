@@ -21,6 +21,8 @@
 /web/work-dist
 /web/src/__fixtures/
 /web/.env.local
+/web/assets/
+/web/cache/
 __tests__
 
 /docker
