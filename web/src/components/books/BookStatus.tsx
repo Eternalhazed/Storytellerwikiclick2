@@ -51,12 +51,6 @@ export function BookStatus({ book }: Props) {
   if (!permissions.book_read) return null
 
   const needsTTS = !book.original_files_exist
-  const showTTSProgress =
-    needsTTS && book.processing_status?.current_task === ProcessingTaskType.TTS
-
-  const ttsWasInProgress =
-    book.processing_status?.current_task === ProcessingTaskType.TTS &&
-    book.processing_status.status !== ProcessingTaskStatus.COMPLETED
 
   return (
     <Paper className="max-w-[600px]">
@@ -94,12 +88,16 @@ export function BookStatus({ book }: Props) {
             ) : (
               <Box>
                 <Text component="div">
-                  {showTTSProgress
-                    ? "Generating audio..."
-                    : ttsWasInProgress && !book.processing_status.is_processing
-                      ? "Audio generation paused" // Show this when TTS was in progress but stopped
-                      : userFriendlyTaskType}
-                  {book.processing_status.is_processing ? "" : " (stopped)"}
+                  {book.processing_status.current_task ===
+                  ProcessingTaskType.TTS
+                    ? book.processing_status.is_processing
+                      ? "Generating audio..."
+                      : "Audio generation paused"
+                    : userFriendlyTaskType}
+                  {!book.processing_status.is_processing &&
+                  book.processing_status.current_task !== ProcessingTaskType.TTS
+                    ? " (stopped)"
+                    : ""}
                   {book.processing_status.status ===
                     ProcessingTaskStatus.IN_ERROR && (
                     <ProcessingFailedMessage />
