@@ -85,7 +85,11 @@ async function copyTranscriptionFiles(bookUuid: UUID): Promise<void> {
 
     // Get all JSON files in processed directory
     const files = await readdir(processedDirectory)
-    const jsonFiles = files.filter((file) => file.endsWith(".json"))
+
+    // Filter JSON files that are actual transcriptions (exclude tts-chunks.json)
+    const jsonFiles = files.filter(
+      (file) => file.endsWith(".json") && file !== "tts-chunks.json",
+    )
 
     if (jsonFiles.length === 0) {
       logger.warn(
