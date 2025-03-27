@@ -1,5 +1,3 @@
 releases:
+  "@storyteller/mobile": patch
   "@storyteller/web": patch
-
-undecided:
-  - "@storyteller/mobile"
