@@ -18,3 +18,6 @@ INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_model', '"mlx-communit
 INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_temperature', '0.6');
 INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_top_p', '0.9');
 INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_top_k', '50');
+
+-- Kokoro FastAPI specific settings
+INSERT OR IGNORE INTO settings (name, value) VALUES ('tts_kokoro_fastapi_base_url', '"http://localhost:8880"');

@@ -17,3 +17,9 @@ export interface OrpheusTTSOptions extends BaseTTSOptions {
   top_k?: number
   repetition_penalty?: number
 }
+
+export interface KokoroFastAPIOptions extends BaseTTSOptions {
+  voice?: string
+  speed?: number
+  baseUrl?: string
+}

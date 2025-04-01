@@ -104,6 +104,8 @@ export function SettingsForm({ settings }: Props) {
     tts_temperature: settings.tts_temperature || 0.6,
     tts_top_p: settings.tts_top_p || 0.9,
     tts_top_k: settings.tts_top_k || 50,
+
+    tts_kokoro_fastapi_base_url: settings.tts_kokoro_fastapi_base_url || "",
   }
 
   const form = useForm({
@@ -563,6 +565,7 @@ export function SettingsForm({ settings }: Props) {
         >
           <option value="mlx">MLX Audio (Apple Silicon)</option>
           <option value="echogarden">Echogarden</option>
+          <option value="kokoro_fastapi">Kokoro FastAPI</option>
         </NativeSelect>
 
         {/* Echogarden-specific settings */}
@@ -685,6 +688,50 @@ export function SettingsForm({ settings }: Props) {
               )}
               searchable
               {...form.getInputProps("tts_voice")}
+            />
+          </>
+        )}
+
+        {/* KokoroFastAPI-specific settings */}
+        {form.values.tts_engine === "kokoro_fastapi" && (
+          <>
+            <Title order={5} mt={15} mb={10}>
+              Kokoro FastAPI Settings
+            </Title>
+
+            <TextInput
+              label="Base URL"
+              description="The base URL of the Kokoro FastAPI server"
+              placeholder="https://example.com"
+              required
+              {...form.getInputProps("tts_kokoro_fastapi_base_url")}
+            />
+
+            <Select
+              label="Language"
+              description="Language for speech synthesis"
+              data={kokoroLanguages}
+              {...form.getInputProps("tts_language")}
+            />
+
+            <Select
+              label="Voice"
+              description="Voice to use for speech synthesis"
+              data={getMlxVoiceOptions(
+                "mlx-community/Kokoro-82M-4bit",
+                form.values.tts_language,
+              )}
+              searchable
+              {...form.getInputProps("tts_voice")}
+            />
+
+            <NumberInput
+              label="Speed"
+              description="Speech rate multiplier (0.5 to 2.0)"
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              {...form.getInputProps("tts_speed")}
             />
           </>
         )}

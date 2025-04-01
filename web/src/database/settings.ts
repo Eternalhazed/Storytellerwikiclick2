@@ -60,7 +60,7 @@ export type Settings = {
   parallelWhisperBuild: number
 
   // TTS Settings
-  ttsEngine?: "mlx" | "echogarden"
+  ttsEngine?: "mlx" | "echogarden" | "kokoro_fastapi"
   ttsVoice?: string
 
   // Echogarden specific
@@ -76,6 +76,9 @@ export type Settings = {
   ttsTemperature?: number
   ttsTopP?: number
   ttsTopK?: number
+
+  // KokoroFastAPI specific
+  ttsKokoroFastApiBaseUrl?: string
 }
 
 export const SETTINGS_COLUMN_NAMES = {
@@ -127,6 +130,9 @@ export const SETTINGS_COLUMN_NAMES = {
   tts_temperature: "ttsTemperature",
   tts_top_p: "ttsTopP",
   tts_top_k: "ttsTopK",
+
+  // KokoroFastAPI specific
+  tts_kokoro_fastapi_base_url: "ttsKokoroFastApiBaseUrl",
 } as const satisfies Record<string, keyof Settings>
 
 export function getSetting<Name extends keyof typeof SETTINGS_COLUMN_NAMES>(

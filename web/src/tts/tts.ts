@@ -29,6 +29,8 @@ import {
   MLXModel,
   textToSpeech,
 } from "./providers/mlx_audio"
+import { textToSpeech as kokoroFastApiTTS } from "./providers/kokoro_fastapi"
+import type { KokoroFastAPITTSOptions } from "./providers/kokoro_fastapi"
 
 // Type assertions for imported functions
 const getProcessedDirectoryTyped = getProcessedAudioFilepath as PathGetter
@@ -42,8 +44,9 @@ export interface TTSGenerationOptions {
   speed?: number
   temperature?: number
   forceRegenerate?: boolean
-  engine?: "mlx" | "echogarden"
+  engine?: "mlx" | "echogarden" | "kokoro_fastapi"
   echogardenOptions?: Partial<EchogardenTTSOptions>
+  kokoroFastApiBaseUrl?: string
 }
 
 /**
@@ -121,19 +124,20 @@ export async function generateTTS(
   options: TTSGenerationOptions = {},
   onProgress?: (progress: number) => void,
 ): Promise<ProcessedBookForTTS> {
-  // Log the full settings object to debug
-  logger.info("TTS Settings:", {
-    engine: options.engine,
-    model: options.model,
-    echogardenOptions: options.echogardenOptions || {},
-  })
-
   // Set default options
   const { maxChunkSize, forceRegenerate = false } = options
 
   // Initialize selected engine
   if (options.engine === "echogarden") {
     await initializeEchogarden()
+  } else if (options.engine === "kokoro_fastapi") {
+    // No initialization needed for the API
+    if (!options.kokoroFastApiBaseUrl) {
+      throw new Error(
+        "kokoroFastApiBaseUrl is required for kokoro_fastapi engine",
+      )
+    }
+    logger.info(`Using KokoroFastAPI at ${options.kokoroFastApiBaseUrl}`)
   } else {
     await initializeMLXAudio()
   }
@@ -324,6 +328,31 @@ export async function generateTTS(
             }
             continue
           }
+        } else if (options.engine === "kokoro_fastapi") {
+          if (!options.kokoroFastApiBaseUrl) {
+            throw new Error(
+              "kokoroFastApiBaseUrl is required for kokoro_fastapi engine",
+            )
+          }
+
+          const kokoroFastApiOptions: KokoroFastAPITTSOptions = {
+            voice: options.voice || "af_heart",
+            speed: options.speed || 1.0,
+            baseUrl: options.kokoroFastApiBaseUrl,
+            filePrefix,
+          }
+
+          try {
+            await kokoroFastApiTTS(chunk.text, outputDir, kokoroFastApiOptions)
+          } catch (error: unknown) {
+            logger.error(
+              `Error generating KokoroFastAPI TTS for chunk ${filePrefix}: ${error instanceof Error ? error.message : String(error)}`,
+            )
+            logger.debug(
+              `Problematic text: "${chunk.text.substring(0, 100)}..."`,
+            )
+            continue
+          }
         } else {
           const voice = options.voice || "af_heart"
           await textToSpeech(chunk.text, outputDir, MLXModel.KOKORO, {
@@ -349,7 +378,7 @@ export async function generateTTS(
       )
     }
 
-    if (process.platform !== "darwin") {
+    if (options.engine !== "mlx") {
       // Copy transcription files (if any) to transcriptions directory
       // Echogarden generates transcription files automatically
       await copyTranscriptionFiles(bookUuid)

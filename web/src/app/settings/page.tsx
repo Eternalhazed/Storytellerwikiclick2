@@ -49,6 +49,7 @@ const defaultSettings: Settings = {
   tts_speed: 1,
   tts_top_k: 50,
   tts_top_p: 0.9,
+  tts_kokoro_fastapi_base_url: "",
 }
 
 export const dynamic = "force-dynamic"

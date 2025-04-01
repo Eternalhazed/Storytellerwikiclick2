@@ -336,6 +336,7 @@ export default async function processBook({
           normalize: settings.ttsNormalize ?? "(not set)",
           targetPeak: settings.ttsTargetPeak ?? "(not set)",
           bitrate: settings.ttsBitrate ?? "(not set)",
+          kokoroFastApiBaseUrl: settings.ttsKokoroFastApiBaseUrl ?? "(not set)",
         })
 
         const engine =
@@ -344,28 +345,53 @@ export default async function processBook({
 
         logger.info(`Selected TTS engine: ${engine}`)
 
-        await generateTTS(
-          bookUuid,
-          {
-            engine,
-            ...(engine === "echogarden" && {
-              echogardenOptions: {
-                voice: settings.ttsVoice ?? "Heart",
-                language: settings.ttsLanguage ?? "en-US",
-              },
-            }),
-            ...(engine === "mlx" && {
-              model: settings.ttsModel ?? MLXModel.KOKORO,
-              temperature: settings.ttsTemperature ?? 0.6,
-              topP: settings.ttsTopP ?? 0.9,
-              topK: settings.ttsTopK ?? 50,
+        const ttsOptions = {
+          engine,
+          maxChunkSize: 2000,
+        }
+
+        if (engine === "echogarden") {
+          Object.assign(ttsOptions, {
+            echogardenOptions: {
+              voice: settings.ttsVoice ?? "Heart",
+              language: settings.ttsLanguage ?? "en-US",
               speed: settings.ttsSpeed ?? 1.0,
-              voice: settings.ttsVoice ?? "af_heart",
-            }),
-            maxChunkSize: 2000,
-          },
-          onProgress,
-        )
+              pitch: settings.ttsPitch ?? 1.0,
+              normalize: settings.ttsNormalize ?? true,
+              targetPeak: settings.ttsTargetPeak ?? -3,
+              bitrate: settings.ttsBitrate ?? 192000,
+            },
+          })
+        } else if (engine === "mlx") {
+          Object.assign(ttsOptions, {
+            model: settings.ttsModel ?? MLXModel.KOKORO,
+            temperature: settings.ttsTemperature ?? 0.6,
+            topP: settings.ttsTopP ?? 0.9,
+            topK: settings.ttsTopK ?? 50,
+            speed: settings.ttsSpeed ?? 1.0,
+            voice: settings.ttsVoice ?? "af_heart",
+          })
+        } else {
+          if (!settings.ttsKokoroFastApiBaseUrl) {
+            logger.error(
+              "Missing kokoroFastApiBaseUrl for kokoro_fastapi engine",
+            )
+            throw new Error(
+              "kokoroFastApiBaseUrl is required for kokoro_fastapi engine",
+            )
+          }
+
+          Object.assign(ttsOptions, {
+            kokoroFastApiBaseUrl: settings.ttsKokoroFastApiBaseUrl,
+            voice: settings.ttsVoice ?? "af_heart",
+            speed: settings.ttsSpeed ?? 1.0,
+          })
+
+          logger.info(
+            `Using KokoroFastAPI at ${settings.ttsKokoroFastApiBaseUrl}`,
+          )
+        }
+        await generateTTS(bookUuid, ttsOptions, onProgress)
 
         // Register the generated audio files for the next steps
         const registeredFiles = await registerTTSAudioFiles(bookUuid)

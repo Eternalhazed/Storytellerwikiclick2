@@ -62,6 +62,7 @@ export const GET = withHasPermission("settings_update")(() => {
     tts_speed: settings.ttsSpeed,
     tts_top_k: settings.ttsTopK,
     tts_top_p: settings.ttsTopP,
+    tts_kokoro_fastapi_base_url: settings.ttsKokoroFastApiBaseUrl,
   }
 
   return NextResponse.json(response)
@@ -118,6 +119,7 @@ export const PUT = withHasPermission("settings_update")(async (request) => {
     ttsPitch: settings.tts_pitch,
     ttsBitrate: settings.tts_bitrate,
     ttsSpeed: settings.tts_speed,
+    ttsKokoroFastApiBaseUrl: settings.tts_kokoro_fastapi_base_url,
   })
 
   return new Response(null, { status: 204 })
