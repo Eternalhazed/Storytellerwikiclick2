@@ -1,6 +1,7 @@
 FROM registry.gitlab.com/storyteller-platform/storyteller-base:latest AS builder
 
-RUN pip3 install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
+RUN apt update && apt install -y python3-dev && \
+    pip3 install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
 
 WORKDIR /app
 
