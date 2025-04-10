@@ -1,5 +1,7 @@
 FROM registry.gitlab.com/storyteller-platform/storyteller-base:latest AS builder
 
+RUN pip3 install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
+
 WORKDIR /app
 
 COPY package.json yarn.lock .yarnrc.yml ./
