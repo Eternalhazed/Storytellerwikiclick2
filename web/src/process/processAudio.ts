@@ -25,7 +25,7 @@ import {
   splitTrack,
   transcodeTrack,
 } from "@/audio"
-import { StorytellerTranscription } from "@/synchronize/getSentenceRanges"
+import { StorytellerTranscription } from "@/align/getSentenceRanges"
 import { detectVoiceActivity } from "echogarden"
 import { streamFile } from "@smoores/fs"
 import { randomUUID } from "node:crypto"
@@ -367,11 +367,30 @@ export async function persistProcessedFilesList(
   })
 }
 
+async function processForCtc(
+  filepath: string,
+  outDir: string,
+  codec: string | null,
+  bitrate: string | null,
+): Promise<AudioFile> {
+  const outputExtension = determineExtension(codec, filepath)
+  const filename = `00000-00001${outputExtension}`
+  const destination = join(outDir, `00000-00001${outputExtension}`)
+
+  await transcodeTrack(filepath, destination, codec, bitrate)
+  return {
+    filename,
+    bare_filename: filename.slice(0, filename.lastIndexOf(".")),
+    extension: outputExtension,
+  }
+}
+
 export async function processAudiobook(
   bookUuid: UUID,
   maxLength: number | null,
   codec: string | null,
   bitrate: string | null,
+  useCtc: boolean,
   semaphore: AsyncSemaphore,
   onProgress?: (progress: number) => void,
 ) {
@@ -384,6 +403,22 @@ export async function processAudiobook(
 
   const processedFilenames = await readdir(processedAudioDirectory)
   if (processedFilenames.length) return
+
+  if (useCtc) {
+    if (filenames.length !== 1) {
+      throw new Error(
+        `CTC currently only supports a single audio file as input`,
+      )
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const filename = filenames[0]!
+    return processForCtc(
+      getOriginalAudioFilepath(bookUuid, filename),
+      processedAudioDirectory,
+      codec,
+      bitrate,
+    )
+  }
 
   const audioFiles: AudioFile[] = []
 
@@ -417,6 +452,10 @@ export async function processAudiobook(
 
 export function getTranscriptionFilename(audoFile: AudioFile) {
   return `${audoFile.bare_filename}.json`
+}
+
+export function getCtcEmissionsFilename(audioFile: AudioFile) {
+  return `${audioFile.bare_filename}.pt`
 }
 
 export async function getTranscriptions(bookUuid: UUID) {

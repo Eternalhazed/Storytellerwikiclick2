@@ -1,6 +1,6 @@
 import { copyFile, mkdir, readdir, rm, stat, symlink } from "node:fs/promises"
 import { UUID } from "../uuid"
-import { getSyncCachePath } from "../synchronize/syncCache"
+import { getSyncCachePath } from "@/align/alignCache"
 import { basename, dirname, extname } from "node:path"
 import { isAudioFile } from "../audio"
 import {

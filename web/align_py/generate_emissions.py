@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import torch
 from ctc_forced_aligner import (
     load_audio,

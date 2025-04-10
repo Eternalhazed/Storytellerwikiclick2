@@ -1,4 +1,4 @@
-import { bagOfWords } from "@/synchronize/nlp"
+import { bagOfWords } from "@/align/nlp"
 
 async function readDict() {
   const response = await fetch(

@@ -25,6 +25,7 @@ void describe("transcribe", () => {
         parallelTranscodes: 1,
         parallelTranscribes: 1,
         parallelWhisperBuild: 1,
+        useCtc: false,
       },
     )
 

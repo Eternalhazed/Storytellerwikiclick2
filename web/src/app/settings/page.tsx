@@ -37,6 +37,7 @@ const defaultSettings: Settings = {
   parallel_transcribes: 1,
   parallel_transcodes: 1,
   parallel_whisper_build: 1,
+  use_ctc: false,
 }
 
 export const dynamic = "force-dynamic"

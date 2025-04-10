@@ -10,7 +10,7 @@ export function getSyncCachePath(bookUuid: UUID) {
 export async function getSyncCache(bookUuid: UUID) {
   const filepath = getSyncCachePath(bookUuid)
   await mkdir(dirname(filepath), { recursive: true })
-  return SyncCache.init(filepath)
+  return AlignCache.init(filepath)
 }
 
 type SerializedCache = {
@@ -20,7 +20,7 @@ type SerializedCache = {
   >
 }
 
-export class SyncCache {
+export class AlignCache {
   private constructor(
     private filepath: string,
     private data: SerializedCache,
@@ -34,7 +34,7 @@ export class SyncCache {
       contents = '{"chapter_index": {}}'
     }
     const data = JSON.parse(contents) as SerializedCache
-    return new SyncCache(filepath, data)
+    return new AlignCache(filepath, data)
   }
 
   getChapterIndex(chapter: number) {
