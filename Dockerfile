@@ -29,10 +29,14 @@ RUN yarn build:web
 
 FROM registry.gitlab.com/storyteller-platform/storyteller-base:latest AS runner
 
-RUN apt update && apt install -y python3-dev && \
-    pip3 install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
-
 WORKDIR /app
+
+RUN apt update && apt install -y python3-dev python3-venv
+RUN python3 -m venv .venv && \
+    /app/.venv/bin/pip install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
+
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH=/app/.venv/bin:$PATH
 
 COPY --from=builder /app/web/.next/standalone ./.next/standalone
 COPY --from=builder /app/web/public ./.next/standalone/web/public
