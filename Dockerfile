@@ -1,8 +1,5 @@
 FROM registry.gitlab.com/storyteller-platform/storyteller-base:latest AS builder
 
-RUN apt update && apt install -y python3-dev && \
-    pip3 install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
-
 WORKDIR /app
 
 COPY package.json yarn.lock .yarnrc.yml ./
@@ -31,6 +28,9 @@ ENV CI_COMMIT_TAG=${CI_COMMIT_TAG}
 RUN yarn build:web
 
 FROM registry.gitlab.com/storyteller-platform/storyteller-base:latest AS runner
+
+RUN apt update && apt install -y python3-dev && \
+    pip3 install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
 
 WORKDIR /app
 
