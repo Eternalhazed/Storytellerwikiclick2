@@ -4,5 +4,5 @@
 
 export type Body_create_book_books_post = {
   epub_file: Blob
-  audio_files: Array<Blob>
+  audio_files?: Array<Blob> // Make auio_files optional for TTS
 }

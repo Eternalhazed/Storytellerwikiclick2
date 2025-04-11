@@ -27,6 +27,7 @@ type Props = {
 }
 
 export const ProcessingTaskTypes = {
+  TTS: "Generating audio",
   SYNC_CHAPTERS: "Synchronizing chapters",
   SPLIT_CHAPTERS: "Pre-processing audio",
   TRANSCRIBE_CHAPTERS: "Transcribing tracks",
@@ -48,6 +49,8 @@ export function BookStatus({ book }: Props) {
     ]
 
   if (!permissions.book_read) return null
+
+  const needsTTS = !book.original_files_exist
 
   return (
     <Paper className="max-w-[600px]">
@@ -84,10 +87,22 @@ export function BookStatus({ book }: Props) {
               "Queued"
             ) : (
               <Box>
-                {userFriendlyTaskType}
-                {book.processing_status.is_processing ? "" : " (stopped)"}
-                {book.processing_status.status ===
-                  ProcessingTaskStatus.IN_ERROR && <ProcessingFailedMessage />}
+                <Text component="div">
+                  {book.processing_status.current_task ===
+                  ProcessingTaskType.TTS
+                    ? book.processing_status.is_processing
+                      ? "Generating audio..."
+                      : "Audio generation paused"
+                    : userFriendlyTaskType}
+                  {!book.processing_status.is_processing &&
+                  book.processing_status.current_task !== ProcessingTaskType.TTS
+                    ? " (stopped)"
+                    : ""}
+                  {book.processing_status.status ===
+                    ProcessingTaskStatus.IN_ERROR && (
+                    <ProcessingFailedMessage />
+                  )}
+                </Text>
                 <Progress
                   value={Math.floor(book.processing_status.progress * 100)}
                 />
@@ -106,7 +121,11 @@ export function BookStatus({ book }: Props) {
             <Text>Unprocessed</Text>
           )}
         </Stack>
-        <BookOptions synchronized={synchronized} book={book} />
+        <BookOptions
+          synchronized={synchronized}
+          book={book}
+          showTTS={needsTTS}
+        />
       </Group>
     </Paper>
   )

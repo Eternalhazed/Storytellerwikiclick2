@@ -556,4 +556,38 @@ export class ApiClient {
     const book = (await response.json()) as BookDetail
     return book
   }
+
+  async continueTTS(bookUuid: string): Promise<void> {
+    const url = new URL(
+      `${this.rootPath}/books/${bookUuid}/tts/continue`,
+      this.origin,
+    )
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+  }
+
+  async restartTranscription(bookUuid: string): Promise<void> {
+    const url = new URL(
+      `${this.rootPath}/books/${bookUuid}/transcribe/restart`,
+      this.origin,
+    )
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+  }
 }

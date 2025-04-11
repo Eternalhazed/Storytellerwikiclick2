@@ -58,6 +58,27 @@ export type Settings = {
   parallelTranscodes: number
   parallelTranscribes: number
   parallelWhisperBuild: number
+
+  // TTS Settings
+  ttsEngine?: "mlx" | "echogarden" | "kokoro_fastapi"
+  ttsVoice?: string
+
+  // Echogarden specific
+  ttsLanguage?: string
+  ttsSpeed?: number
+  ttsPitch?: number
+  ttsNormalize?: boolean
+  ttsTargetPeak?: number
+  ttsBitrate?: number
+
+  // MLX specific
+  ttsModel?: string
+  ttsTemperature?: number
+  ttsTopP?: number
+  ttsTopK?: number
+
+  // KokoroFastAPI specific
+  ttsKokoroFastApiBaseUrl?: string
 }
 
 export const SETTINGS_COLUMN_NAMES = {
@@ -91,6 +112,27 @@ export const SETTINGS_COLUMN_NAMES = {
   parallel_transcodes: "parallelTranscodes",
   parallel_transcribes: "parallelTranscribes",
   parallel_whisper_build: "parallelWhisperBuild",
+
+  // TTS Settings
+  tts_engine: "ttsEngine",
+  tts_voice: "ttsVoice",
+
+  // Echogarden specific
+  tts_language: "ttsLanguage",
+  tts_pitch: "ttsPitch",
+  tts_normalize: "ttsNormalize",
+  tts_target_peak: "ttsTargetPeak",
+  tts_bitrate: "ttsBitrate",
+  tts_speed: "ttsSpeed",
+
+  // MLX specific
+  tts_model: "ttsModel",
+  tts_temperature: "ttsTemperature",
+  tts_top_p: "ttsTopP",
+  tts_top_k: "ttsTopK",
+
+  // KokoroFastAPI specific
+  tts_kokoro_fastapi_base_url: "ttsKokoroFastApiBaseUrl",
 } as const satisfies Record<string, keyof Settings>
 
 export function getSetting<Name extends keyof typeof SETTINGS_COLUMN_NAMES>(

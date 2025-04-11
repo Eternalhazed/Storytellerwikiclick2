@@ -11,9 +11,10 @@ import {
 type Props = {
   book: BookDetail
   synchronized: boolean
+  showTTS: boolean
 }
 
-export function ProcessingItems({ book, synchronized }: Props) {
+export function ProcessingItems({ book, synchronized, showTTS }: Props) {
   const client = useApiClient()
 
   if (
@@ -37,17 +38,23 @@ export function ProcessingItems({ book, synchronized }: Props) {
             onClick={() => client.processBook(book.uuid, false)}
           >
             <IconProgress aria-hidden />{" "}
-            {synchronized ? "Re-process (using cached files)" : "Continue"}
+            {synchronized
+              ? "Re-process (using cached files)"
+              : showTTS
+                ? "Generate audio"
+                : "Continue"}
           </Menu.Item>
-          <Menu.Item
-            classNames={{
-              itemLabel: "flex gap-2",
-            }}
-            onClick={() => client.processBook(book.uuid, true)}
-          >
-            <IconReload aria-hidden /> Delete cache and re-process from source
-            files
-          </Menu.Item>
+          {!showTTS && (
+            <Menu.Item
+              classNames={{
+                itemLabel: "flex gap-2",
+              }}
+              onClick={() => client.processBook(book.uuid, true)}
+            >
+              <IconReload aria-hidden /> Delete cache and re-process from source
+              files
+            </Menu.Item>
+          )}
           <Menu.Item
             classNames={{
               itemLabel: "flex gap-2",

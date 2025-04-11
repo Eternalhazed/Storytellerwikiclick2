@@ -37,6 +37,19 @@ const defaultSettings: Settings = {
   parallel_transcribes: 1,
   parallel_transcodes: 1,
   parallel_whisper_build: 1,
+  tts_voice: "",
+  tts_pitch: 1,
+  tts_engine: "echogarden",
+  tts_bitrate: 128,
+  tts_language: "en",
+  tts_model: "default",
+  tts_normalize: true,
+  tts_target_peak: -3,
+  tts_temperature: 0.6,
+  tts_speed: 1,
+  tts_top_k: 50,
+  tts_top_p: 0.9,
+  tts_kokoro_fastapi_base_url: "",
 }
 
 export const dynamic = "force-dynamic"

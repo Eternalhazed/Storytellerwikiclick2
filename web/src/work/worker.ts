@@ -2,8 +2,9 @@ import {
   ProcessingTaskStatus,
   ProcessingTaskType,
 } from "@/apiModels/models/ProcessingStatus"
-import { deleteProcessed } from "@/assets/assets"
+import { deleteProcessed, originalAudioExists } from "@/assets/assets"
 import {
+  AudioFile,
   getCustomEpubCover,
   getEpubCoverFilename,
   getProcessedAudioFiles,
@@ -23,6 +24,7 @@ import { logger } from "@/logging"
 import {
   getTranscriptionFilename,
   getTranscriptions,
+  persistProcessedFilesList,
   processAudiobook,
 } from "@/process/processAudio"
 import { getFullText, processEpub, readEpub } from "@/process/processEpub"
@@ -34,8 +36,47 @@ import { UUID } from "@/uuid"
 import { getCurrentVersion } from "@/versions"
 import { AsyncSemaphore } from "@esfx/async-semaphore"
 import type { RecognitionResult } from "echogarden/dist/api/Recognition"
-import { mkdir, readFile, writeFile } from "node:fs/promises"
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises"
 import { MessagePort } from "node:worker_threads"
+import { generateTTS } from "@/tts/tts"
+import { MLXModel } from "@/tts/providers/mlx_audio"
+import path from "path"
+
+async function findTTSAudioFiles(bookUuid: UUID): Promise<AudioFile[] | null> {
+  try {
+    const processedDirectory = getProcessedAudioFilepath(bookUuid)
+    const files = await readdir(processedDirectory)
+
+    // Get audio files with audio extensions
+    const audioFilenames = files.filter((file) =>
+      /\.(mp3|m4a|ogg|wav|flac)$/i.test(file),
+    )
+
+    if (audioFilenames.length === 0) {
+      return null
+    }
+
+    // Convert to AudioFile format
+    const audioFiles = audioFilenames.map((filename: string) => {
+      // Add explicit typing to filename
+      const extension = path.extname(filename)
+      const bare_filename = filename.slice(
+        0,
+        filename.length - extension.length,
+      )
+      return {
+        filename,
+        bare_filename,
+        extension,
+      } as AudioFile
+    })
+
+    return audioFiles
+  } catch (e: unknown) {
+    logger.error(`Failed to find TTS audio files: ${String(e)}`)
+    return null
+  }
+}
 
 export async function transcribeBook(
   bookUuid: UUID,
@@ -47,9 +88,30 @@ export async function transcribeBook(
   const semaphore = new AsyncSemaphore(settings.parallelTranscribes)
   const transcriptionsPath = getTranscriptionsFilepath(bookUuid)
   await mkdir(transcriptionsPath, { recursive: true })
-  const audioFiles = await getProcessedAudioFiles(bookUuid)
+  // Try to get processed audio files using the standard method
+  let audioFiles = await getProcessedAudioFiles(bookUuid)
+
+  // If standard method fails, try to find TTS-generated audio files
   if (!audioFiles) {
-    throw new Error("Failed to transcribe book: found no processed audio files")
+    logger.info(
+      "No standard processed audio files found, looking for TTS-generated files...",
+    )
+    const foundFiles = await findTTSAudioFiles(bookUuid)
+
+    if (foundFiles && foundFiles.length > 0) {
+      audioFiles = foundFiles // Now correctly typed
+      logger.info(
+        `Found ${foundFiles.length} TTS-generated audio files for transcription - registering them in audio index`,
+      )
+      // Register the found files in the audio index
+      await persistProcessedFilesList(bookUuid, foundFiles)
+    }
+
+    if (!audioFiles || audioFiles.length === 0) {
+      throw new Error(
+        "Failed to transcribe book: found no processed audio files",
+      )
+    }
   }
 
   if (
@@ -109,6 +171,9 @@ export async function transcribeBook(
   return transcriptions
 }
 
+/**
+ * Determines which tasks still need to be completed
+ */
 export function determineRemainingTasks(
   bookUuid: UUID,
   processingTasks: ProcessingTask[],
@@ -129,24 +194,40 @@ export function determineRemainingTasks(
       }))
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const lastCompletedTaskIndex = sortedTasks.findLastIndex(
     (task) => task.status === ProcessingTaskStatus.COMPLETED,
   )
 
-  return (sortedTasks as Omit<ProcessingTask, "uuid">[])
-    .slice(lastCompletedTaskIndex + 1)
-    .concat(
-      Object.entries(PROCESSING_TASK_ORDER)
-        .sort(([, orderA], [, orderB]) => orderA - orderB)
-        .slice(sortedTasks.length)
-        .map(([type]) => ({
-          type: type as ProcessingTaskType,
-          status: ProcessingTaskStatus.STARTED,
-          progress: 0,
-          bookUuid,
-        })),
+  // Get remaining tasks from the current list
+  const remainingExistingTasks = sortedTasks.slice(lastCompletedTaskIndex + 1)
+
+  // Find the order of the last completed task (or -1 if none)
+  const lastCompletedOrder =
+    lastCompletedTaskIndex >= 0 && sortedTasks[lastCompletedTaskIndex]
+      ? PROCESSING_TASK_ORDER[sortedTasks[lastCompletedTaskIndex].type]
+      : -1
+
+  // Collect existing task types that are pending
+  const existingTypes = new Set(remainingExistingTasks.map((task) => task.type))
+
+  // Find missing tasks that should come after the last completed task
+  const missingTasks = Object.entries(PROCESSING_TASK_ORDER)
+    .filter(
+      ([type, order]) =>
+        !existingTypes.has(type as ProcessingTaskType) &&
+        order > lastCompletedOrder,
     )
+    .map(([type]) => ({
+      type: type as ProcessingTaskType,
+      status: ProcessingTaskStatus.STARTED,
+      progress: 0,
+      bookUuid,
+    }))
+
+  // Combine and sort all tasks
+  return [...remainingExistingTasks, ...missingTasks].sort(
+    (a, b) => PROCESSING_TASK_ORDER[a.type] - PROCESSING_TASK_ORDER[b.type],
+  )
 }
 
 export default async function processBook({
@@ -179,11 +260,43 @@ export default async function processBook({
   // book reference to use in log
   const bookRefForLog = `"${book.title}" (uuid: ${bookUuid})`
 
+  // Check if user uploaded audio files
+  const userUploadedAudio = await originalAudioExists(bookUuid)
+
   logger.info(
     `Found ${remainingTasks.length} remaining tasks for book ${bookRefForLog}`,
   )
 
   for (const task of remainingTasks) {
+    // Skip TTS task if user uploaded audio
+    if (userUploadedAudio && task.type === ProcessingTaskType.TTS) {
+      logger.info(
+        `Skipping TTS task for book ${bookRefForLog} because user-uploaded audio was detected`,
+      )
+      // Mark as completed so the next tasks can run
+      port.postMessage({
+        type: "taskTypeUpdated",
+        bookUuid,
+        payload: {
+          taskUuid: task.uuid,
+          taskType: task.type,
+          taskStatus: ProcessingTaskStatus.COMPLETED,
+        },
+      })
+
+      const taskUuid: UUID = await new Promise((resolve) => {
+        port.once("message", resolve)
+      })
+
+      port.postMessage({
+        type: "taskCompleted",
+        bookUuid,
+        payload: { taskUuid },
+      })
+
+      continue // Skip to next task
+    }
+
     port.postMessage({
       type: "taskTypeUpdated",
       bookUuid,
@@ -207,16 +320,90 @@ export default async function processBook({
     }
 
     try {
-      if (task.type === ProcessingTaskType.SPLIT_CHAPTERS) {
-        logger.info("Pre-processing...")
-        await processEpub(bookUuid)
-        await processAudiobook(
-          bookUuid,
-          settings.maxTrackLength ?? null,
-          settings.codec ?? null,
-          settings.bitrate ?? null,
-          new AsyncSemaphore(settings.parallelTranscodes),
-          onProgress,
+      if (task.type === ProcessingTaskType.TTS) {
+        logger.info(`Generating TTS chunks for book ${bookRefForLog}...`)
+
+        logger.info("TTS Settings from database:", {
+          engine: settings.ttsEngine ?? "(not set)",
+          model: settings.ttsModel ?? "(not set)",
+          voice: settings.ttsVoice ?? "(not set)",
+          language: settings.ttsLanguage ?? "(not set)",
+          temperature: settings.ttsTemperature ?? "(not set)",
+          topP: settings.ttsTopP ?? "(not set)",
+          topK: settings.ttsTopK ?? "(not set)",
+          speed: settings.ttsSpeed ?? "(not set)",
+          pitch: settings.ttsPitch ?? "(not set)",
+          normalize: settings.ttsNormalize ?? "(not set)",
+          targetPeak: settings.ttsTargetPeak ?? "(not set)",
+          bitrate: settings.ttsBitrate ?? "(not set)",
+          kokoroFastApiBaseUrl: settings.ttsKokoroFastApiBaseUrl ?? "(not set)",
+        })
+
+        const engine =
+          settings.ttsEngine ??
+          (process.platform === "darwin" ? "mlx" : "echogarden")
+
+        logger.info(`Selected TTS engine: ${engine}`)
+
+        const ttsOptions = {
+          engine,
+          maxChunkSize: 2000,
+        }
+
+        if (engine === "echogarden") {
+          Object.assign(ttsOptions, {
+            echogardenOptions: {
+              voice: settings.ttsVoice ?? "Heart",
+              language: settings.ttsLanguage ?? "en-US",
+              speed: settings.ttsSpeed ?? 1.0,
+              pitch: settings.ttsPitch ?? 1.0,
+              normalize: settings.ttsNormalize ?? true,
+              targetPeak: settings.ttsTargetPeak ?? -3,
+              bitrate: settings.ttsBitrate ?? 192000,
+            },
+          })
+        } else if (engine === "mlx") {
+          Object.assign(ttsOptions, {
+            model: settings.ttsModel ?? MLXModel.KOKORO,
+            temperature: settings.ttsTemperature ?? 0.6,
+            topP: settings.ttsTopP ?? 0.9,
+            topK: settings.ttsTopK ?? 50,
+            speed: settings.ttsSpeed ?? 1.0,
+            voice: settings.ttsVoice ?? "af_heart",
+          })
+        } else {
+          if (!settings.ttsKokoroFastApiBaseUrl) {
+            logger.error(
+              "Missing kokoroFastApiBaseUrl for kokoro_fastapi engine",
+            )
+            throw new Error(
+              "kokoroFastApiBaseUrl is required for kokoro_fastapi engine",
+            )
+          }
+
+          Object.assign(ttsOptions, {
+            kokoroFastApiBaseUrl: settings.ttsKokoroFastApiBaseUrl,
+            voice: settings.ttsVoice ?? "af_heart",
+            speed: settings.ttsSpeed ?? 1.0,
+          })
+
+          logger.info(
+            `Using KokoroFastAPI at ${settings.ttsKokoroFastApiBaseUrl}`,
+          )
+        }
+        await generateTTS(bookUuid, ttsOptions, onProgress)
+
+        // Register the generated audio files for the next steps
+        const registeredFiles = await registerTTSAudioFiles(bookUuid)
+
+        if (registeredFiles.length === 0) {
+          throw new Error(
+            "TTS task completed but no audio files were found to register",
+          )
+        }
+
+        logger.info(
+          `Successfully generated and registered ${registeredFiles.length} TTS audio files for book ${bookRefForLog}`,
         )
       }
 
@@ -245,6 +432,27 @@ export default async function processBook({
           settings,
           onProgress,
         )
+      }
+
+      if (task.type === ProcessingTaskType.SPLIT_CHAPTERS) {
+        logger.info("Pre-processing...")
+        await processEpub(bookUuid)
+
+        // Check if original audio directory exists before processing audio
+        try {
+          await processAudiobook(
+            bookUuid,
+            settings.maxTrackLength ?? null,
+            settings.codec ?? null,
+            settings.bitrate ?? null,
+            new AsyncSemaphore(settings.parallelTranscodes),
+            onProgress,
+          )
+        } catch (e) {
+          logger.error(
+            `Error processing audio for book ${bookUuid}: ${e instanceof Error ? e.message : String(e)}`,
+          )
+        }
       }
 
       if (task.type === ProcessingTaskType.SYNC_CHAPTERS) {
@@ -327,4 +535,53 @@ export default async function processBook({
   }
   logger.info(`Completed synchronizing book ${bookRefForLog})`)
   port.postMessage({ type: "processingCompleted", bookUuid })
+}
+
+/**
+ * Register TTS-generated audio files in the audio index
+ */
+async function registerTTSAudioFiles(bookUuid: UUID): Promise<AudioFile[]> {
+  try {
+    const processedDirectory = getProcessedAudioFilepath(bookUuid)
+    const files = await readdir(processedDirectory)
+
+    // Filter audio files with extensions
+    const ttsAudioFiles = files
+      .filter((file) => /\.(mp3|m4a|ogg|wav|flac)$/i.test(file))
+      .map((filename) => {
+        // Extract the base filename without extension
+        const extension = path.extname(filename)
+        const bare_filename = filename.slice(
+          0,
+          filename.length - extension.length,
+        )
+        return {
+          filename,
+          bare_filename,
+          extension,
+        } as AudioFile
+      })
+
+    if (ttsAudioFiles.length > 0) {
+      logger.info(
+        `Found ${ttsAudioFiles.length} TTS-generated audio files to register in audio index`,
+      )
+
+      // Update the audio index
+      await persistProcessedFilesList(bookUuid, ttsAudioFiles)
+
+      logger.info(
+        `Successfully registered ${ttsAudioFiles.length} audio files for book ${bookUuid}`,
+      )
+      return ttsAudioFiles
+    } else {
+      logger.warn(
+        `No audio files found to register in directory: ${processedDirectory}`,
+      )
+      return []
+    }
+  } catch (e) {
+    logger.error(`Failed to register TTS audio files: ${String(e)}`)
+    return []
+  }
 }

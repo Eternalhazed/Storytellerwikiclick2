@@ -159,6 +159,9 @@ export const GET = withHasPermission<Params>("book_read")(async (
         ...book.processingStatus,
         current_task: book.processingStatus.currentTask,
         is_processing: isProcessing(book.uuid),
+        tts_incomplete:
+          book.processingStatus.currentTask === ProcessingTaskType.TTS &&
+          book.processingStatus.status !== ProcessingTaskStatus.COMPLETED,
       },
     }),
   })

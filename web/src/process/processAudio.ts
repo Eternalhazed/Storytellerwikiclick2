@@ -381,6 +381,10 @@ export async function processAudiobook(
   await mkdir(processedAudioDirectory, { recursive: true })
 
   const filenames = await readdir(originalAudioDirectory)
+  if (!filenames.length) {
+    logger.info(`No audio files found in ${originalAudioDirectory}`)
+    return []
+  }
 
   const processedFilenames = await readdir(processedAudioDirectory)
   if (processedFilenames.length) return
@@ -420,20 +424,77 @@ export function getTranscriptionFilename(audoFile: AudioFile) {
 }
 
 export async function getTranscriptions(bookUuid: UUID) {
-  const audioFiles = await getProcessedAudioFiles(bookUuid)
-  if (!audioFiles)
+  // Try to get processed audio files using the standard method
+  let audioFiles = await getProcessedAudioFiles(bookUuid)
+
+  // If standard method fails, try to find TTS-generated audio files
+  if (!audioFiles) {
+    logger.info(
+      "No standard processed audio files found in getTranscriptions, looking for TTS-generated files...",
+    )
+
+    const processedDirectory = getProcessedAudioFilepath(bookUuid)
+    try {
+      const files = await readdir(processedDirectory)
+
+      // Filter audio files with extensions and create proper AudioFile objects
+      const ttsAudioFiles: AudioFile[] = []
+
+      for (const file of files) {
+        // Only process files that match our audio extensions
+        if (/\.(mp3|m4a|ogg|wav|flac)$/i.test(file)) {
+          // Safely process each file with known string type
+          const filename: string = file
+          const extension: string = extname(filename) // Use node's path functions
+          const bare_filename: string = filename.substring(
+            0,
+            filename.length - extension.length,
+          )
+
+          ttsAudioFiles.push({
+            filename,
+            bare_filename,
+            extension,
+          })
+        }
+      }
+
+      if (ttsAudioFiles.length > 0) {
+        logger.info(
+          `Found ${ttsAudioFiles.length} TTS-generated audio files for transcriptions`,
+        )
+        audioFiles = ttsAudioFiles
+      }
+    } catch (e) {
+      logger.error(
+        `Failed to find TTS audio files in getTranscriptions: ${String(e)}`,
+      )
+    }
+  }
+
+  if (!audioFiles) {
     throw new Error(
       "Could not retrieve transcriptions: found no processed audio files",
     )
+  }
+
   const transcriptionFilepaths = audioFiles.map((audioFile) =>
     getTranscriptionsFilepath(bookUuid, getTranscriptionFilename(audioFile)),
   )
+
   const transcriptions = await Promise.all(
     transcriptionFilepaths.map(async (filepath) => {
-      const transcriptionContents = await readFile(filepath, {
-        encoding: "utf-8",
-      })
-      return JSON.parse(transcriptionContents) as StorytellerTranscription
+      try {
+        const transcriptionContents = await readFile(filepath, {
+          encoding: "utf-8",
+        })
+        return JSON.parse(transcriptionContents) as StorytellerTranscription
+      } catch (error) {
+        logger.error(
+          `Failed to read transcription file ${filepath}: ${String(error)}`,
+        )
+        throw new Error(`Failed to read transcription file ${filepath}`)
+      }
     }),
   )
   return transcriptions

@@ -38,4 +38,11 @@ src/__fixtures__/__output__/*
 work-dist
 migrate-dist
 
+# ignore all files in sqlite except for uuid.c
+sqlite/*
+!sqlite/uuid.c
+
+assets/audio
+assets/text
+
 whisper-builds/

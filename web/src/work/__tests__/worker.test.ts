@@ -17,6 +17,12 @@ void describe("determineRemainingTasks", () => {
 
     assert.deepStrictEqual(output, [
       {
+        type: ProcessingTaskType.TTS,
+        status: ProcessingTaskStatus.STARTED,
+        progress: 0,
+        bookUuid: uuid,
+      },
+      {
         type: ProcessingTaskType.SPLIT_CHAPTERS,
         status: ProcessingTaskStatus.STARTED,
         progress: 0,
@@ -71,6 +77,56 @@ void describe("determineRemainingTasks", () => {
   void it("only produces non-completed tasks when some are completed and some are not", () => {
     const uuid = randomUUID()
 
+    const transcribeUuid = randomUUID()
+    const syncUuid = randomUUID()
+
+    const input: ProcessingTask[] = [
+      {
+        uuid: randomUUID(),
+        type: ProcessingTaskType.SPLIT_CHAPTERS,
+        status: ProcessingTaskStatus.COMPLETED,
+        progress: 0,
+        bookUuid: uuid,
+      },
+      {
+        uuid: transcribeUuid,
+        type: ProcessingTaskType.TRANSCRIBE_CHAPTERS,
+        status: ProcessingTaskStatus.STARTED,
+        progress: 0,
+        bookUuid: uuid,
+      },
+      {
+        uuid: syncUuid,
+        type: ProcessingTaskType.SYNC_CHAPTERS,
+        status: ProcessingTaskStatus.STARTED,
+        progress: 0,
+        bookUuid: uuid,
+      },
+    ]
+
+    const output = determineRemainingTasks(uuid, input)
+
+    assert.deepStrictEqual(output, [
+      {
+        uuid: transcribeUuid,
+        type: ProcessingTaskType.TRANSCRIBE_CHAPTERS,
+        status: ProcessingTaskStatus.STARTED,
+        progress: 0,
+        bookUuid: uuid,
+      },
+      {
+        uuid: syncUuid,
+        type: ProcessingTaskType.SYNC_CHAPTERS,
+        status: ProcessingTaskStatus.STARTED,
+        progress: 0,
+        bookUuid: uuid,
+      },
+    ])
+  })
+
+  void it("only produces errored tasks after a failure", () => {
+    const uuid = randomUUID()
+
     const input: ProcessingTask[] = [
       {
         uuid: randomUUID(),
@@ -81,32 +137,7 @@ void describe("determineRemainingTasks", () => {
       },
       {
         uuid: randomUUID(),
-        type: ProcessingTaskType.TRANSCRIBE_CHAPTERS,
-        status: ProcessingTaskStatus.STARTED,
-        progress: 0,
-        bookUuid: uuid,
-      },
-      {
-        uuid: randomUUID(),
-        type: ProcessingTaskType.SYNC_CHAPTERS,
-        status: ProcessingTaskStatus.STARTED,
-        progress: 0,
-        bookUuid: uuid,
-      },
-    ]
-
-    const output = determineRemainingTasks(uuid, input)
-
-    assert.deepStrictEqual(output, [input[1], input[2]])
-  })
-
-  void it("only produces errored tasks after a failure", () => {
-    const uuid = randomUUID()
-
-    const input: ProcessingTask[] = [
-      {
-        uuid: randomUUID(),
-        type: ProcessingTaskType.SPLIT_CHAPTERS,
+        type: ProcessingTaskType.TTS,
         status: ProcessingTaskStatus.COMPLETED,
         progress: 0,
         bookUuid: uuid,
@@ -129,6 +160,6 @@ void describe("determineRemainingTasks", () => {
 
     const output = determineRemainingTasks(uuid, input)
 
-    assert.deepStrictEqual(output, [input[2]])
+    assert.deepStrictEqual(output, [input[3]])
   })
 })

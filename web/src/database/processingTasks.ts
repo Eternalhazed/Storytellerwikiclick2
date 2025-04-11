@@ -6,9 +6,10 @@ import {
 } from "@/apiModels/models/ProcessingStatus"
 
 export const PROCESSING_TASK_ORDER = {
-  [ProcessingTaskType.SPLIT_CHAPTERS]: 0,
-  [ProcessingTaskType.TRANSCRIBE_CHAPTERS]: 1,
-  [ProcessingTaskType.SYNC_CHAPTERS]: 2,
+  [ProcessingTaskType.TTS]: 0,
+  [ProcessingTaskType.SPLIT_CHAPTERS]: 1,
+  [ProcessingTaskType.TRANSCRIBE_CHAPTERS]: 2,
+  [ProcessingTaskType.SYNC_CHAPTERS]: 3,
 }
 
 export type ProcessingTask = {
@@ -103,4 +104,34 @@ export function updateTaskStatus(taskUuid: UUID, status: ProcessingTaskStatus) {
     status,
     uuid: taskUuid,
   })
+}
+
+export function resetProcessingTasks(
+  bookUuid: UUID,
+  taskTypes: ProcessingTaskType[] = [],
+) {
+  const db = getDatabase()
+
+  if (taskTypes.length === 0) {
+    // Reset all tasks for the book
+    db.prepare<{ bookUuid: UUID }>(
+      `
+      UPDATE processing_task
+      SET progress = 0.0, status = 'STARTED'
+      WHERE book_uuid = $bookUuid
+      `,
+    ).run({
+      bookUuid,
+    })
+  } else {
+    // Reset only specific task types
+    const placeholders = taskTypes.map(() => "?").join(",")
+    db.prepare(
+      `
+      UPDATE processing_task
+      SET progress = 0.0, status = 'STARTED'
+      WHERE book_uuid = ? AND type IN (${placeholders})
+      `,
+    ).run(bookUuid, ...taskTypes)
+  }
 }
