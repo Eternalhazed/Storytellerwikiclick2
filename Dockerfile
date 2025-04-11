@@ -43,6 +43,9 @@ COPY --from=builder /app/web/sqlite/uuid.c.so ./.next/standalone/web/sqlite/uuid
 COPY --from=builder /app/web/migrate-dist ./.next/standalone/web/migrate-dist
 COPY --from=builder /app/web/migrations ./.next/standalone/web/migrations
 
+# Copy Python tools
+COPY --from=builder /app/web/align_py ./.next/standalone/web/align_py
+
 # WASM files aren't statically imported, so esbuild doesn't find them and they need to be manually copied over
 COPY --from=builder /app/node_modules/@echogarden/speex-resampler-wasm/wasm/*.wasm ./.next/standalone/web/work-dist/
 COPY --from=builder /app/node_modules/@echogarden/pffft-wasm/dist/simd/pffft.wasm ./.next/standalone/web/work-dist/
