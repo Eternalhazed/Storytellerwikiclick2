@@ -21,6 +21,10 @@ export function getIsAudioLoading(state: RootState) {
   return state.bookshelf.isAudioLoading
 }
 
+export function getSleepTimer(state: RootState) {
+  return state.bookshelf.sleepTimer
+}
+
 export function getIsBookInBookshelf(state: RootState, bookId: number) {
   return !!getBookshelfBook(state, bookId)
 }
