@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "../store/appState"
 import {
   getCurrentlyPlayingBook,
   getLocator,
+  getSleepTimer,
 } from "../store/selectors/bookshelfSelectors"
 import { ToolbarDialog, toolbarSlice } from "../store/slices/toolbarSlice"
 import { bookshelfSlice } from "../store/slices/bookshelfSlice"
@@ -59,7 +60,7 @@ export function Toolbar({ mode, activeBookmarks }: Props) {
     null,
   )
 
-  const sleepTimer = useAppSelector((state) => state.bookshelf.sleepTimer)
+  const sleepTimer = useAppSelector(getSleepTimer)
 
   useEffect(() => {
     if (sleepTimer) {

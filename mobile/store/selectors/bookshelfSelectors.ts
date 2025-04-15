@@ -1,3 +1,4 @@
+import { createSelector } from "@reduxjs/toolkit"
 import { RootState } from "../appState"
 import { Highlight } from "../slices/bookshelfSlice"
 
@@ -21,9 +22,15 @@ export function getIsAudioLoading(state: RootState) {
   return state.bookshelf.isAudioLoading
 }
 
-export function getSleepTimer(state: RootState) {
-  return state.bookshelf.sleepTimer
-}
+/**
+ * Get sleep timer as a memoized Date object.
+ */
+export const getSleepTimer = createSelector(
+  (state: RootState) => state.bookshelf.sleepTimer,
+  (sleepTimer) => {
+    return sleepTimer ? new Date(sleepTimer) : null
+  },
+)
 
 export function getIsBookInBookshelf(state: RootState, bookId: number) {
   return !!getBookshelfBook(state, bookId)

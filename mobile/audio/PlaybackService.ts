@@ -8,6 +8,7 @@ import {
 } from "../store/slices/bookshelfSlice"
 import { getGlobalPreferences } from "../store/selectors/preferencesSelectors"
 import { isPast } from "date-fns"
+import { getSleepTimer } from "../store/selectors/bookshelfSelectors"
 
 export async function seekBackward(interval: number) {
   const { position: currentPosition } = await TrackPlayer.getProgress()
@@ -49,7 +50,7 @@ export async function PlaybackService() {
 
     store.dispatch(playerPositionUpdated())
 
-    const { sleepTimer } = store.getState().bookshelf
+    const sleepTimer = getSleepTimer(store.getState())
     if (sleepTimer) {
       if (isPast(sleepTimer)) {
         TrackPlayer.pause()
