@@ -160,7 +160,7 @@ export class CtcAligner {
     })
   }
 
-  private async alignChapter(chapterId: string) {
+  private async alignChapter(chapterId: string, skips: [number, number][]) {
     const manifest = await this.epub.getManifest()
     const chapter = manifest[chapterId]
     if (!chapter)
@@ -175,6 +175,7 @@ export class CtcAligner {
       chapterTextblocks,
       this.emissionsPath,
       await this.epub.getLanguage(),
+      skips,
     )
 
     const multiWordSentences = sentenceRanges.filter(
@@ -188,6 +189,17 @@ export class CtcAligner {
     // If more than half of the "found" sentences appear to be guesses,
     // skip this chapter entirely
     if (guessCount >= multiWordSentences.length / 2) return
+
+    const foundAdjacentSentences = sentenceRanges.some((range, i) => {
+      const next = sentenceRanges[i + 1]
+      if (!next) return false
+      return next.start < range.end + 30
+    })
+
+    // Similarly, if none of the found sentences appear adjacent
+    // to each other, we didn't really find the text of this chapter,
+    // so skip.
+    if (!foundAdjacentSentences) return
 
     const tagged = tagSentences(
       chapterId,
@@ -206,18 +218,18 @@ export class CtcAligner {
       type: "text/css",
     })
 
-    this.alignedChapters.push({
+    return {
       chapter,
       xml: tagged,
       sentenceRanges,
-    })
-
-    return sentenceRanges.at(-1) ?? null
+    }
   }
 
   async alignBook(onProgress?: (progress: number) => void) {
     await this.writeAudioFile()
     const spine = await this.epub.getSpineItems()
+
+    const skips: [number, number][] = []
 
     for (let index = 0; index < spine.length; index++) {
       onProgress?.(index / spine.length)
@@ -238,7 +250,21 @@ export class CtcAligner {
         continue
       }
 
-      await this.alignChapter(chapterId)
+      const alignedChapter = await this.alignChapter(chapterId, skips)
+      if (alignedChapter) {
+        this.alignedChapters.push(alignedChapter)
+        for (const range of alignedChapter.sentenceRanges.slice(
+          1,
+          alignedChapter.sentenceRanges.length - 1,
+        )) {
+          const lastSkip = skips.at(-1)
+          if (!lastSkip || range.start - lastSkip[1] > 5) {
+            skips.push([range.start, range.end])
+            continue
+          }
+          lastSkip[1] = range.end
+        }
+      }
     }
 
     const sortedRanges = this.alignedChapters

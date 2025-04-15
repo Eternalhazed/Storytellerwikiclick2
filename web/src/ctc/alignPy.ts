@@ -89,6 +89,7 @@ export async function align(
   text: string,
   emissionsPath: string,
   locale: Intl.Locale | null,
+  skips: [number, number][],
 ) {
   const iso6393Lang = locale && getIso6393Lang(locale)
 
@@ -96,6 +97,9 @@ export async function align(
     "-e",
     emissionsPath,
     ...(iso6393Lang ? ["--lang", iso6393Lang] : []),
+    ...(skips.length
+      ? ["--skip", skips.map(([from, to]) => `${from}:${to}`).join(",")]
+      : []),
   ])
 
   p.child.stdin.write(text)

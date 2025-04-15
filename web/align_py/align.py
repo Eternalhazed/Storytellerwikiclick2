@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 import json
 import torch
+import numpy as np
 from ctc_forced_aligner import (
     load_alignment_model,
     get_alignments,
     get_spans,
     split_text,
-    postprocess_results,
     text_normalize,
-    get_uroman_tokens
+    get_uroman_tokens,
+    merge_segments
 )
+from ctc_forced_aligner.alignment_utils import time_to_frame
 import time
 import argparse
 import sys
@@ -54,10 +56,52 @@ def preprocess_text(
     return tokens_starred, text_starred
 
 
+
+def postprocess_results(
+    text_starred: list,
+    spans: list,
+    stride: float,
+    scores: np.ndarray,
+    skips: list[list[float]],
+    merge_threshold: float = 0.0,
+):
+    results = []
+
+    for i, t in enumerate(text_starred):
+        if t == "<star>":
+            continue
+        span = spans[i]
+        seg_start_idx = span[0].start
+        seg_end_idx = span[-1].end
+
+        audio_start_sec = seg_start_idx * (stride) / 1000
+        audio_end_sec = seg_end_idx * (stride) / 1000
+
+        for start, end in skips:
+            if start < audio_start_sec:
+                audio_start_sec += end - start
+            if start < audio_end_sec:
+                audio_end_sec += end - start
+
+        score = scores[seg_start_idx:seg_end_idx].sum()
+        sample = {
+            "start": audio_start_sec,
+            "end": audio_end_sec,
+            "text": t,
+            "score": score.item(),
+        }
+        results.append(sample)
+
+    merge_segments(results, merge_threshold)
+    return results
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-e', required=True)
     parser.add_argument('--lang', default="eng")
+    parser.add_argument('--skip', default="")
 
     args = parser.parse_args()
 
@@ -67,6 +111,9 @@ if __name__ == "__main__":
 
     emissions_path = args.e
     language = args.lang
+    skip_str = args.skip
+
+    skips = [[float(n) for n in range.split(':')] for range in skip_str.split(',')] if skip_str else []
 
     start_time = time.time()
 
@@ -80,8 +127,6 @@ if __name__ == "__main__":
 
     emissions, stride = torch.load(emissions_path)
 
-    # TODO: Break this down into components and customize
-    # `split_text` to split on newlines before using punkt
     tokens_starred, text_starred = preprocess_text(
         text,
         romanize=True,
@@ -89,13 +134,25 @@ if __name__ == "__main__":
         split_size="sentence"
     )
 
+    keeps: list[list[int|None]] = [[None, None]]
+    for start, end in skips:
+        last_keep = keeps[-1]
+        last_keep[1] = time_to_frame(start)
+
+        keeps.append([time_to_frame(end), None])
+
+    unskipped_emissions = torch.cat(
+        [emissions[start:end] for start, end in keeps],
+        dim=0
+    )
+
     segments, scores, blank_token = get_alignments(
-        emissions,
+        unskipped_emissions,
         tokens_starred,
         alignment_tokenizer,
     )
 
     spans = get_spans(tokens_starred, segments, blank_token)
 
-    timestamps = postprocess_results(text_starred, spans, stride, scores)
+    timestamps = postprocess_results(text_starred, spans, stride, scores, skips)
     print(json.dumps(timestamps))
