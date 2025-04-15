@@ -944,6 +944,22 @@ export function* manualTrackSeekSaga() {
   )
 }
 
+export function* sleepTimerSaga() {
+  yield takeEvery(playerPositionUpdated, function* () {
+    const sleepTimer = (yield select(getSleepTimer)) as ReturnType<
+      typeof getSleepTimer
+    >
+    if (sleepTimer === null) {
+      return
+    }
+
+    if (isPast(sleepTimer)) {
+      yield call(TrackPlayer.pause)
+      yield put(bookshelfSlice.actions.sleepTimerExpired())
+    }
+  })
+}
+
 export function* relocateToTrackPositionSaga() {
   yield takeLeadingWithQueue(
     [playerPositionUpdated, playerPaused],
