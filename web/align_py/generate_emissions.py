@@ -1,13 +1,31 @@
 #!/usr/bin/env python3
 import torch
-from ctc_forced_aligner import (
-    load_audio,
-    load_alignment_model,
-    generate_emissions,
-)
 import time
 import argparse
 import datetime
+
+from torchaudio.io import StreamReader
+from ctc_forced_aligner import (
+    load_alignment_model,
+    generate_emissions,
+)
+from ctc_forced_aligner.alignment_utils import SAMPLING_FREQ
+
+def load_audio(audio_file: str, dtype: torch.dtype, device: str):
+    streamer = StreamReader(audio_file)
+    streamer.add_basic_audio_stream(
+        frames_per_chunk=10 * SAMPLING_FREQ,
+        sample_rate=SAMPLING_FREQ
+    )  # 10-second chunks
+
+    resampled_waveform = []
+    for chunk in streamer.stream():
+        resampled_waveform.append(chunk[0].permute(1, 0))
+    waveform = torch.cat(resampled_waveform, dim=1)
+
+    waveform = torch.mean(waveform, dim=0)
+    waveform = waveform.to(dtype).to(device)
+    return waveform
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

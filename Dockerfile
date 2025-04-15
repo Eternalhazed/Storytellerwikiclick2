@@ -31,7 +31,9 @@ FROM registry.gitlab.com/storyteller-platform/storyteller-base:latest AS runner
 
 WORKDIR /app
 
-RUN apt update && apt install -y python3-dev python3-venv
+# TODO: Move these into storyteller-base (and remove static ffmpeg install there)
+RUN apt update && apt install -y python3-dev python3-venv ffmpeg
+# TODO: Run this dynamically, like whisper?
 RUN python3 -m venv .venv && \
     /app/.venv/bin/pip install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
 
