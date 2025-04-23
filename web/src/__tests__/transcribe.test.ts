@@ -26,6 +26,7 @@ void describe("transcribe", () => {
         parallelTranscribes: 1,
         parallelWhisperBuild: 1,
         useCtc: false,
+        ctcBuild: "cpu",
       },
     )
 

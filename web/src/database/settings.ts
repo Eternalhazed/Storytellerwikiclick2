@@ -59,6 +59,7 @@ export type Settings = {
   parallelTranscribes: number
   parallelWhisperBuild: number
   useCtc: boolean
+  ctcBuild: "cpu" | "cuda-11.8" | "cuda-12.6" | "rocm"
 }
 
 export const SETTINGS_COLUMN_NAMES = {
@@ -93,6 +94,7 @@ export const SETTINGS_COLUMN_NAMES = {
   parallel_transcribes: "parallelTranscribes",
   parallel_whisper_build: "parallelWhisperBuild",
   use_ctc: "useCtc",
+  ctc_build: "ctcBuild",
 } as const satisfies Record<string, keyof Settings>
 
 export function getSetting<Name extends keyof typeof SETTINGS_COLUMN_NAMES>(

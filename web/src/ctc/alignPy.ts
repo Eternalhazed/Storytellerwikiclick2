@@ -7,6 +7,8 @@ import { promisify } from "node:util"
 import { iso6393 } from "iso-639-3"
 import { existsSync } from "node:fs"
 import { logger } from "@/logging"
+import { Settings } from "@/database/settings"
+import { installCuda, installRocm } from "@/acceleration"
 
 const exec = promisify(execCb)
 
@@ -14,12 +16,59 @@ function getIso6393Lang(locale: Intl.Locale) {
   return iso6393.find((lang) => lang.iso6391 === locale.language)?.iso6393
 }
 
-async function installCtc() {
+async function installCtc(settings: Settings) {
+  if (settings.ctcBuild === "rocm") {
+    await installRocm()
+
+    logger.info("Downloading PyTorch dependencies from the Radeon repo")
+    await exec(
+      `wget -nv https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3.4/torch-2.4.0%2Brocm6.3.4.git7cecbf6d-cp310-cp310-linux_x86_64.whl`,
+    )
+    await exec(
+      `wget -nv https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3.4/pytorch_triton_rocm-3.0.0%2Brocm6.3.4.git75cc27c2-cp310-cp310-linux_x86_64.whl`,
+    )
+    await exec(
+      `wget -nv https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3.4/torchaudio-2.4.0%2Brocm6.3.4.git69d40773-cp310-cp310-linux_x86_64.whl`,
+    )
+    logger.info("Installing PyTorch dependencies")
+    await exec(`pip uninstall torch torchaudio triton`)
+    await exec(
+      `pip install torch-2.4.0+rocm6.3.4.git7cecbf6d-cp310-cp310-linux_x86_64.whl torchaudio-2.4.0+rocm6.3.4.git69d40773-cp310-cp310-linux_x86_64.whl pytorch_triton_rocm-3.0.0+rocm6.3.4.git75cc27c2-cp310-cp310-linux_x86_64.whl`,
+    )
+    logger.info("ROCm PyTorch dependencies installed")
+  }
+  if (settings.ctcBuild === "cuda-11.8") {
+    await installCuda("11.8")
+    logger.info("Installing CUDA PyTorch dependencies")
+    await exec(`pip uninstall torch torchaudio triton`)
+    await exec(
+      `pip install torch triton torchaudio --index-url https://download.pytorch.org/whl/cu118`,
+    )
+    logger.info("CUDA PyTorch dependencies installed")
+  }
+  if (settings.ctcBuild === "cuda-12.6") {
+    await installCuda("12.6")
+    logger.info("Installing CUDA PyTorch dependencies")
+    await exec(`pip uninstall torch torchaudio triton`)
+    await exec(
+      `pip install torch triton torchaudio --index-url https://download.pytorch.org/whl/cu126`,
+    )
+    logger.info("CUDA PyTorch dependencies installed")
+  }
+  if (settings.ctcBuild === "cpu") {
+    logger.info("Installing CPU PyTorch dependencies")
+    await exec(`pip uninstall torch torchaudio triton`)
+    await exec(
+      `pip install torch triton torchaudio --index-url https://download.pytorch.org/whl/cpu`,
+    )
+    logger.info("CPU PyTorch dependencies installed")
+  }
+
   logger.info(
     "Installing ctc_forced_aligner from GitHub (this may take a few minutes)",
   )
   await exec(
-    `${process.env["VIRTUAL_ENV"]}/bin/pip install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git`,
+    `pip install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git`,
   )
   logger.info("ctc_forced_aligner installed")
 }
@@ -28,10 +77,11 @@ export async function generateEmmisions(
   audioPath: string,
   locale: Intl.Locale,
   outputPath: string,
+  settings: Settings,
 ) {
   if (existsSync(outputPath)) return
 
-  await installCtc()
+  await installCtc(settings)
 
   const iso6393Lang = getIso6393Lang(locale)
 

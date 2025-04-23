@@ -62,6 +62,7 @@ export function SettingsForm({ settings }: Props) {
     parallel_transcodes: settings.parallel_transcodes,
     parallel_whisper_build: settings.parallel_whisper_build,
     use_ctc: settings.use_ctc,
+    ctc_build: settings.ctc_build,
   }
 
   const form = useForm({
@@ -97,6 +98,14 @@ export function SettingsForm({ settings }: Props) {
           label="Use CTC forced aligner instead of Storyteller’s transcription-based aligner"
           {...form.getInputProps("use_ctc", { type: "checkbox" })}
         />
+        {state.use_ctc && (
+          <NativeSelect label="CTC build" {...form.getInputProps("ctc_build")}>
+            <option value="cpu">CPU</option>
+            <option value="cuda-11.8">CUDA 11.8 (NVIDIA GPU)</option>
+            <option value="cuda-12.6">CUDA 12.6 (NVIDIA GPU)</option>
+            <option value="rocm">ROCm (AMD GPU)</option>
+          </NativeSelect>
+        )}
       </Fieldset>
       <Fieldset legend="Audio settings">
         {!state.use_ctc && (

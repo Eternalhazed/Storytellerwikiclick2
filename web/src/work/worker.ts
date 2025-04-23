@@ -253,7 +253,7 @@ export default async function processBook({
             getCtcEmissionsFilename(audioFile),
           )
           await mkdir(getTranscriptionsFilepath(bookUuid), { recursive: true })
-          await generateEmmisions(audioPath, locale, outputPath)
+          await generateEmmisions(audioPath, locale, outputPath, settings)
         } else {
           const fullText = await getFullText(epub)
           const initialPrompt =

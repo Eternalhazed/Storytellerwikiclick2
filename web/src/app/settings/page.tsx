@@ -38,6 +38,7 @@ const defaultSettings: Settings = {
   parallel_transcodes: 1,
   parallel_whisper_build: 1,
   use_ctc: false,
+  ctc_build: "cpu",
 }
 
 export const dynamic = "force-dynamic"
