@@ -34,8 +34,7 @@ WORKDIR /app
 # TODO: Move these into storyteller-base (and remove static ffmpeg install there)
 RUN apt update && apt install -y python3-dev python3-venv ffmpeg
 # TODO: Run this dynamically, like whisper?
-RUN python3 -m venv .venv && \
-    /app/.venv/bin/pip install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
+RUN python3 -m venv /app/.venv
 
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH=/app/.venv/bin:$PATH

@@ -6,11 +6,22 @@ import {
 import { promisify } from "node:util"
 import { iso6393 } from "iso-639-3"
 import { existsSync } from "node:fs"
+import { logger } from "@/logging"
 
 const exec = promisify(execCb)
 
 function getIso6393Lang(locale: Intl.Locale) {
   return iso6393.find((lang) => lang.iso6391 === locale.language)?.iso6393
+}
+
+async function installCtc() {
+  logger.info(
+    "Installing ctc_forced_aligner from GitHub (this may take a few minutes)",
+  )
+  await exec(
+    `${process.env["VIRTUAL_ENV"]}/bin/pip install git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git`,
+  )
+  logger.info("ctc_forced_aligner installed")
 }
 
 export async function generateEmmisions(
@@ -19,6 +30,8 @@ export async function generateEmmisions(
   outputPath: string,
 ) {
   if (existsSync(outputPath)) return
+
+  await installCtc()
 
   const iso6393Lang = getIso6393Lang(locale)
 
