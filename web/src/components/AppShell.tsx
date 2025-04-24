@@ -164,6 +164,7 @@ export function AppShell({ children, version, books }: Props) {
             <CurrentBookProgress />
             {(permissions.book_create || permissions.book_list) && (
               <NavLink
+                onClick={toggle}
                 component={NextLink}
                 href="/"
                 leftSection={<IconBook2 />}
@@ -173,6 +174,7 @@ export function AppShell({ children, version, books }: Props) {
             )}
             {(permissions.user_create || permissions.user_list) && (
               <NavLink
+                onClick={toggle}
                 component={NextLink}
                 href="/users"
                 leftSection={<IconUser />}
@@ -182,6 +184,7 @@ export function AppShell({ children, version, books }: Props) {
             )}
             {permissions.settings_update && (
               <NavLink
+                onClick={toggle}
                 component={NextLink}
                 href="/settings"
                 leftSection={<IconSettings />}
@@ -190,6 +193,7 @@ export function AppShell({ children, version, books }: Props) {
               />
             )}
             <NavLink
+              onClick={toggle}
               component="a"
               href="/logout"
               leftSection={<IconLogout />}
@@ -197,7 +201,7 @@ export function AppShell({ children, version, books }: Props) {
               active={pathname === "/logout"}
             />
           </AppShellNavbar>
-          <AppShellMain>{children}</AppShellMain>
+          <AppShellMain className="*:ml-8">{children}</AppShellMain>
         </MantineAppShell>
       </LiveBooksProvider>
     </MantineProvider>

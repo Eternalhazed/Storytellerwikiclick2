@@ -3,8 +3,7 @@ import { useApiClient } from "@/hooks/useApiClient"
 import { usePermissions } from "@/contexts/UserPermissions"
 import { ProcessingItems } from "./ProcessingItems"
 import { ActionIcon, Button, Group, Modal, Stack, Tooltip } from "@mantine/core"
-import { IconPencil, IconTrash } from "@tabler/icons-react"
-import NextLink from "next/link"
+import { IconTrash } from "@tabler/icons-react"
 import { useDisclosure } from "@mantine/hooks"
 
 type Props = {
@@ -45,18 +44,6 @@ export function BookOptions({ book, synchronized }: Props) {
         </Stack>
       </Modal>
       <Stack>
-        {permissions.book_update && (
-          <ActionIcon
-            component={NextLink}
-            variant="subtle"
-            color="black"
-            href={`/books/${book.uuid}`}
-          >
-            <Tooltip position="right" label="Edit">
-              <IconPencil aria-label="Edit" />
-            </Tooltip>
-          </ActionIcon>
-        )}
         {permissions.book_process &&
           book.processing_status &&
           book.original_files_exist && (

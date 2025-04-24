@@ -1,6 +1,5 @@
 "use client"
 
-import NextImage from "next/image"
 import { BookDetail } from "@/apiModels"
 import { useApiClient } from "@/hooks/useApiClient"
 import { BookOptions } from "./BookOptions"
@@ -10,17 +9,7 @@ import {
   ProcessingTaskStatus,
   ProcessingTaskType,
 } from "@/apiModels/models/ProcessingStatus"
-import {
-  Paper,
-  Image,
-  Group,
-  Stack,
-  Box,
-  Title,
-  Text,
-  Button,
-  Progress,
-} from "@mantine/core"
+import { Paper, Group, Stack, Box, Text, Button, Progress } from "@mantine/core"
 
 type Props = {
   book: BookDetail
@@ -51,25 +40,8 @@ export function BookStatus({ book }: Props) {
 
   return (
     <Paper className="max-w-[600px]">
-      <Group justify="space-between" wrap="nowrap" align="stretch">
-        <Image
-          className="rounded-md"
-          component={NextImage}
-          h={150}
-          w={98}
-          height={150}
-          width={98}
-          alt=""
-          aria-hidden
-          src={client.getCoverUrl(book.uuid)}
-        />
+      <Group justify="space-between" wrap="nowrap" align="flex-end">
         <Stack justify="space-between" className="grow">
-          <Box>
-            <Title order={3} className="text-lg">
-              {book.title}
-            </Title>
-            {book.authors[0] && <Text>{book.authors[0].name}</Text>}
-          </Box>
           {synchronized ? (
             permissions.book_download && (
               <a

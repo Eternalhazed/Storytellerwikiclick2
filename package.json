@@ -55,7 +55,7 @@
     "pyright": "^1.1.348",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "typescript": "^5.4.5",
+    "typescript": "^5.8.3",
     "typescript-plugin-css-modules": "^5.0.2"
   }
 }

@@ -2,7 +2,11 @@ import {
   ProcessingTaskStatus,
   ProcessingTaskType,
 } from "@/apiModels/models/ProcessingStatus"
-import { deleteAssets } from "@/assets/assets"
+import {
+  deleteAssets,
+  originalAudioExists,
+  originalEpubExists,
+} from "@/assets/assets"
 import {
   persistCustomEpubCover,
   persistCustomAudioCover,
@@ -154,6 +158,12 @@ export const GET = withHasPermission<Params>("book_read")(async (
 
   return NextResponse.json({
     ...book,
+    original_files_exist: (
+      await Promise.all([
+        originalEpubExists(book.uuid),
+        originalAudioExists(book.uuid),
+      ])
+    ).every((originalsExist) => originalsExist),
     ...(book.processingStatus && {
       processing_status: {
         ...book.processingStatus,
