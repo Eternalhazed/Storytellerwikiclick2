@@ -1,0 +1,7 @@
+releases:
+  "@storyteller/web": minor
+
+declined:
+  - "@storyteller/docs"
+  - "@smoores/epub"
+  - "@storyteller/mobile"
