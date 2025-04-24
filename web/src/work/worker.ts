@@ -218,7 +218,7 @@ export default async function processBook({
           settings.maxTrackLength ?? null,
           settings.codec ?? null,
           settings.bitrate ?? null,
-          settings.useCtc,
+          settings.useCtc, // TODO: Don't special-case CTC here. Instead, generate emissions for each split track, and then concatenate the resulting emissions.
           new AsyncSemaphore(settings.parallelTranscodes),
           onProgress,
         )

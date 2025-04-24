@@ -66,7 +66,7 @@ export async function installRocm({ includeHipblas = false } = {}) {
     }
     return
   } catch {
-    /* empty */
+    /* Move on to installation if checks fail */
   }
 
   logger.info(`Installing ROCm${includeHipblas ? " and hipBLAS" : ""}`)

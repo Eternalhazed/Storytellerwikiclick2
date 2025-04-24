@@ -20,6 +20,7 @@ async function installCtc(settings: Settings) {
   if (settings.ctcBuild === "rocm") {
     await installRocm()
 
+    // TODO: Check whether rocm torch is already installed with pip show torch
     logger.info("Downloading PyTorch dependencies from the Radeon repo")
     await exec(
       `wget -nv https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3.4/torch-2.4.0%2Brocm6.3.4.git7cecbf6d-cp310-cp310-linux_x86_64.whl`,
@@ -31,7 +32,7 @@ async function installCtc(settings: Settings) {
       `wget -nv https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3.4/torchaudio-2.4.0%2Brocm6.3.4.git69d40773-cp310-cp310-linux_x86_64.whl`,
     )
     logger.info("Installing PyTorch dependencies")
-    await exec(`pip uninstall torch torchaudio triton`)
+    await exec(`pip uninstall -y torch torchaudio triton`)
     await exec(
       `pip install torch-2.4.0+rocm6.3.4.git7cecbf6d-cp310-cp310-linux_x86_64.whl torchaudio-2.4.0+rocm6.3.4.git69d40773-cp310-cp310-linux_x86_64.whl pytorch_triton_rocm-3.0.0+rocm6.3.4.git75cc27c2-cp310-cp310-linux_x86_64.whl`,
     )
@@ -40,7 +41,7 @@ async function installCtc(settings: Settings) {
   if (settings.ctcBuild === "cuda-11.8") {
     await installCuda("11.8")
     logger.info("Installing CUDA PyTorch dependencies")
-    await exec(`pip uninstall torch torchaudio triton`)
+    await exec(`pip uninstall -y torch torchaudio triton`)
     await exec(
       `pip install torch triton torchaudio --index-url https://download.pytorch.org/whl/cu118`,
     )
@@ -49,7 +50,7 @@ async function installCtc(settings: Settings) {
   if (settings.ctcBuild === "cuda-12.6") {
     await installCuda("12.6")
     logger.info("Installing CUDA PyTorch dependencies")
-    await exec(`pip uninstall torch torchaudio triton`)
+    await exec(`pip uninstall -y torch torchaudio triton`)
     await exec(
       `pip install torch triton torchaudio --index-url https://download.pytorch.org/whl/cu126`,
     )
@@ -57,7 +58,7 @@ async function installCtc(settings: Settings) {
   }
   if (settings.ctcBuild === "cpu") {
     logger.info("Installing CPU PyTorch dependencies")
-    await exec(`pip uninstall torch torchaudio triton`)
+    await exec(`pip uninstall -y torch torchaudio triton`)
     await exec(
       `pip install torch triton torchaudio --index-url https://download.pytorch.org/whl/cpu`,
     )
