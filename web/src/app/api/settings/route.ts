@@ -50,6 +50,8 @@ export const GET = withHasPermission("settings_update")(() => {
     parallel_transcodes: settings.parallelTranscodes,
     parallel_transcribes: settings.parallelTranscribes,
     parallel_whisper_build: settings.parallelWhisperBuild,
+    use_ctc: settings.useCtc,
+    ctc_build: settings.ctcBuild,
   }
 
   return NextResponse.json(response)
@@ -94,6 +96,8 @@ export const PUT = withHasPermission("settings_update")(async (request) => {
     parallelTranscodes: settings.parallel_transcodes,
     parallelTranscribes: settings.parallel_transcribes,
     parallelWhisperBuild: settings.parallel_whisper_build,
+    useCtc: settings.use_ctc,
+    ctcBuild: settings.ctc_build,
   })
 
   return new Response(null, { status: 204 })

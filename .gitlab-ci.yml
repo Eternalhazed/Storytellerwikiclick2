@@ -91,7 +91,6 @@ publish-web-amd64:
   script:
     - docker buildx build --build-arg CI_COMMIT_TAG=$CI_COMMIT_TAG --push -f
       Dockerfile --cache-from type=registry,ref=$CI_REGISTRY_IMAGE/cache:latest
-      --cache-to type=registry,ref=$CI_REGISTRY_IMAGE/cache:latest,mode=max
       --tag $CI_REGISTRY_IMAGE/amd64:$CI_COMMIT_SHORT_SHA .
 
 publish-web-arm64:
@@ -110,7 +109,6 @@ publish-web-arm64:
   script:
     - docker buildx build --build-arg CI_COMMIT_TAG=$CI_COMMIT_TAG --push -f
       Dockerfile --cache-from type=registry,ref=$CI_REGISTRY_IMAGE/cache:latest
-      --cache-to type=registry,ref=$CI_REGISTRY_IMAGE/cache:latest,mode=max
       --tag $CI_REGISTRY_IMAGE/arm64:$CI_COMMIT_SHORT_SHA .
 
 publish-web-multiarch:
@@ -125,8 +123,8 @@ publish-web-multiarch:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - docker buildx imagetools create --tag
-      $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --tag $CI_REGISTRY_IMAGE:latest
-      --tag $CI_REGISTRY_IMAGE:web-v1 --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+      $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --tag
+      $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
       $CI_REGISTRY_IMAGE/amd64:$CI_COMMIT_SHORT_SHA
       $CI_REGISTRY_IMAGE/arm64:$CI_COMMIT_SHORT_SHA
 

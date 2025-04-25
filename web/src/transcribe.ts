@@ -3,13 +3,11 @@ import { join } from "node:path"
 import { WHISPER_BUILD_DIR } from "./directories"
 import { mkdir, stat } from "node:fs/promises"
 import simpleGit, { CheckRepoActions, GitConfigScope } from "simple-git"
-import { exec as execCb, spawn } from "node:child_process"
-import { promisify } from "node:util"
+import { spawn } from "node:child_process"
 import { WhisperCppModelId } from "echogarden/dist/recognition/WhisperCppSTT"
 import { Settings, WhisperModel } from "./database/settings"
 import { logger } from "./logging"
-
-const exec = promisify(execCb)
+import { installCuda, installRocm } from "./acceleration"
 
 const WHISPER_REPO =
   process.env["STORYTELLER_WHISPER_REPO"] ??
@@ -57,62 +55,14 @@ export async function installWhisper(settings: Settings) {
         WHISPER_VERSION,
       ])
     }
-    let path = process.env["PATH"] ?? ""
-    let libraryPath = process.env["LIBRARY_PATH"] ?? ""
-    if (enableCuda) {
-      logger.info("CUDA enabled; installing cuda toolkit")
-      const cudaVersions =
-        whisperBuild === "cublas-12.6"
-          ? {
-              full: "12-6-local_12.6.3-560.35.05-1",
-              semver: "12.6.3",
-              majorMinor: "12.6",
-              short: "12-6",
-            }
-          : {
-              full: "11-8-local_11.8.0-520.61.05-1",
-              semver: "11.8.0",
-              majorMinor: "11.8",
-              short: "11-8",
-            }
 
-      logger.info("Downloading toolkit package")
-      await exec(
-        `wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin`,
-      )
-      await exec(
-        `mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600`,
-      )
-      await exec(
-        `wget --quiet https://developer.download.nvidia.com/compute/cuda/${cudaVersions.semver}/local_installers/cuda-repo-ubuntu2204-${cudaVersions.full}_amd64.deb`,
-      )
-      logger.info("Unpacking toolkit package")
-      await exec(`dpkg -i cuda-repo-ubuntu2204-${cudaVersions.full}_amd64.deb`)
-      await exec(
-        `cp /var/cuda-repo-ubuntu2204-${cudaVersions.short}-local/cuda-*-keyring.gpg /usr/share/keyrings/`,
-      )
-      await exec(`rm cuda-repo-ubuntu2204-${cudaVersions.full}_amd64.deb`)
-      await exec("apt update")
-      logger.info("Installing toolkit")
-      await exec(`apt-get -y install cuda-toolkit-${cudaVersions.short}`)
-      path = `/usr/local/cuda-${cudaVersions.majorMinor}/bin:${path}`
-      libraryPath = `/usr/local/cuda-${cudaVersions.majorMinor}/lib64/stubs:${libraryPath}`
-    } else if (whisperBuild === "hipblas") {
-      logger.info("Installing ROCm and hipBLAS")
-      await exec(
-        "curl -sL http://repo.radeon.com/rocm/rocm.gpg.key | apt-key add -",
-      )
-      await exec(
-        'printf "deb [arch=amd64] https://repo.radeon.com/rocm/apt/6.2.1/ jammy main" | tee /etc/apt/sources.list.d/rocm.list',
-      )
-      await exec(
-        'printf "deb [arch=amd64] https://repo.radeon.com/amdgpu/6.2.1/ubuntu jammy main" | tee /etc/apt/sources.list.d/amdgpu.list',
-      )
-      await exec("apt-get update")
-      await exec("apt-get -y install rocm-dev hipblas-dev", {
-        env: { ...process.env, DEBIAN_FRONTEND: "noninteractive" },
-      })
+    if (enableCuda) {
+      await installCuda(whisperBuild === "cublas-11.8" ? "11.8" : "12.6")
     }
+    if (whisperBuild === "hipblas") {
+      await installRocm({ includeHipblas: true })
+    }
+
     logger.info("Building whisper.cpp")
 
     // We use spawn here rather than exec so that we can
@@ -127,8 +77,6 @@ export async function installWhisper(settings: Settings) {
           ...process.env,
           ...(enableCuda && {
             WHISPER_CUDA: "1",
-            PATH: path,
-            LIBRARY_PATH: libraryPath,
           }),
           ...(whisperBuild === "hipblas" && {
             GGML_HIPBLAS: "1",

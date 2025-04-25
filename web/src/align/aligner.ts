@@ -12,7 +12,7 @@ import {
   interpolateSentenceRanges,
 } from "./getSentenceRanges"
 import { tagSentences } from "./tagSentences"
-import { SyncCache } from "./syncCache"
+import { AlignCache } from "./alignCache"
 import { getXHtmlSentences } from "./getXhtmlSentences"
 import type { RecognitionResult } from "echogarden/dist/api/Recognition"
 import { findNearestMatch } from "./fuzzy"
@@ -71,7 +71,7 @@ function createMediaOverlay(
   ]
 }
 
-type SyncedChapter = {
+type AlignedChapter = {
   chapter: ManifestItem
   xml: ParsedXml
   sentenceRanges: SentenceRange[]
@@ -104,16 +104,16 @@ export function concatTranscriptions(
   )
 }
 
-export class Synchronizer {
+export class Aligner {
   private transcription: StorytellerTranscription
 
   private totalDuration = 0
 
-  private syncedChapters: SyncedChapter[] = []
+  private alignedChapters: AlignedChapter[] = []
 
   constructor(
     public epub: Epub,
-    private syncCache: SyncCache,
+    private alignCache: AlignCache,
     audiofiles: string[],
     transcriptions: Pick<RecognitionResult, "transcript" | "wordTimeline">[],
   ) {
@@ -143,12 +143,12 @@ export class Synchronizer {
 
       let startSeen: number | null = null
       let endSeen: number | null = null
-      for (const synced of this.syncedChapters) {
-        if (startSeen !== null && endSeen === synced.startOffset) {
-          endSeen = synced.endOffset
+      for (const aligned of this.alignedChapters) {
+        if (startSeen !== null && endSeen === aligned.startOffset) {
+          endSeen = aligned.endOffset
         } else {
-          startSeen = synced.startOffset
-          endSeen = synced.endOffset
+          startSeen = aligned.startOffset
+          endSeen = aligned.endOffset
         }
         if (startIndex >= startSeen && startIndex < endSeen) {
           startIndex = endSeen
@@ -207,8 +207,8 @@ export class Synchronizer {
     return cleanSentences
   }
 
-  private async writeSyncedChapter(syncedChapter: SyncedChapter) {
-    const { chapter, sentenceRanges, xml } = syncedChapter
+  private async writeAlignedChapter(alignedChapter: AlignedChapter) {
+    const { chapter, sentenceRanges, xml } = alignedChapter
 
     const audiofiles = Array.from(
       new Set(sentenceRanges.map(({ audiofile }) => audiofile)),
@@ -280,7 +280,7 @@ export class Synchronizer {
     })
   }
 
-  private async syncChapter(
+  private async alignChapter(
     startSentence: number,
     chapterId: string,
     transcriptionOffset: number,
@@ -290,7 +290,7 @@ export class Synchronizer {
     const chapter = manifest[chapterId]
     if (!chapter)
       throw new Error(
-        `Failed to sync chapter: could not find chapter with id ${chapterId} in manifest`,
+        `Failed to align chapter: could not find chapter with id ${chapterId} in manifest`,
       )
     const chapterXml = await this.epub.readXhtmlItemContents(chapterId)
 
@@ -322,7 +322,7 @@ export class Synchronizer {
       type: "text/css",
     })
 
-    this.syncedChapters.push({
+    this.alignedChapters.push({
       chapter,
       xml: tagged,
       sentenceRanges: expanded,
@@ -336,7 +336,7 @@ export class Synchronizer {
     }
   }
 
-  async syncBook(onProgress?: (progress: number) => void) {
+  async alignBook(onProgress?: (progress: number) => void) {
     const spine = await this.epub.getSpineItems()
     const transcriptionText = this.transcription.transcript
 
@@ -349,7 +349,7 @@ export class Synchronizer {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const spineItem = spine[index]!
 
-      logger.info(`Syncing epub item #${index} : ${basename(spineItem.href)}`)
+      logger.info(`Aligning epub item #${index} : ${basename(spineItem.href)}`)
 
       const chapterId = spineItem.id
       const chapterSentences = await this.getChapterSentences(chapterId)
@@ -366,7 +366,7 @@ export class Synchronizer {
         continue
       }
       const { startSentence, transcriptionOffset } =
-        this.syncCache.getChapterIndex(index) ??
+        this.alignCache.getChapterIndex(index) ??
         this.findBestOffset(
           chapterSentences,
           transcriptionText,
@@ -377,7 +377,7 @@ export class Synchronizer {
         logger.info(
           `Couldn't find matching transcription for chapter #${index}`,
         )
-        await this.syncCache.setChapterIndex(index, {
+        await this.alignCache.setChapterIndex(index, {
           startSentence: 0,
           transcriptionOffset: null,
         })
@@ -388,12 +388,12 @@ export class Synchronizer {
         `Chapter #${index} best matches transcription at offset ${transcriptionOffset}, starting at sentence ${startSentence}`,
       )
 
-      await this.syncCache.setChapterIndex(index, {
+      await this.alignCache.setChapterIndex(index, {
         startSentence,
         transcriptionOffset,
       })
       ;({ lastSentenceRange, endTranscriptionOffset: lastTranscriptionOffset } =
-        await this.syncChapter(
+        await this.alignChapter(
           startSentence,
           chapterId,
           transcriptionOffset,
@@ -407,8 +407,8 @@ export class Synchronizer {
       )
     }
 
-    for (const syncedChapter of this.syncedChapters) {
-      await this.writeSyncedChapter(syncedChapter)
+    for (const alignedChapter of this.alignedChapters) {
+      await this.writeAlignedChapter(alignedChapter)
     }
 
     await this.epub.addMetadata({

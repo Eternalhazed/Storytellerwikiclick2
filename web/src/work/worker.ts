@@ -13,6 +13,7 @@ import {
   getProcessedAudioFilepath,
   getEpubSyncedFilepath,
 } from "@/assets/paths"
+import { CtcAligner } from "@/ctc/aligner"
 import { getBooks } from "@/database/books"
 import {
   PROCESSING_TASK_ORDER,
@@ -21,14 +22,15 @@ import {
 import { Settings } from "@/database/settings"
 import { logger } from "@/logging"
 import {
+  getCtcEmissionsFilename,
   getTranscriptionFilename,
   getTranscriptions,
   processAudiobook,
 } from "@/process/processAudio"
 import { getFullText, processEpub, readEpub } from "@/process/processEpub"
 import { getInitialPrompt } from "@/process/prompt"
-import { getSyncCache } from "@/synchronize/syncCache"
-import { Synchronizer } from "@/synchronize/synchronizer"
+import { getSyncCache as getAlignCache } from "@/align/alignCache"
+import { Aligner } from "@/align/aligner"
 import { installWhisper, transcribeTrack } from "@/transcribe"
 import { UUID } from "@/uuid"
 import { getCurrentVersion } from "@/versions"
@@ -36,6 +38,7 @@ import { AsyncSemaphore } from "@esfx/async-semaphore"
 import type { RecognitionResult } from "echogarden/dist/api/Recognition"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { MessagePort } from "node:worker_threads"
+import { generateEmmisions } from "@/ctc/alignPy"
 
 export async function transcribeBook(
   bookUuid: UUID,
@@ -215,6 +218,7 @@ export default async function processBook({
           settings.maxTrackLength ?? null,
           settings.codec ?? null,
           settings.bitrate ?? null,
+          settings.useCtc, // TODO: Don't special-case CTC here. Instead, generate emissions for each split track, and then concatenate the resulting emissions.
           new AsyncSemaphore(settings.parallelTranscodes),
           onProgress,
         )
@@ -232,39 +236,82 @@ export default async function processBook({
           ? new Intl.Locale(book.language)
           : (await epub.getLanguage()) ?? new Intl.Locale("en-US")
 
-        const fullText = await getFullText(epub)
-        const initialPrompt =
-          locale.language === "en"
-            ? await getInitialPrompt(title ?? "", fullText)
-            : null
+        if (settings.useCtc) {
+          const audioFiles = await getProcessedAudioFiles(bookUuid)
+          const audioFile = audioFiles?.[0]
+          if (!audioFile) {
+            throw new Error(
+              `Failed to find processed audio file for book ${bookRefForLog}`,
+            )
+          }
+          const audioPath = getProcessedAudioFilepath(
+            bookUuid,
+            audioFile.filename,
+          )
+          const outputPath = getTranscriptionsFilepath(
+            bookUuid,
+            getCtcEmissionsFilename(audioFile),
+          )
+          await mkdir(getTranscriptionsFilepath(bookUuid), { recursive: true })
+          await generateEmmisions(audioPath, locale, outputPath, settings)
+        } else {
+          const fullText = await getFullText(epub)
+          const initialPrompt =
+            locale.language === "en"
+              ? await getInitialPrompt(title ?? "", fullText)
+              : null
 
-        await transcribeBook(
-          bookUuid,
-          initialPrompt,
-          locale,
-          settings,
-          onProgress,
-        )
+          await transcribeBook(
+            bookUuid,
+            initialPrompt,
+            locale,
+            settings,
+            onProgress,
+          )
+        }
       }
 
       if (task.type === ProcessingTaskType.SYNC_CHAPTERS) {
         const epub = await readEpub(bookUuid)
         const audioFiles = await getProcessedAudioFiles(bookUuid)
-        const transcriptions = await getTranscriptions(bookUuid)
         if (!audioFiles) {
           throw new Error(`No audio files found for book ${bookUuid}`)
         }
-        logger.info("Syncing narration...")
-        const syncCache = await getSyncCache(bookUuid)
-        const synchronizer = new Synchronizer(
-          epub,
-          syncCache,
-          audioFiles.map((audioFile) =>
+        logger.info("Aligning narration...")
+        if (settings.useCtc) {
+          const audioFile = audioFiles[0]
+          if (!audioFile) {
+            throw new Error(
+              `Failed to find processed audio file for book ${bookRefForLog}`,
+            )
+          }
+
+          const emissionsPath = getTranscriptionsFilepath(
+            bookUuid,
+            getCtcEmissionsFilename(audioFile),
+          )
+
+          const aligner = new CtcAligner(
+            epub,
             getProcessedAudioFilepath(bookUuid, audioFile.filename),
-          ),
-          transcriptions,
-        )
-        await synchronizer.syncBook(onProgress)
+            emissionsPath,
+          )
+
+          await aligner.alignBook(onProgress)
+        } else {
+          const transcriptions = await getTranscriptions(bookUuid)
+
+          const alignCache = await getAlignCache(bookUuid)
+          const aligner = new Aligner(
+            epub,
+            alignCache,
+            audioFiles.map((audioFile) =>
+              getProcessedAudioFilepath(bookUuid, audioFile.filename),
+            ),
+            transcriptions,
+          )
+          await aligner.alignBook(onProgress)
+        }
         const [book] = getBooks([bookUuid])
 
         if (!book)

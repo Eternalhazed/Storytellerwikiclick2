@@ -31,6 +31,14 @@ FROM registry.gitlab.com/storyteller-platform/storyteller-base:latest AS runner
 
 WORKDIR /app
 
+# TODO: Move these into storyteller-base (and remove static ffmpeg install there)
+RUN apt update && apt install -y python3-dev python3-venv ffmpeg
+
+RUN python3 -m venv /app/.venv
+
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH=/app/.venv/bin:$PATH
+
 COPY --from=builder /app/web/.next/standalone ./.next/standalone
 COPY --from=builder /app/web/public ./.next/standalone/web/public
 COPY --from=builder /app/web/.next/static ./.next/standalone/web/.next/static
@@ -39,6 +47,9 @@ COPY --from=builder /app/web/sqlite/uuid.c.so ./.next/standalone/web/sqlite/uuid
 # Copy SQL migrations
 COPY --from=builder /app/web/migrate-dist ./.next/standalone/web/migrate-dist
 COPY --from=builder /app/web/migrations ./.next/standalone/web/migrations
+
+# Copy Python tools
+COPY --from=builder /app/web/align_py ./.next/standalone/web/align_py
 
 # WASM files aren't statically imported, so esbuild doesn't find them and they need to be manually copied over
 COPY --from=builder /app/node_modules/@echogarden/speex-resampler-wasm/wasm/*.wasm ./.next/standalone/web/work-dist/

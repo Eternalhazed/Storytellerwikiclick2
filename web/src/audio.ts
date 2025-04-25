@@ -5,7 +5,7 @@ import { extname } from "node:path"
 import { copyFile } from "node:fs/promises"
 import { logger } from "./logging"
 import { lookup } from "mime-types"
-import { promisify } from "util"
+import { promisify } from "node:util"
 
 const execPromise = promisify(exec)
 

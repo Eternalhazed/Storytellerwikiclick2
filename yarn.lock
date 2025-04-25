@@ -8455,6 +8455,7 @@ __metadata:
     date-fns: "npm:^3.6.0"
     echogarden: "npm:^2.3.1"
     esbuild: "npm:^0.23.0"
+    iso-639-3: "npm:^3.0.1"
     jsonwebtoken: "npm:^9.0.2"
     match-sorter: "npm:^6.3.4"
     memoize: "npm:^10.0.0"
@@ -18653,6 +18654,13 @@ __metadata:
   version: 3.1.1
   resolution: "isexe@npm:3.1.1"
   checksum: 10c0/9ec257654093443eb0a528a9c8cbba9c0ca7616ccb40abd6dde7202734d96bb86e4ac0d764f0f8cd965856aacbff2f4ce23e730dc19dfb41e3b0d865ca6fdcc7
+  languageName: node
+  linkType: hard
+
+"iso-639-3@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "iso-639-3@npm:3.0.1"
+  checksum: 10c0/ecc2974a574817656e32fc471cb4b0a5ec27ec74c74b5cabec31dab582f55f11812e60b8b7c94bad3f170a14d560bb298aed6ec45270653875e87e02107ee8d3
   languageName: node
   linkType: hard
 

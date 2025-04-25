@@ -7,4 +7,3 @@ node migrate-dist/migrate.cjs
 
 # Start the server and replace the shell with the server process
 exec node server.js
-

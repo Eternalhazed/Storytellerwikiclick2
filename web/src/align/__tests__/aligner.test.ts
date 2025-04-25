@@ -1,11 +1,11 @@
 import { describe, it } from "node:test"
 import { Epub, XmlElement } from "@smoores/epub"
 import { join } from "node:path"
-import { Synchronizer } from "../synchronizer"
+import { Aligner } from "../aligner"
 import transcription from "../../__fixtures__/mobydick_001_002_melville.json"
 import { StorytellerTranscription } from "../getSentenceRanges"
 import assert from "node:assert"
-import { SyncCache } from "../syncCache"
+import { AlignCache } from "../alignCache"
 import { TimelineEntry } from "echogarden/dist/utilities/Timeline"
 
 const stTranscription: StorytellerTranscription = {
@@ -21,19 +21,17 @@ const stTranscription: StorytellerTranscription = {
   })),
 }
 
-void describe("Synchronizer", () => {
+void describe("Aligner", () => {
   void it("synchronizes an epub", async () => {
     const epub = await Epub.from(join("src", "__fixtures__", "moby-dick.epub"))
     const audiofiles = [
       join("src", "__fixtures__", "mobydick_001_002_melville.mp3"),
     ]
-    const syncCache = await SyncCache.init(
+    const syncCache = await AlignCache.init(
       join("src", "__fixtures__", "__output__", "moby-dick-cache.json"),
     )
-    const synchronizer = new Synchronizer(epub, syncCache, audiofiles, [
-      stTranscription,
-    ])
-    await synchronizer.syncBook()
+    const aligner = new Aligner(epub, syncCache, audiofiles, [stTranscription])
+    await aligner.alignBook()
 
     const manifest = await epub.getManifest()
 
