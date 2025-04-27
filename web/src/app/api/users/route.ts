@@ -1,4 +1,4 @@
-import { UserPermissions } from "@/apiModels"
+import { InviteAccept } from "@/apiModels"
 import {
   createAccessToken,
   getAccessTokenExpireDate,
@@ -6,13 +6,17 @@ import {
   withHasPermission,
 } from "@/auth"
 import { verifyInvite } from "@/database/invites"
-import { createUser, getUsers } from "@/database/users"
+import { createUser, getUsers, UserPermissionSet } from "@/database/users"
 import { NextRequest, NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
 
-export const GET = withHasPermission("user_list")(() => {
-  const users = getUsers()
+/**
+ * @summary List all users
+ * @desc '
+ */
+export const GET = withHasPermission("userList")(async () => {
+  const users = await getUsers()
   return NextResponse.json(
     users.map((user) => ({
       uuid: user.uuid,
@@ -20,37 +24,34 @@ export const GET = withHasPermission("user_list")(() => {
       username: user.username,
       email: user.email,
       permissions: {
-        book_create: user.permissions.bookCreate,
-        book_delete: user.permissions.bookDelete,
-        book_download: user.permissions.bookDownload,
-        book_list: user.permissions.bookList,
-        book_process: user.permissions.bookProcess,
-        book_read: user.permissions.bookRead,
-        book_update: user.permissions.bookUpdate,
-        invite_delete: user.permissions.inviteDelete,
-        invite_list: user.permissions.inviteList,
-        settings_update: user.permissions.settingsUpdate,
-        user_create: user.permissions.userCreate,
-        user_delete: user.permissions.userDelete,
-        user_list: user.permissions.userList,
-        user_read: user.permissions.userRead,
-        user_update: user.permissions.userUpdate,
-      } satisfies UserPermissions,
+        bookCreate: user.permissions?.bookCreate ?? false,
+        bookDelete: user.permissions?.bookDelete ?? false,
+        bookDownload: user.permissions?.bookDownload ?? false,
+        bookList: user.permissions?.bookList ?? false,
+        bookProcess: user.permissions?.bookProcess ?? false,
+        bookRead: user.permissions?.bookRead ?? false,
+        bookUpdate: user.permissions?.bookUpdate ?? false,
+        inviteDelete: user.permissions?.inviteDelete ?? false,
+        inviteList: user.permissions?.inviteList ?? false,
+        settingsUpdate: user.permissions?.settingsUpdate ?? false,
+        userCreate: user.permissions?.userCreate ?? false,
+        userDelete: user.permissions?.userDelete ?? false,
+        userList: user.permissions?.userList ?? false,
+        userRead: user.permissions?.userRead ?? false,
+        userUpdate: user.permissions?.userUpdate ?? false,
+      } satisfies UserPermissionSet,
     })),
   )
 })
 
-type InviteAccept = {
-  username: string
-  full_name: string
-  email: string
-  password: string
-  invite_key: string
-}
-
+/**
+ * @summary Create a user from an invite
+ * @desc Invite keys can only be used once, and the user's email
+ *       must match the email used to create the invite.
+ */
 export async function POST(request: NextRequest) {
   const invite = (await request.json()) as InviteAccept
-  const verified = verifyInvite(invite.email, invite.invite_key)
+  const verified = await verifyInvite(invite.email, invite.inviteKey)
   if (!verified) {
     return NextResponse.json(
       {
@@ -62,12 +63,12 @@ export async function POST(request: NextRequest) {
 
   const hashedPassword = await hashPassword(invite.password)
 
-  createUser(
+  await createUser(
     invite.username,
-    invite.full_name,
+    invite.fullName,
     invite.email,
     hashedPassword,
-    invite.invite_key,
+    invite.inviteKey,
   )
 
   const accessTokenExpires = getAccessTokenExpireDate()

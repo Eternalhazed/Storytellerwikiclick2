@@ -1,7 +1,5 @@
 import axios, { AxiosProgressEvent } from "axios"
 import {
-  Body_login_token_post,
-  BookAuthor,
   BookDetail,
   Invite,
   InviteAccept,
@@ -9,9 +7,10 @@ import {
   Settings,
   Token,
   User,
-  UserPermissions,
   UserRequest,
 } from "./apiModels"
+import { UserPermissionSet } from "./database/users"
+import { AuthorRelation, BookUpdate } from "./database/books"
 
 export class ApiClientError extends Error {
   constructor(
@@ -38,7 +37,7 @@ export class ApiClient {
   }
 
   getSyncedDownloadUrl(bookUuid: string) {
-    return `${this.rootPath}/books/${bookUuid}/synced`
+    return `${this.rootPath}/books/${bookUuid}/aligned`
   }
 
   getCoverUrl(bookUuid: string, audio = false) {
@@ -67,7 +66,7 @@ export class ApiClient {
     return true
   }
 
-  async login(creds: Body_login_token_post): Promise<Token> {
+  async login(creds: { username: string; password: string }): Promise<Token> {
     const formData = new FormData()
     formData.set("username", creds.username)
     formData.set("password", creds.password)
@@ -253,7 +252,10 @@ export class ApiClient {
     }
   }
 
-  async updateUser(uuid: string, permissions: UserPermissions): Promise<void> {
+  async updateUser(
+    uuid: string,
+    permissions: UserPermissionSet,
+  ): Promise<void> {
     const url = new URL(`${this.rootPath}/users/${uuid}`, this.origin)
 
     const response = await fetch(url, {
@@ -303,7 +305,7 @@ export class ApiClient {
     return settings
   }
 
-  async updateSettings(settings: Required<Settings>) {
+  async updateSettings(settings: Settings) {
     const url = new URL(`${this.rootPath}/settings`, this.origin)
 
     const response = await fetch(url, {
@@ -404,8 +406,8 @@ export class ApiClient {
         method: "POST",
         headers: { ...this.getHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({
-          epub_path: epubFile,
-          audio_paths: audioFiles,
+          epubPath: epubFile,
+          audioPaths: audioFiles,
         }),
       })
 
@@ -418,8 +420,8 @@ export class ApiClient {
     const response = await axios.postForm<BookDetail>(
       url.toString(),
       {
-        epub_file: epubFile,
-        audio_files: audioFiles,
+        epubFile: epubFile,
+        audioFiles: audioFiles,
       },
       {
         formSerializer: { indexes: null },
@@ -436,28 +438,6 @@ export class ApiClient {
     }
 
     return response.data
-  }
-
-  async uploadBookAudio(
-    bookUuid: string,
-    files: FileList,
-    onUploadProgress: (progressEvent: AxiosProgressEvent) => void,
-  ): Promise<void> {
-    const url = new URL(`${this.rootPath}/books/${bookUuid}/audio`, this.origin)
-
-    const response = await axios.postForm<BookDetail>(
-      url.toString(),
-      { files },
-      {
-        formSerializer: { indexes: null },
-        withCredentials: true,
-        onUploadProgress,
-      },
-    )
-
-    if (response.status > 299) {
-      throw new ApiClientError(response.status, response.statusText)
-    }
   }
 
   async processBook(bookUuid: string, restart?: boolean): Promise<void> {
@@ -515,30 +495,29 @@ export class ApiClient {
   }
 
   async updateBook(
-    bookUuid: string,
-    title: string,
-    language: string | null,
-    authors: BookAuthor[],
+    update: BookUpdate & { authors: AuthorRelation[] },
     textCover: File | null,
     audioCover: File | null,
   ): Promise<BookDetail> {
-    const url = new URL(`${this.rootPath}/books/${bookUuid}`, this.origin)
+    const url = new URL(`${this.rootPath}/books/${update.uuid}`, this.origin)
 
     const body = new FormData()
-    body.append("title", title)
-    if (language !== null) {
-      body.append("language", language)
+    if (update.title != undefined) {
+      body.append("title", update.title)
     }
-    for (const author of authors) {
+    if (update.language != undefined) {
+      body.append("language", update.language)
+    }
+    for (const author of update.authors) {
       body.append("authors", JSON.stringify(author))
     }
 
     if (textCover !== null) {
-      body.append("text_cover", textCover)
+      body.append("textCover", textCover)
     }
 
     if (audioCover !== null) {
-      body.append("audio_cover", audioCover)
+      body.append("audioCover", audioCover)
     }
 
     const response = await fetch(url, {

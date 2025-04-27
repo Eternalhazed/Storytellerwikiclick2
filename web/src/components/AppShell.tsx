@@ -162,7 +162,7 @@ export function AppShell({ children, version, books }: Props) {
               Version: {version}
             </Text>
             <CurrentBookProgress />
-            {(permissions.book_create || permissions.book_list) && (
+            {(permissions.bookCreate || permissions.bookList) && (
               <NavLink
                 onClick={toggle}
                 component={NextLink}
@@ -172,7 +172,7 @@ export function AppShell({ children, version, books }: Props) {
                 active={pathname === "/"}
               />
             )}
-            {(permissions.user_create || permissions.user_list) && (
+            {(permissions.userCreate || permissions.userList) && (
               <NavLink
                 onClick={toggle}
                 component={NextLink}
@@ -182,7 +182,7 @@ export function AppShell({ children, version, books }: Props) {
                 active={pathname === "/users"}
               />
             )}
-            {permissions.settings_update && (
+            {permissions.settingsUpdate && (
               <NavLink
                 onClick={toggle}
                 component={NextLink}

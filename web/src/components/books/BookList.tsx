@@ -15,7 +15,8 @@ type Props = {
 }
 
 export function BookList({ books: initialBooks }: Props) {
-  const canListBooks = usePermission("book_list")
+  const canListBooks = usePermission("bookList")
+
   const liveBooks = useLiveBooks(initialBooks)
   const { books, onFilterChange, filter, sort, onSortChange } =
     useFilterSortedBooks(liveBooks)

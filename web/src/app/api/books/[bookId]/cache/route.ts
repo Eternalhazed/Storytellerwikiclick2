@@ -7,12 +7,18 @@ type Params = Promise<{
   bookId: string
 }>
 
-export const DELETE = withHasPermission<Params>("book_process")(async (
+/**
+ * @summary Delete cache files for a book
+ *
+ * @desc Cache files are generated during processing. They include
+ *       processed (split and transcoded) audio files, transcriptions, etc.
+ */
+export const DELETE = withHasPermission<Params>("bookProcess")(async (
   request,
   context,
 ) => {
   const { bookId } = await context.params
-  const bookUuid = getBookUuid(bookId)
+  const bookUuid = await getBookUuid(bookId)
   const url = request.nextUrl
   const includeOriginals = typeof url.searchParams.get("originals") === "string"
 
@@ -25,7 +31,7 @@ export const DELETE = withHasPermission<Params>("book_process")(async (
     BookEvents.emit("message", {
       type: "bookUpdated",
       bookUuid,
-      payload: { original_files_exist: false },
+      payload: { originalFilesExist: false },
     })
   }
 

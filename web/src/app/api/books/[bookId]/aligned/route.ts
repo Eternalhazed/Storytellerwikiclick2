@@ -12,12 +12,16 @@ type Params = Promise<{
   bookId: string
 }>
 
-export const GET = withHasPermission<Params>("book_download")(async (
+/**
+ * @summary Get the aligned EPUB file
+ * @desc Supports HTTP range requests for pause-able downloads.
+ */
+export const GET = withHasPermission<Params>("bookDownload")(async (
   request,
   context,
 ) => {
   const { bookId } = await context.params
-  const bookUuid = getBookUuid(bookId)
+  const bookUuid = await getBookUuid(bookId)
   const range = request.headers.get("Range")?.valueOf()
   const ifRange = request.headers.get("If-Range")?.valueOf()
   const filepath = getEpubSyncedFilepath(bookUuid)

@@ -16,14 +16,13 @@ import {
 import { getEpubFilepath, getEpubSyncedFilepath } from "@/assets/paths"
 import { withHasPermission } from "@/auth"
 import {
-  AuthorInput,
+  AuthorRelation,
   deleteBook,
   getBookUuid,
   getBooks,
   updateBook,
 } from "@/database/books"
 import { Epub } from "@smoores/epub"
-import { isProcessing } from "@/work/distributor"
 import { extension } from "mime-types"
 import { NextResponse } from "next/server"
 
@@ -33,12 +32,17 @@ type Params = Promise<{
   bookId: string
 }>
 
-export const PUT = withHasPermission<Params>("book_update")(async (
+/**
+ * @summary Update a book's metadata
+ * @desc Any new metadata will also be encoded in the aligned EPUB file
+ *       itself.
+ */
+export const PUT = withHasPermission<Params>("bookUpdate")(async (
   request,
   context,
 ) => {
   const { bookId } = await context.params
-  const bookUuid = getBookUuid(bookId)
+  const bookUuid = await getBookUuid(bookId)
   const formData = await request.formData()
   const title = formData.get("title")?.valueOf()
   if (typeof title !== "string") {
@@ -61,11 +65,11 @@ export const PUT = withHasPermission<Params>("book_update")(async (
   const authorStrings = formData.getAll("authors")
   const authors = authorStrings.map(
     (authorString) =>
-      JSON.parse(authorString.valueOf() as string) as AuthorInput,
+      JSON.parse(authorString.valueOf() as string) as AuthorRelation,
   )
-  const updated = updateBook(bookUuid, title, language, authors)
+  const updated = await updateBook(bookUuid, { title, language }, { authors })
 
-  const textCover = formData.get("text_cover")?.valueOf()
+  const textCover = formData.get("textCover")?.valueOf()
   if (typeof textCover === "object") {
     const textCoverFile = textCover as File
     const ext = extension(textCoverFile.type)
@@ -74,7 +78,7 @@ export const PUT = withHasPermission<Params>("book_update")(async (
     await persistCustomEpubCover(bookUuid, `Cover.${ext}`, data)
   }
 
-  const audioCover = formData.get("audio_cover")?.valueOf()
+  const audioCover = formData.get("audioCover")?.valueOf()
   if (typeof audioCover === "object") {
     const audioCoverFile = audioCover as File
     const ext = extension(audioCoverFile.type)
@@ -84,9 +88,8 @@ export const PUT = withHasPermission<Params>("book_update")(async (
   }
 
   if (
-    updated.processingStatus?.currentTask ===
-      ProcessingTaskType.SYNC_CHAPTERS &&
-    updated.processingStatus.status === ProcessingTaskStatus.COMPLETED
+    updated.processingTask?.type === ProcessingTaskType.SYNC_CHAPTERS &&
+    updated.processingTask.status === ProcessingTaskStatus.COMPLETED
   ) {
     const syncedEpubPath = getEpubSyncedFilepath(updated.uuid)
     const epub = await Epub.from(syncedEpubPath)
@@ -101,7 +104,7 @@ export const PUT = withHasPermission<Params>("book_update")(async (
     for (const author of updated.authors) {
       await epub.addCreator({
         name: author.name,
-        fileAs: author.fileAs ?? author.name,
+        fileAs: author.fileAs,
         role: author.role ?? "aut",
       })
     }
@@ -117,24 +120,20 @@ export const PUT = withHasPermission<Params>("book_update")(async (
     await epub.writeToFile(syncedEpubPath)
   }
 
-  return NextResponse.json({
-    ...updated,
-    ...(updated.processingStatus && {
-      processing_status: {
-        ...updated.processingStatus,
-        current_task: updated.processingStatus.currentTask,
-      },
-    }),
-  })
+  return NextResponse.json(updated)
 })
 
-export const GET = withHasPermission<Params>("book_read")(async (
+/**
+ * @summary Get metadata for a book
+ * @desc '
+ */
+export const GET = withHasPermission<Params>("bookRead")(async (
   _request,
   context,
 ) => {
   const { bookId } = await context.params
-  const bookUuid = getBookUuid(bookId)
-  const [book] = getBooks([bookUuid])
+  const bookUuid = await getBookUuid(bookId)
+  const [book] = await getBooks([bookUuid])
   if (!book) {
     return NextResponse.json(
       { message: `Could not find book with id ${bookId}` },
@@ -144,8 +143,8 @@ export const GET = withHasPermission<Params>("book_read")(async (
 
   if (!book.language) {
     const synchronized =
-      book.processingStatus?.currentTask === ProcessingTaskType.SYNC_CHAPTERS &&
-      book.processingStatus.status === ProcessingTaskStatus.COMPLETED
+      book.processingTask?.type === ProcessingTaskType.SYNC_CHAPTERS &&
+      book.processingTask.status === ProcessingTaskStatus.COMPLETED
     const epubPath = synchronized
       ? getEpubSyncedFilepath(book.uuid)
       : getEpubFilepath(book.uuid)
@@ -158,29 +157,26 @@ export const GET = withHasPermission<Params>("book_read")(async (
 
   return NextResponse.json({
     ...book,
-    original_files_exist: (
+    originalFilesExist: (
       await Promise.all([
         originalEpubExists(book.uuid),
         originalAudioExists(book.uuid),
       ])
     ).every((originalsExist) => originalsExist),
-    ...(book.processingStatus && {
-      processing_status: {
-        ...book.processingStatus,
-        current_task: book.processingStatus.currentTask,
-        is_processing: isProcessing(book.uuid),
-      },
-    }),
   })
 })
 
-export const DELETE = withHasPermission<Params>("book_delete")(async (
+/**
+ * @summary Delete a book
+ * @desc Will also delete all files associated with the book from disk.
+ */
+export const DELETE = withHasPermission<Params>("bookDelete")(async (
   _request,
   context,
 ) => {
   const { bookId } = await context.params
-  const bookUuid = getBookUuid(bookId)
-  const [book] = getBooks([bookUuid])
+  const bookUuid = await getBookUuid(bookId)
+  const [book] = await getBooks([bookUuid])
   if (!book) {
     return NextResponse.json(
       { message: `Could not find book with id ${bookId}` },
@@ -188,7 +184,7 @@ export const DELETE = withHasPermission<Params>("book_delete")(async (
     )
   }
 
-  deleteBook(book.uuid)
+  await deleteBook(book.uuid)
   await deleteAssets(book.uuid)
 
   return new Response(null, { status: 204 })

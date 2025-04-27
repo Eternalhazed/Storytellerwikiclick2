@@ -3,7 +3,12 @@ import { subscribeToBookEvents } from "@/events"
 import { NextResponse } from "next/server"
 // import { ReadableStream } from "node:stream/web"
 
-export const GET = withHasPermission("book_list")((request) => {
+/**
+ * @summary Subscribe to updates to the book list
+ * @desc Uses server-sent events to notify subscribers of updates
+ *       to the set of books.
+ */
+export const GET = withHasPermission("bookList")((request) => {
   if (request.headers.get("Accept") !== "text/event-stream") {
     return new NextResponse(null, { status: 405 })
   }

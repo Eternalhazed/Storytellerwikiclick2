@@ -16,10 +16,7 @@ type Props = {
 export function ProcessingItems({ book, synchronized }: Props) {
   const client = useApiClient()
 
-  if (
-    !book.processing_status?.is_processing &&
-    !book.processing_status?.is_queued
-  ) {
+  if (book.processingStatus === null) {
     return (
       <Menu position="left-start">
         <Menu.Target>
@@ -90,7 +87,7 @@ export function ProcessingItems({ book, synchronized }: Props) {
     <Tooltip
       position="right"
       label={
-        book.processing_status.is_queued
+        book.processingStatus === "queued"
           ? "Remove from queue"
           : "Stop processing"
       }
@@ -102,7 +99,7 @@ export function ProcessingItems({ book, synchronized }: Props) {
       >
         <IconProgressX
           aria-label={
-            book.processing_status.is_queued
+            book.processingStatus === "queued"
               ? "Remove from queue"
               : "Stop processing"
           }

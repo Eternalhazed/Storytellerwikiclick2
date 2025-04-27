@@ -8,6 +8,10 @@ type Params = Promise<{
   inviteKey: string
 }>
 
+/**
+ * @summary Get an invite details
+ * @desc '
+ */
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<Params> },
@@ -17,11 +21,15 @@ export async function GET(
   return NextResponse.json(invite)
 }
 
-export const DELETE = withHasPermission<Params>("invite_delete")(async (
+/**
+ * @summary Delete an invite
+ * @desc '
+ */
+export const DELETE = withHasPermission<Params>("inviteDelete")(async (
   _request,
   context,
 ) => {
   const { inviteKey } = await context.params
-  deleteInvite(inviteKey)
+  await deleteInvite(inviteKey)
   return new Response(null, { status: 204 })
 })

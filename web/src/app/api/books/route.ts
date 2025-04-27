@@ -7,9 +7,8 @@ import {
   persistEpub,
 } from "@/assets/assets"
 import { withHasPermission } from "@/auth"
-import { createBook, getBooks } from "@/database/books"
+import { createBookFromEpub, getBooks } from "@/database/books"
 import { Epub } from "@smoores/epub"
-import { isProcessing, isQueued } from "@/work/distributor"
 import { NextResponse } from "next/server"
 import { basename, join } from "node:path"
 import busboy from "busboy"
@@ -19,65 +18,62 @@ import { createWriteStream, mkdirSync } from "node:fs"
 import { Readable } from "node:stream"
 import { ReadableStream } from "node:stream/web"
 import { logger } from "@/logging"
+import { isProcessing, isQueued } from "@/work/distributor"
 
 export const dynamic = "force-dynamic"
 
-export const GET = withHasPermission("book_list")(async (request) => {
+/**
+ * @summary List all books in the library
+ * @desc Use the `alignedOnly` param to limit results to books that
+ *       have been aligned by Storyteller successfully.
+ */
+export const GET = withHasPermission("bookList")(async (request) => {
   const url = request.nextUrl
-  const syncedOnly = url.searchParams.get("synced")
+  const alignedOnly = url.searchParams.get("aligned")
 
-  const books = await Promise.all(
-    getBooks(null, syncedOnly !== null).map(async (book) => {
-      return {
-        ...book,
-        original_files_exist: (
-          await Promise.all([
-            originalEpubExists(book.uuid),
-            originalAudioExists(book.uuid),
-          ])
-        ).every((originalsExist) => originalsExist),
-      }
-    }),
-  )
+  const books = await getBooks(null, alignedOnly !== null)
 
   return NextResponse.json(
-    books.reverse().map((book) => ({
-      ...book,
-      ...(book.processingStatus && {
-        processing_status: {
-          ...book.processingStatus,
-          current_task: book.processingStatus.currentTask,
-          is_processing: isProcessing(book.uuid),
-          is_queued: isQueued(book.uuid),
-        },
+    await Promise.all(
+      books.map(async (book) => {
+        return {
+          ...book,
+          originalFilesExist: (
+            await Promise.all([
+              originalEpubExists(book.uuid),
+              originalAudioExists(book.uuid),
+            ])
+          ).every((originalsExist) => originalsExist),
+          processingStatus: isProcessing(book.uuid)
+            ? "processing"
+            : isQueued(book.uuid)
+              ? "queued"
+              : null,
+        }
       }),
-    })),
+    ),
   )
 })
 
-export const POST = withHasPermission("book_create")(async (request) => {
+/**
+ * @summary Create a new book
+ * @desc A new book is created from an EPUB file and some number of
+ *       audiobook files. These can either be sent in the request, or
+ *       the request can specify server-side filepaths to find the
+ *       input files.
+ */
+export const POST = withHasPermission("bookCreate")(async (request) => {
   if (request.headers.get("Content-Type") === "application/json") {
-    const { epub_path: epubPath, audio_paths: audioPaths } =
-      (await request.json()) as {
-        epub_path: string
-        audio_paths: string[]
-      }
+    const { epubPath, audioPaths } = (await request.json()) as {
+      epubPath: string
+      audioPaths: string[]
+    }
 
     try {
       const epub = await Epub.from(epubPath)
-      const title = await epub.getTitle()
-      const authors = await epub.getCreators()
-      const language = await epub.getLanguage()
-
-      const book = createBook(
-        title ?? basename(epubPath).replace(".epub", ""),
-        language?.toString() ?? null,
-        authors.map((author) => ({
-          name: author.name,
-          role: author.role ?? null,
-          fileAs: author.fileAs ?? author.name,
-          uuid: "",
-        })),
+      const book = await createBookFromEpub(
+        epub,
+        basename(epubPath).replace(".epub", ""),
       )
       await linkEpub(book.uuid, epubPath)
       await linkAudio(book.uuid, audioPaths)
@@ -145,19 +141,9 @@ export const POST = withHasPermission("book_create")(async (request) => {
 
   const epub = await Epub.from(paths.epubFile)
 
-  const title = await epub.getTitle()
-  const authors = await epub.getCreators()
-  const language = await epub.getLanguage()
-
-  const book = createBook(
-    title ?? basename(paths.epubFile).replace(".epub", ""),
-    language?.toString() ?? null,
-    authors.map((author) => ({
-      name: author.name,
-      role: author.role ?? null,
-      fileAs: author.fileAs ?? author.name,
-      uuid: "",
-    })),
+  const book = await createBookFromEpub(
+    epub,
+    basename(paths.epubFile).replace(".epub", ""),
   )
   await persistEpub(book.uuid, paths.epubFile)
   await persistAudio(book.uuid, paths.audioFiles)

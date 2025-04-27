@@ -7,14 +7,18 @@ type Params = Promise<{
   inviteKey: string
 }>
 
-export const POST = withHasPermission<Params>("user_create")(async (
+/**
+ * @summary Send an invite email
+ * @desc '
+ */
+export const POST = withHasPermission<Params>("userCreate")(async (
   _request,
   context,
 ) => {
   const { inviteKey } = await context.params
   const key = inviteKey
 
-  const invite = getInvite(key)
+  const invite = await getInvite(key)
 
   await sendInvite(invite.email, key)
 

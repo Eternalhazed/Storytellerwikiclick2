@@ -3,6 +3,7 @@ import {
   ProcessingTaskType,
   ProcessingTaskStatus,
 } from "@/apiModels/models/ProcessingStatus"
+import { ProcessingTask } from "@/database/processingTasks"
 import { BookEvent } from "@/events"
 import { useState, useEffect } from "react"
 
@@ -33,89 +34,80 @@ export function useLiveBooks(initialBooks: BookDetail[] = []) {
             case "processingQueued": {
               return {
                 ...book,
-                processing_status: {
-                  is_queued: true,
-                  is_processing: false,
-                  current_task: ProcessingTaskType.SPLIT_CHAPTERS,
+                processingStatus: "queued" as const,
+                processingTask: {
+                  type: ProcessingTaskType.SPLIT_CHAPTERS,
                   progress: 0,
                   status: ProcessingTaskStatus.STARTED,
-                },
+                } as ProcessingTask,
               }
             }
             case "processingCompleted": {
               return {
                 ...book,
-                processing_status: {
-                  is_processing: false,
-                  is_queued: false,
-                  current_task: ProcessingTaskType.SYNC_CHAPTERS,
+                processingStatus: null,
+                processingTask: {
+                  type: ProcessingTaskType.SYNC_CHAPTERS,
                   progress: 1,
                   status: ProcessingTaskStatus.COMPLETED,
-                },
+                } as ProcessingTask,
               }
             }
             case "processingStopped": {
               return {
                 ...book,
-                processing_status: {
-                  is_processing: false,
-                  is_queued: false,
-                  current_task:
-                    book.processing_status?.current_task ??
+                processingStatus: null,
+                processingTask: {
+                  type:
+                    book.processingTask?.type ??
                     ProcessingTaskType.SPLIT_CHAPTERS,
-                  progress: book.processing_status?.progress ?? 0,
-                  status: ProcessingTaskStatus.STARTED,
-                },
+                  progress: book.processingTask?.progress ?? 0,
+                  status:
+                    book.processingTask?.status ?? ProcessingTaskStatus.STARTED,
+                } as ProcessingTask,
               }
             }
             case "processingFailed": {
               return {
                 ...book,
-                processing_status: {
-                  is_processing: false,
-                  is_queued: false,
-                  current_task: ProcessingTaskType.SYNC_CHAPTERS,
-                  progress: 1,
+                processingStatus: null,
+                processingTask: {
+                  ...book.processingTask,
                   status: ProcessingTaskStatus.IN_ERROR,
-                },
+                } as ProcessingTask,
               }
             }
             case "processingStarted": {
               return {
                 ...book,
-                processing_status: {
-                  is_processing: true,
-                  is_queued: false,
-                  current_task: ProcessingTaskType.SPLIT_CHAPTERS,
+                processingStatus: "processing" as const,
+                processingTask: {
+                  type: ProcessingTaskType.SPLIT_CHAPTERS,
                   progress: 0,
                   status: ProcessingTaskStatus.STARTED,
-                },
+                } as ProcessingTask,
               }
             }
             case "taskProgressUpdated": {
               return {
                 ...book,
-                processing_status: {
-                  is_processing: true,
-                  is_queued: false,
-                  current_task:
-                    book.processing_status?.current_task ??
-                    ProcessingTaskType.SPLIT_CHAPTERS,
+                processingStatus: "processing" as const,
+                processingTask: {
+                  ...book.processingTask,
                   progress: data.payload.progress,
                   status: ProcessingTaskStatus.STARTED,
-                },
+                } as ProcessingTask,
               }
             }
             case "taskTypeUpdated": {
               return {
                 ...book,
-                processing_status: {
-                  is_processing: true,
-                  is_queued: false,
-                  current_task: data.payload.taskType,
-                  progress: 0,
+                processingStatus: "processing" as const,
+                processingTask: {
+                  ...book.processingTask,
+                  type: data.payload.taskType,
                   status: ProcessingTaskStatus.STARTED,
-                },
+                } as ProcessingTask,
               }
             }
             default: {

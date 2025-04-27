@@ -1,46 +1,51 @@
-import { UserPermissions } from "@/apiModels"
 import { withVerifyToken } from "@/auth"
-import { getUser } from "@/database/users"
+import { getUser, UserPermissionSet } from "@/database/users"
 import { NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
 
-export const GET = withVerifyToken((_request, _context, _token, tokenData) => {
-  const user = getUser(tokenData.username)
+/**
+ * @summary Get the current user details
+ * @desc '
+ */
+export const GET = withVerifyToken(
+  async (_request, _context, _token, tokenData) => {
+    const user = await getUser(tokenData.username)
 
-  if (!user) {
-    return NextResponse.json(
-      {
-        message: "Invalid authentication credentials",
-      },
-      {
-        status: 401,
-        headers: { "WWW-Authenticate": "Bearer" },
-      },
-    )
-  }
+    if (!user) {
+      return NextResponse.json(
+        {
+          message: "Invalid authentication credentials",
+        },
+        {
+          status: 401,
+          headers: { "WWW-Authenticate": "Bearer" },
+        },
+      )
+    }
 
-  return NextResponse.json({
-    uuid: user.uuid,
-    full_name: user.fullName,
-    username: user.username,
-    email: user.email,
-    permissions: {
-      book_create: user.permissions.bookCreate,
-      book_delete: user.permissions.bookDelete,
-      book_download: user.permissions.bookDownload,
-      book_list: user.permissions.bookList,
-      book_process: user.permissions.bookProcess,
-      book_read: user.permissions.bookRead,
-      book_update: user.permissions.bookUpdate,
-      invite_delete: user.permissions.inviteDelete,
-      invite_list: user.permissions.inviteList,
-      settings_update: user.permissions.settingsUpdate,
-      user_create: user.permissions.userCreate,
-      user_delete: user.permissions.userDelete,
-      user_list: user.permissions.userList,
-      user_read: user.permissions.userRead,
-      user_update: user.permissions.userUpdate,
-    } satisfies UserPermissions,
-  })
-})
+    return NextResponse.json({
+      uuid: user.uuid,
+      full_name: user.fullName,
+      username: user.username,
+      email: user.email,
+      permissions: {
+        bookCreate: user.permissions?.bookCreate ?? false,
+        bookDelete: user.permissions?.bookDelete ?? false,
+        bookDownload: user.permissions?.bookDownload ?? false,
+        bookList: user.permissions?.bookList ?? false,
+        bookProcess: user.permissions?.bookProcess ?? false,
+        bookRead: user.permissions?.bookRead ?? false,
+        bookUpdate: user.permissions?.bookUpdate ?? false,
+        inviteDelete: user.permissions?.inviteDelete ?? false,
+        inviteList: user.permissions?.inviteList ?? false,
+        settingsUpdate: user.permissions?.settingsUpdate ?? false,
+        userCreate: user.permissions?.userCreate ?? false,
+        userDelete: user.permissions?.userDelete ?? false,
+        userList: user.permissions?.userList ?? false,
+        userRead: user.permissions?.userRead ?? false,
+        userUpdate: user.permissions?.userUpdate ?? false,
+      } satisfies UserPermissionSet,
+    })
+  },
+)

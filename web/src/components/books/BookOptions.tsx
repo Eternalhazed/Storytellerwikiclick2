@@ -44,12 +44,12 @@ export function BookOptions({ book, synchronized }: Props) {
         </Stack>
       </Modal>
       <Stack>
-        {permissions.book_process &&
-          book.processing_status &&
-          book.original_files_exist && (
+        {permissions.bookProcess &&
+          book.processingTask &&
+          book.originalFilesExist && (
             <ProcessingItems synchronized={synchronized} book={book} />
           )}
-        {permissions.book_delete && (
+        {permissions.bookDelete && (
           <ActionIcon variant="subtle" color="red" onClick={open}>
             <Tooltip position="right" label="Delete book">
               <IconTrash aria-label="Delete" />

@@ -48,8 +48,25 @@ export function useFilterSortedBooks(books: BookDetail[]) {
                 ? -1
                 : 0
           }
+          case "align-time": {
+            const firstAlignedAt = first.alignedAt
+            if (!firstAlignedAt) return -1
+            const secondAlignedAt = second.alignedAt
+            if (!secondAlignedAt) return 1
+            return (
+              new Date(firstAlignedAt).valueOf() -
+              new Date(secondAlignedAt).valueOf()
+            )
+          }
+          case "create-time": {
+            const firstAlignedAt = first.createdAt
+            const secondAlignedAt = second.createdAt
+            return (
+              new Date(firstAlignedAt).valueOf() -
+              new Date(secondAlignedAt).valueOf()
+            )
+          }
         }
-        return 0
       }),
     [filtered, sort],
   )

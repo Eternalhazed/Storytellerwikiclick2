@@ -27,23 +27,23 @@ export function BookStatus({ book }: Props) {
   const permissions = usePermissions()
 
   const synchronized =
-    book.processing_status?.current_task === ProcessingTaskType.SYNC_CHAPTERS &&
-    book.processing_status.status === ProcessingTaskStatus.COMPLETED
+    book.processingTask?.type === ProcessingTaskType.SYNC_CHAPTERS &&
+    book.processingTask.status === ProcessingTaskStatus.COMPLETED
 
   const userFriendlyTaskType =
-    book.processing_status &&
+    book.processingTask &&
     ProcessingTaskTypes[
-      book.processing_status.current_task as keyof typeof ProcessingTaskTypes
+      book.processingTask.type as keyof typeof ProcessingTaskTypes
     ]
 
-  if (!permissions.book_read) return null
+  if (!permissions.bookRead) return null
 
   return (
     <Paper className="max-w-[600px]">
       <Group justify="space-between" wrap="nowrap" align="flex-end">
         <Stack justify="space-between" className="grow">
           {synchronized ? (
-            permissions.book_download && (
+            permissions.bookDownload && (
               <a
                 href={client.getSyncedDownloadUrl(book.uuid)}
                 className="text-st-orange-600 underline"
@@ -51,21 +51,21 @@ export function BookStatus({ book }: Props) {
                 Download
               </a>
             )
-          ) : book.processing_status ? (
-            book.processing_status.is_queued ? (
+          ) : book.processingTask ? (
+            book.processingStatus === "queued" ? (
               "Queued"
             ) : (
               <Box>
                 {userFriendlyTaskType}
-                {book.processing_status.is_processing ? "" : " (stopped)"}
-                {book.processing_status.status ===
+                {book.processingStatus === "processing" ? "" : " (stopped)"}
+                {book.processingTask.status ===
                   ProcessingTaskStatus.IN_ERROR && <ProcessingFailedMessage />}
                 <Progress
-                  value={Math.floor(book.processing_status.progress * 100)}
+                  value={Math.floor(book.processingTask.progress * 100)}
                 />
               </Box>
             )
-          ) : permissions.book_process ? (
+          ) : permissions.bookProcess ? (
             <Button
               className="self-start"
               onClick={() => {

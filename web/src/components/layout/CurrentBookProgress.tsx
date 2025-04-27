@@ -9,16 +9,15 @@ export function CurrentBookProgress() {
   const books = useBooks()
 
   const currentBook = books.find(
-    (book) => book.processing_status?.is_processing,
+    (book) => book.processingStatus === "processing",
   )
 
   if (!currentBook) return null
 
   const userFriendlyTaskType =
-    currentBook.processing_status &&
+    currentBook.processingTask &&
     ProcessingTaskTypes[
-      currentBook.processing_status
-        .current_task as keyof typeof ProcessingTaskTypes
+      currentBook.processingTask.type as keyof typeof ProcessingTaskTypes
     ]
 
   return (
@@ -46,7 +45,7 @@ export function CurrentBookProgress() {
             sections={[
               {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                value: currentBook.processing_status!.progress * 100,
+                value: currentBook.processingTask!.progress * 100,
                 color: "white",
               },
             ]}

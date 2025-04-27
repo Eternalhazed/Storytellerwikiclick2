@@ -8,12 +8,17 @@ type Params = Promise<{
   bookId: string
 }>
 
-export const POST = withHasPermission<Params>("book_process")(async (
+/**
+ * @summary Begin processing for a book
+ * @desc Use the `restart` param to delete cache files. This will
+ *       force processing to restart from scratch.
+ */
+export const POST = withHasPermission<Params>("bookProcess")(async (
   request,
   context,
 ) => {
   const { bookId } = await context.params
-  const bookUuid = getBookUuid(bookId)
+  const bookUuid = await getBookUuid(bookId)
   const url = request.nextUrl
   const restart = typeof url.searchParams.get("restart") === "string"
 
@@ -22,12 +27,16 @@ export const POST = withHasPermission<Params>("book_process")(async (
   return new Response(null, { status: 204 })
 })
 
-export const DELETE = withHasPermission<Params>("book_process")(async (
+/**
+ * @summary Cancel processing for a book
+ * @desc '
+ */
+export const DELETE = withHasPermission<Params>("bookProcess")(async (
   _request,
   context,
 ) => {
   const { bookId } = await context.params
-  const bookUuid = getBookUuid(bookId)
+  const bookUuid = await getBookUuid(bookId)
 
   cancelProcessing(bookUuid)
 
