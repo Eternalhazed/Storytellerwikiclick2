@@ -14,7 +14,7 @@ type Params = Promise<{
 }>
 
 /**
- * @summary Get the cover image for a book
+ * @summary deprecated - Get the cover image for a book
  * @desc Use the `audio` search param to get the audio cover. The
  *       default is to get the text cover.
  */

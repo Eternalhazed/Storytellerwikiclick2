@@ -3,7 +3,7 @@ import { withVerifyToken } from "@/auth"
 export const dynamic = "force-dynamic"
 
 /**
- * @summary Verify that an auth token is still valid
+ * @summary deprecated - Verify that an auth token is still valid
  * @desc '
  */
 export const GET = withVerifyToken(() => {

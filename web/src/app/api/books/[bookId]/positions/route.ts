@@ -14,7 +14,7 @@ type Params = Promise<{
 }>
 
 /**
- * @summary Update the current position for a book
+ * @summary deprecated - Update the current position for a book
  * @desc If the timestamp in the provided position is earlier
  *       than the current stored position, this will return a 409
  *       response to indicate that the position was not updated,
@@ -50,7 +50,7 @@ export const POST = withHasPermission<Params>("bookRead")(async (
 })
 
 /**
- * @summary Get the current position for a book
+ * @summary deprecated - Get the current position for a book
  * @desc '
  */
 export const GET = withHasPermission<Params>("bookRead")(async (

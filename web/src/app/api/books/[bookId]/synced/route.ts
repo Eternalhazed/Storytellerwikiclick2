@@ -13,7 +13,7 @@ type Params = Promise<{
 }>
 
 /**
- * @summary Get the aligned EPUB file
+ * @summary deprecated - Get the aligned EPUB file
  * @desc Supports HTTP range requests for pause-able downloads.
  */
 export const GET = withHasPermission<Params>("bookDownload")(async (

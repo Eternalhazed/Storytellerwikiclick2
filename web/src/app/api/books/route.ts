@@ -3,7 +3,7 @@ import { getBooks } from "@/database/books"
 import { NextResponse } from "next/server"
 
 /**
- * @summary List all books in the library
+ * @summary deprecated - List all books in the library
  * @desc Use the `synced` param to limit results to books that
  *       have been aligned by Storyteller successfully.
  */

@@ -15,7 +15,7 @@ type Params = Promise<{
 }>
 
 /**
- * @summary Get metadata for a book
+ * @summary deprecated - Get metadata for a book
  * @desc '
  */
 export const GET = withHasPermission<Params>("bookRead")(async (
