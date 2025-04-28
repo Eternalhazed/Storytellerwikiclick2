@@ -21,9 +21,10 @@ export function CurrentBookProgress() {
     ]
 
   return (
-    <Group bg="st-orange" wrap="nowrap">
+    <Group wrap="nowrap" className="bg-st-orange-50 relative">
       <Image
         component={NextImage}
+        className="rounded-r-md"
         h={150}
         w={98}
         height={150}
@@ -32,27 +33,27 @@ export function CurrentBookProgress() {
         aria-hidden
         src={client.getCoverUrl(currentBook.uuid)}
       />
-      <Stack className="my-4 self-stretch" justify="space-between">
-        <Title order={3} size="lg">
+      <Stack className="mb-1 self-stretch" gap={2} justify="flex-end">
+        <Title order={3} size="md">
           {currentBook.title}
         </Title>
-        <Group>
-          <RingProgress
-            size={40}
-            thickness={4}
-            roundCaps
-            rootColor="gray"
-            sections={[
-              {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                value: currentBook.processingTask!.progress * 100,
-                color: "white",
-              },
-            ]}
-          />
-          <Text>{userFriendlyTaskType}</Text>
-        </Group>
+
+        <Text size="sm">{userFriendlyTaskType}</Text>
       </Stack>
+      <RingProgress
+        className="absolute right-2 top-2"
+        size={40}
+        thickness={4}
+        roundCaps
+        rootColor="st-orange.2"
+        sections={[
+          {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            value: currentBook.processingTask!.progress * 100,
+            color: "st-orange.8",
+          },
+        ]}
+      />
     </Group>
   )
 }

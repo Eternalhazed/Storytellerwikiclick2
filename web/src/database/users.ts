@@ -80,7 +80,23 @@ export async function getUsers() {
       jsonObjectFrom(
         eb
           .selectFrom("userPermission")
-          .selectAll("userPermission")
+          .select([
+            "bookCreate",
+            "bookDelete",
+            "bookRead",
+            "bookProcess",
+            "bookDownload",
+            "bookUpdate",
+            "bookList",
+            "inviteList",
+            "inviteDelete",
+            "userCreate",
+            "userList",
+            "userRead",
+            "userDelete",
+            "userUpdate",
+            "settingsUpdate",
+          ])
           .whereRef("user.userPermissionUuid", "=", "userPermission.uuid"),
       ).as("permissions"),
     ])

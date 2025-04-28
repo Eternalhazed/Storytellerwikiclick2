@@ -99,7 +99,7 @@ export async function startProcessing(bookUuid: UUID, restart: boolean) {
       )
       queue.splice(index, 1)
       await resetProcessingTasksForBook(event.bookUuid)
-      const currentTasks = getProcessingTasksForBook(event.bookUuid)
+      const currentTasks = await getProcessingTasksForBook(event.bookUuid)
       port2.postMessage(currentTasks)
     }
     if (event.type === "taskTypeUpdated") {

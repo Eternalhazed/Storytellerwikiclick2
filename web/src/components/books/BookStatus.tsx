@@ -10,6 +10,7 @@ import {
   ProcessingTaskType,
 } from "@/apiModels/models/ProcessingStatus"
 import { Paper, Group, Stack, Box, Text, Button, Progress } from "@mantine/core"
+import { useLiveBooks } from "@/hooks/useLiveBooks"
 
 type Props = {
   book: BookDetail
@@ -21,8 +22,10 @@ export const ProcessingTaskTypes = {
   TRANSCRIBE_CHAPTERS: "Transcribing tracks",
 }
 
-export function BookStatus({ book }: Props) {
+export function BookStatus({ book: initialBook }: Props) {
   const client = useApiClient()
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const book = useLiveBooks([initialBook])[0]!
 
   const permissions = usePermissions()
 

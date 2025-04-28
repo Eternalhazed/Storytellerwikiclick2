@@ -22,6 +22,7 @@ import {
   getBooks,
   updateBook,
 } from "@/database/books"
+import { isProcessing, isQueued } from "@/work/distributor"
 import { Epub } from "@smoores/epub"
 import { extension } from "mime-types"
 import { NextResponse } from "next/server"
@@ -163,6 +164,11 @@ export const GET = withHasPermission<Params>("bookRead")(async (
         originalAudioExists(book.uuid),
       ])
     ).every((originalsExist) => originalsExist),
+    processingStatus: isProcessing(book.uuid)
+      ? "processing"
+      : isQueued(book.uuid)
+        ? "queued"
+        : null,
   })
 })
 

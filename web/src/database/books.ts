@@ -270,7 +270,7 @@ export async function getBooks(
             "processingTask.updatedAt",
           ])
           .whereRef("processingTask.bookUuid", "=", "book.uuid")
-          .orderBy("processingTask.updatedAt")
+          .orderBy("processingTask.updatedAt", "desc")
           .limit(1),
       ).as("processingTask"),
       jsonObjectFrom(

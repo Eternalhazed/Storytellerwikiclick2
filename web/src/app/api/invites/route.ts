@@ -35,7 +35,7 @@ export const POST = withHasPermission("userCreate")(async (request) => {
  * @summary List all invites
  * @desc '
  */
-export const GET = withHasPermission("inviteList")(() => {
-  const invites = getInvites()
+export const GET = withHasPermission("inviteList")(async () => {
+  const invites = await getInvites()
   return NextResponse.json(invites)
 })
