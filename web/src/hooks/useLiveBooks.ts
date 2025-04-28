@@ -4,32 +4,30 @@ import {
   ProcessingTaskStatus,
 } from "@/apiModels/models/ProcessingStatus"
 import { ProcessingTask } from "@/database/processingTasks"
-import { BookEvent } from "@/events"
 import { useState, useEffect } from "react"
+import { useApiClient } from "./useApiClient"
 
 export function useLiveBooks(initialBooks: BookDetail[] = []) {
+  const client = useApiClient()
   const [books, setBooks] = useState(initialBooks)
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/books/events")
-
-    eventSource.addEventListener("message", (event: MessageEvent<string>) => {
-      const data = JSON.parse(event.data) as BookEvent
+    return client.subscribeToBookEvents((event) => {
       setBooks((books) => {
-        if (data.type === "bookCreated") {
-          return [data.payload, ...books]
+        if (event.type === "bookCreated") {
+          return [event.payload, ...books]
         }
 
-        if (data.type === "bookDeleted") {
-          return books.filter((book) => book.uuid !== data.bookUuid)
+        if (event.type === "bookDeleted") {
+          return books.filter((book) => book.uuid !== event.bookUuid)
         }
 
         const newBooks = books.map((book) => {
-          if (book.uuid !== data.bookUuid) return book
+          if (book.uuid !== event.bookUuid) return book
 
-          switch (data.type) {
+          switch (event.type) {
             case "bookUpdated": {
-              return { ...book, ...data.payload }
+              return { ...book, ...event.payload }
             }
             case "processingQueued": {
               return {
@@ -94,7 +92,7 @@ export function useLiveBooks(initialBooks: BookDetail[] = []) {
                 processingStatus: "processing" as const,
                 processingTask: {
                   ...book.processingTask,
-                  progress: data.payload.progress,
+                  progress: event.payload.progress,
                   status: ProcessingTaskStatus.STARTED,
                 } as ProcessingTask,
               }
@@ -105,7 +103,7 @@ export function useLiveBooks(initialBooks: BookDetail[] = []) {
                 processingStatus: "processing" as const,
                 processingTask: {
                   ...book.processingTask,
-                  type: data.payload.taskType,
+                  type: event.payload.taskType,
                   status: ProcessingTaskStatus.STARTED,
                 } as ProcessingTask,
               }
@@ -118,11 +116,7 @@ export function useLiveBooks(initialBooks: BookDetail[] = []) {
         return newBooks
       })
     })
-
-    return () => {
-      eventSource.close()
-    }
-  }, [])
+  }, [client])
 
   return books
 }
