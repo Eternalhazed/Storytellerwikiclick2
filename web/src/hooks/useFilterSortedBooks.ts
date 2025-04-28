@@ -6,6 +6,42 @@ export type BookSortKey = "title" | "author" | "align-time" | "create-time"
 export type SortDirection = "asc" | "desc"
 export type BookSort = [BookSortKey, SortDirection]
 
+const articlesByLanguage: Record<string, string[]> = {
+  en: ["the ", "a ", "an "],
+  de: [
+    "der ",
+    "die ",
+    "das ",
+    "den ",
+    "dem ",
+    "des ",
+    "ein ",
+    "einen ",
+    "einem ",
+    "eines ",
+    "eine ",
+    "einer ",
+  ],
+  // TODO: Need to confirm whether these should be ignored for sorting
+  // fr: ["le ", "la ", "l'", "les ", "un ", "una ", "des "],
+  // es: ["el ", "la ", "lo ", "los ", "las ", "un ", "una ", "unos ", "unas "],
+  // nl: ["de ", "het ", "een "],
+}
+
+function createComparisonTitle(title: string, locale: Intl.Locale) {
+  const lower = title.toLowerCase()
+  const articles = articlesByLanguage[locale.language]
+
+  if (!articles) return lower
+
+  const leadingArticle = articles.find((article) => lower.startsWith(article))
+  if (leadingArticle) {
+    return lower.slice(leadingArticle.length)
+  }
+
+  return lower
+}
+
 export function useFilterSortedBooks(books: BookDetail[]) {
   const fuse = useMemo(
     () =>
@@ -30,9 +66,17 @@ export function useFilterSortedBooks(books: BookDetail[]) {
         const second = sort[1] === "asc" ? b : a
         switch (sort[0]) {
           case "title": {
-            return first.title.toLowerCase() > second.title.toLowerCase()
+            const firstTitle = createComparisonTitle(
+              first.title,
+              new Intl.Locale(first.language ?? "en"),
+            )
+            const secondTitle = createComparisonTitle(
+              second.title,
+              new Intl.Locale(second.language ?? "en"),
+            )
+            return firstTitle > secondTitle
               ? 1
-              : first.title.toLowerCase() < second.title.toLowerCase()
+              : firstTitle < secondTitle
                 ? -1
                 : 0
           }
