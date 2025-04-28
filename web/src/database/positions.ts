@@ -1,6 +1,44 @@
 import { UUID } from "@/uuid"
 import { getDatabase } from "./connection"
 
+export type ReadiumLocation = {
+  fragments?: string[]
+  progression?: number
+  position?: number
+  totalProgression?: number
+  cssSelector?: string
+  partialCfi?: string
+  domRange?: {
+    start: {
+      cssSelector: string
+      textNodeIndex: number
+      charOffset?: number
+    }
+    end?: {
+      cssSelector: string
+      textNodeIndex: number
+      charOffset?: number
+    }
+  }
+}
+
+export type ReadiumLocator = {
+  href: string
+  type: string
+  title?: string
+  locations?: ReadiumLocation
+  text?: {
+    after?: string
+    before?: string
+    highlight?: string
+  }
+}
+
+export type Position = {
+  locator: ReadiumLocator
+  timestamp: number
+}
+
 export class PositionConflictError extends Error {
   constructor() {
     super("Attempted to write a position older than the current one")
@@ -11,7 +49,7 @@ export class PositionConflictError extends Error {
 export async function upsertPosition(
   userUuid: UUID,
   bookUuid: UUID,
-  locator: unknown,
+  locator: ReadiumLocator,
   timestamp: number,
 ) {
   const db = getDatabase()
@@ -65,7 +103,7 @@ export async function getPosition(userUuid: UUID, bookUuid: UUID) {
     result && {
       userUuid,
       bookUuid,
-      locator: JSON.parse(result.locator) as unknown,
+      locator: JSON.parse(result.locator) as ReadiumLocator,
       timestamp: result.timestamp,
     }
   )
