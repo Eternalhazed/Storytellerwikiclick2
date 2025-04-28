@@ -298,6 +298,8 @@ export async function getBooks(
   })
 }
 
+export type BookWithRelations = NonNullable<Awaited<ReturnType<typeof getBook>>>
+
 export async function getBook(uuid: UUID) {
   const [book] = await getBooks([uuid])
   return book ?? null
