@@ -8,10 +8,10 @@ import { useDisclosure } from "@mantine/hooks"
 
 type Props = {
   book: BookDetail
-  synchronized: boolean
+  aligned: boolean
 }
 
-export function BookOptions({ book, synchronized }: Props) {
+export function BookOptions({ book, aligned }: Props) {
   const [opened, { open, close }] = useDisclosure()
   const client = useApiClient()
 
@@ -47,7 +47,7 @@ export function BookOptions({ book, synchronized }: Props) {
         {permissions.bookProcess &&
           book.processingTask &&
           book.originalFilesExist && (
-            <ProcessingItems synchronized={synchronized} book={book} />
+            <ProcessingItems aligned={aligned} book={book} />
           )}
         {permissions.bookDelete && (
           <ActionIcon variant="subtle" color="red" onClick={open}>

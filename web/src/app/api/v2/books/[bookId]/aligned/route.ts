@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 import { createHash } from "node:crypto"
 import { Epub } from "@smoores/epub"
 import { getEpubSyncedFilepath } from "@/assets/paths"
+import contentDisposition from "content-disposition"
 
 export const dynamic = "force-dynamic"
 
@@ -89,7 +90,9 @@ export const GET = withHasPermission<Params>("bookDownload")(async (
   return new NextResponse(file.createReadStream({ start, end }), {
     status: partialResponse ? 206 : 200,
     headers: {
-      "Content-Disposition": `attachment; filename="${normalizedTitle}.epub"`,
+      "Content-Disposition": contentDisposition(`${title}.epub`, {
+        fallback: `${normalizedTitle}.epub`,
+      }),
       "Content-Type": "application/epub+zip",
       "Content-Length": `${end - start + 1}`,
       "Last-Modified": new Date(stats.mtime).toISOString(),

@@ -37,7 +37,7 @@ export class ApiClient {
       : { Authorization: `Bearer ${this.accessToken}` }
   }
 
-  getSyncedDownloadUrl(bookUuid: string) {
+  getAlignedDownloadUrl(bookUuid: string) {
     return `${this.rootPath}/v2/books/${bookUuid}/aligned`
   }
 

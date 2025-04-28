@@ -10,10 +10,10 @@ import {
 
 type Props = {
   book: BookDetail
-  synchronized: boolean
+  aligned: boolean
 }
 
-export function ProcessingItems({ book, synchronized }: Props) {
+export function ProcessingItems({ book, aligned }: Props) {
   const client = useApiClient()
 
   if (book.processingStatus === null) {
@@ -34,7 +34,7 @@ export function ProcessingItems({ book, synchronized }: Props) {
             onClick={() => client.processBook(book.uuid, false)}
           >
             <IconProgress aria-hidden />{" "}
-            {synchronized ? "Re-process (using cached files)" : "Continue"}
+            {aligned ? "Re-process (using cached files)" : "Continue"}
           </Menu.Item>
           <Menu.Item
             classNames={{
@@ -53,7 +53,7 @@ export function ProcessingItems({ book, synchronized }: Props) {
           >
             <IconReload aria-hidden /> Delete cache files
           </Menu.Item>
-          {synchronized ? (
+          {aligned ? (
             <Menu.Item
               classNames={{
                 itemLabel: "flex gap-2",

@@ -29,7 +29,7 @@ export function BookStatus({ book: initialBook }: Props) {
 
   const permissions = usePermissions()
 
-  const synchronized =
+  const aligned =
     book.processingTask?.type === ProcessingTaskType.SYNC_CHAPTERS &&
     book.processingTask.status === ProcessingTaskStatus.COMPLETED
 
@@ -45,11 +45,12 @@ export function BookStatus({ book: initialBook }: Props) {
     <Paper className="max-w-[600px]">
       <Group justify="space-between" wrap="nowrap" align="flex-end">
         <Stack justify="space-between" className="grow">
-          {synchronized ? (
+          {aligned ? (
             permissions.bookDownload && (
               <a
-                href={client.getSyncedDownloadUrl(book.uuid)}
+                href={client.getAlignedDownloadUrl(book.uuid)}
                 className="text-st-orange-600 underline"
+                download={`${book.title}.epub`}
               >
                 Download
               </a>
@@ -81,7 +82,7 @@ export function BookStatus({ book: initialBook }: Props) {
             <Text>Unprocessed</Text>
           )}
         </Stack>
-        <BookOptions synchronized={synchronized} book={book} />
+        <BookOptions aligned={aligned} book={book} />
       </Group>
     </Paper>
   )
