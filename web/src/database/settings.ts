@@ -1,6 +1,23 @@
 import { getDatabase } from "./connection"
 import { SETTINGS_ROW_NAMES, Settings } from "./settingsTypes"
 
+export function formatTranscriptionEngineDetails(settings: Settings) {
+  let details = settings.transcriptionEngine ?? "whisper.cpp"
+  if (settings.transcriptionEngine === "whisper.cpp") {
+    details += `:${settings.whisperModel ?? "tiny"}`
+  }
+  if (
+    settings.transcriptionEngine === "openai-cloud" &&
+    settings.openAiModelName
+  ) {
+    details += `:${settings.openAiModelName}`
+  }
+  if (settings.transcriptionEngine === "deepgram" && settings.deepgramModel) {
+    details += `:${settings.deepgramModel}`
+  }
+  return details
+}
+
 export async function getSetting<Name extends keyof typeof SETTINGS_ROW_NAMES>(
   name: Name,
 ) {

@@ -13,12 +13,13 @@ import {
   getProcessedAudioFilepath,
   getEpubSyncedFilepath,
 } from "@/assets/paths"
-import { getBooks } from "@/database/books"
+import { getBooks, updateBook } from "@/database/books"
 import {
   NewProcessingTask,
   PROCESSING_TASK_ORDER,
   type ProcessingTask,
 } from "@/database/processingTasks"
+import { formatTranscriptionEngineDetails } from "@/database/settings"
 import { Settings } from "@/database/settingsTypes"
 import { logger } from "@/logging"
 import {
@@ -306,6 +307,11 @@ export default async function processBook({
 
         await epub.writeToFile(getEpubSyncedFilepath(bookUuid))
         await epub.close()
+        await updateBook(book.uuid, {
+          alignedByStorytellerVersion: appVersion,
+          alignedAt: dateTimeString,
+          alignedWith: formatTranscriptionEngineDetails(settings),
+        })
       }
 
       port.postMessage({
