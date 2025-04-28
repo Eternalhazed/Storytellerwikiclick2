@@ -13,7 +13,7 @@ import {
   getProcessedAudioFilepath,
   getEpubSyncedFilepath,
 } from "@/assets/paths"
-import { getBooks, updateBook } from "@/database/books"
+import { getBook, updateBook } from "@/database/books"
 import {
   NewProcessingTask,
   PROCESSING_TASK_ORDER,
@@ -176,7 +176,7 @@ export default async function processBook({
   const remainingTasks = determineRemainingTasks(bookUuid, currentTasks)
 
   // get book info from db
-  const [book] = await getBooks([bookUuid])
+  const book = await getBook(bookUuid)
   if (!book) throw new Error(`Failed to retrieve book with uuid ${bookUuid}`)
   // book reference to use in log
   const bookRefForLog = `"${book.title}" (uuid: ${bookUuid})`
@@ -226,7 +226,7 @@ export default async function processBook({
         logger.info("Transcribing...")
         const epub = await readEpub(bookUuid)
         const title = await epub.getTitle()
-        const [book] = await getBooks([bookUuid])
+        const book = await getBook(bookUuid)
         if (!book)
           throw new Error(`Failed to retrieve book with uuid ${bookUuid}`)
 
@@ -267,7 +267,7 @@ export default async function processBook({
           transcriptions,
         )
         await synchronizer.syncBook(onProgress)
-        const [book] = await getBooks([bookUuid])
+        const book = await getBook(bookUuid)
 
         if (!book)
           throw new Error(`Failed to retrieve book with uuid ${bookUuid}`)

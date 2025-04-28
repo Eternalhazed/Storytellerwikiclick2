@@ -18,8 +18,8 @@ import { withHasPermission } from "@/auth"
 import {
   AuthorRelation,
   deleteBook,
+  getBook,
   getBookUuid,
-  getBooks,
   updateBook,
 } from "@/database/books"
 import { isProcessing, isQueued } from "@/work/distributor"
@@ -134,7 +134,7 @@ export const GET = withHasPermission<Params>("bookRead")(async (
 ) => {
   const { bookId } = await context.params
   const bookUuid = await getBookUuid(bookId)
-  const [book] = await getBooks([bookUuid])
+  const book = await getBook(bookUuid)
   if (!book) {
     return NextResponse.json(
       { message: `Could not find book with id ${bookId}` },
@@ -182,7 +182,7 @@ export const DELETE = withHasPermission<Params>("bookDelete")(async (
 ) => {
   const { bookId } = await context.params
   const bookUuid = await getBookUuid(bookId)
-  const [book] = await getBooks([bookUuid])
+  const book = await getBook(bookUuid)
   if (!book) {
     return NextResponse.json(
       { message: `Could not find book with id ${bookId}` },

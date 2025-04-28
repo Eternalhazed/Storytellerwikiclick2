@@ -179,7 +179,7 @@ export async function createBook(
     }
   }
 
-  const [book] = await getBooks([uuid])
+  const book = await getBook(uuid)
 
   if (!book) {
     throw new Error("Failod te create book")
@@ -300,8 +300,7 @@ export async function getBooks(
 
 export async function getBook(uuid: UUID) {
   const [book] = await getBooks([uuid])
-  if (!book) throw new Error(`Failed to retrieve book with uuid ${uuid}`)
-  return book
+  return book ?? null
 }
 
 export async function deleteBook(bookUuid: UUID) {
@@ -442,8 +441,7 @@ export async function updateBook(
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const [book] = await getBooks([uuid])
+  const book = await getBook(uuid)
   if (!book) throw new Error(`Failed to retrieve book with uuid ${uuid}`)
 
   BookEvents.emit("message", {
