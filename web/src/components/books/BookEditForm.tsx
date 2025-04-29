@@ -1,9 +1,8 @@
 "use client"
 
 import NextImage from "next/image"
-import { BookDetail } from "@/apiModels"
 import { useApiClient } from "@/hooks/useApiClient"
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useForm } from "@mantine/form"
 import {
   FileButton,
@@ -16,12 +15,31 @@ import {
   Text,
   Fieldset,
   ActionIcon,
+  Checkbox,
+  NumberInput,
+  Combobox,
+  useCombobox,
+  InputBase,
+  Autocomplete,
 } from "@mantine/core"
 import { IconPlus, IconTrash } from "@tabler/icons-react"
-import { AuthorRelation } from "@/database/books"
+import {
+  AuthorRelation,
+  CollectionRelation,
+  SeriesRelation,
+  TagRelation,
+} from "@/database/books"
+import { Status } from "@/database/statuses"
+import { UUID } from "@/uuid"
+import { useBook } from "./LiveBooksProvider"
+import { Author } from "@/database/authors"
+import { Series } from "@/database/series"
 
 type Props = {
-  book: BookDetail
+  bookUuid: UUID
+  authors: Author[]
+  statuses: Status[]
+  series: Series[]
 }
 
 enum SaveState {
@@ -31,20 +49,61 @@ enum SaveState {
   ERROR = "ERROR",
 }
 
-export function BookEditForm({ book }: Props) {
+export function BookEditForm({ bookUuid, statuses, authors, series }: Props) {
   const client = useApiClient()
+  const clearSavedTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const book = useBook(bookUuid, (update) => {
+    form.setValues({
+      title: update.title,
+      language: update.language ?? "",
+      authors: update.authors,
+      series: update.series,
+      statusUuid: update.statusUuid,
+      collections: update.collections,
+      publicationDate: update.publicationDate ?? "",
+      rating: update.rating,
+      description: update.description ?? "",
+      narrator: update.narrator ?? "",
+      tags: update.tags as TagRelation[],
+      textCover: null,
+      audioCover: null,
+    })
+  })!
+
+  const combobox = useCombobox({
+    onDropdownClose: () => {
+      combobox.resetSelectedOption()
+    },
+  })
 
   const form = useForm({
     initialValues: {
       title: book.title,
-      language: book.language,
+      language: book.language ?? "",
       authors: book.authors as AuthorRelation[],
+      series: book.series as SeriesRelation[],
+      statusUuid: book.statusUuid,
+      collections: book.collections as CollectionRelation[],
+      publicationDate: book.publicationDate ?? "",
+      rating: book.rating,
+      description: book.description ?? "",
+      narrator: book.narrator ?? "",
+      tags: book.tags as TagRelation[],
       textCover: null as File | null,
       audioCover: null as File | null,
     },
   })
 
-  const { textCover, audioCover, authors } = form.getValues()
+  const {
+    textCover,
+    audioCover,
+    authors: bookAuthors,
+    series: bookSeries,
+    collections,
+    statusUuid,
+  } = form.getValues()
   const textCoverUrl = useMemo(
     () =>
       textCover
@@ -64,23 +123,21 @@ export function BookEditForm({ book }: Props) {
 
   return (
     <>
-      {savedState === SaveState.SAVED && <p>Saved!</p>}
       {savedState === SaveState.ERROR && (
         <p>Failed to update. Check your server logs for details.</p>
       )}
       <form
         onSubmit={form.onSubmit(async (values) => {
           setSavedState(SaveState.LOADING)
+          const { textCover, audioCover, ...update } = values
           try {
             await client.updateBook(
               {
                 ...book,
-                title: values.title,
-                language: values.language,
-                authors: values.authors,
+                ...update,
               },
-              values.textCover,
-              values.audioCover,
+              textCover,
+              audioCover,
             )
           } catch (_) {
             setSavedState(SaveState.ERROR)
@@ -88,8 +145,53 @@ export function BookEditForm({ book }: Props) {
           }
 
           setSavedState(SaveState.SAVED)
+
+          if (clearSavedTimeoutRef.current) {
+            clearTimeout(clearSavedTimeoutRef.current)
+          }
+          clearSavedTimeoutRef.current = setTimeout(() => {
+            setSavedState(SaveState.CLEAN)
+          }, 2000)
         })}
       >
+        <Combobox
+          store={combobox}
+          withinPortal={false}
+          onOptionSubmit={(value) => {
+            form.setFieldValue("statusUuid", value as UUID)
+            combobox.closeDropdown()
+          }}
+        >
+          <Combobox.Target>
+            <InputBase
+              className="w-48"
+              component="button"
+              type="button"
+              pointer
+              rightSection={<Combobox.Chevron />}
+              onClick={() => {
+                combobox.toggleDropdown()
+              }}
+              rightSectionPointerEvents="none"
+            >
+              <Group justify="space-between" wrap="nowrap">
+                <Text>{statuses.find((s) => s.uuid === statusUuid)?.name}</Text>
+              </Group>
+            </InputBase>
+          </Combobox.Target>
+
+          <Combobox.Dropdown>
+            <Combobox.Options>
+              {statuses.map((s) => (
+                <Combobox.Option value={s.uuid} key={s.uuid}>
+                  <Group justify="space-between" wrap="nowrap">
+                    <Text>{s.name}</Text>
+                  </Group>
+                </Combobox.Option>
+              ))}
+            </Combobox.Options>
+          </Combobox.Dropdown>
+        </Combobox>
         <Group align="stretch" gap="xl" mt="lg">
           <Tabs defaultValue="text-cover">
             <Tabs.List>
@@ -166,14 +268,15 @@ export function BookEditForm({ book }: Props) {
           <Stack gap={0} className="grow">
             <TextInput label="Title" {...form.getInputProps("title")} />
             <TextInput label="Language" {...form.getInputProps("language")} />
-            {authors.map((author, i) => (
+            {bookAuthors.map((author, i) => (
               <Fieldset
-                key={author.uuid || i}
-                legend="Author"
+                key={author.uuid ?? i}
+                legend="Authors"
                 className="relative"
               >
-                <TextInput
+                <Autocomplete
                   label="Name"
+                  data={authors.map((author) => author.name)}
                   {...form.getInputProps(`authors.${i}.name`)}
                 />
                 <TextInput
@@ -197,23 +300,105 @@ export function BookEditForm({ book }: Props) {
               leftSection={<IconPlus />}
               variant="outline"
               mt="sm"
-              className="self-end"
+              className="self-start"
               onClick={() => {
                 form.insertListItem("authors", {
                   name: "",
                   role: "Author",
-                  uuid: "",
-                  file_as: "",
-                })
+                  fileAs: "",
+                } satisfies AuthorRelation)
               }}
             >
               Add author
+            </Button>
+            {bookSeries.map((s, i) => (
+              <Fieldset key={s.uuid ?? i} legend="Series" className="relative">
+                <Autocomplete
+                  label="Name"
+                  data={series.map((s) => s.name)}
+                  {...form.getInputProps(`series.${i}.name`)}
+                />
+                <Checkbox
+                  label="Featured"
+                  {...form.getInputProps(`series.${i}.featured`, {
+                    type: "checkbox",
+                  })}
+                />
+                <NumberInput
+                  label="Position"
+                  {...form.getInputProps(`series.${i}.position`)}
+                />
+                {i > 0 && (
+                  <ActionIcon
+                    variant="subtle"
+                    className="absolute right-4 top-0"
+                    onClick={() => {
+                      form.removeListItem("seriess", i)
+                    }}
+                  >
+                    <IconTrash color="red" />
+                  </ActionIcon>
+                )}
+              </Fieldset>
+            ))}
+            <Button
+              leftSection={<IconPlus />}
+              variant="outline"
+              mt="sm"
+              className="self-start"
+              onClick={() => {
+                form.insertListItem("series", {
+                  name: "",
+                  featured: !bookSeries.length,
+                  position: 1,
+                } satisfies SeriesRelation)
+              }}
+            >
+              Add series
+            </Button>
+            {collections.map((collection, i) => (
+              <Fieldset
+                key={collection.uuid ?? i}
+                legend="Collections"
+                className="relative"
+              >
+                <TextInput
+                  label="Name"
+                  {...form.getInputProps(`collections.${i}.name`)}
+                />
+                {i > 0 && (
+                  <ActionIcon
+                    variant="subtle"
+                    className="absolute right-4 top-0"
+                    onClick={() => {
+                      form.removeListItem("collections", i)
+                    }}
+                  >
+                    <IconTrash color="red" />
+                  </ActionIcon>
+                )}
+              </Fieldset>
+            ))}
+            <Button
+              leftSection={<IconPlus />}
+              variant="outline"
+              mt="sm"
+              className="self-start"
+              onClick={() => {
+                form.insertListItem("collections", {
+                  name: "",
+                } satisfies CollectionRelation)
+              }}
+            >
+              Add collection
             </Button>
           </Stack>
         </Group>
 
         <Group justify="flex-end" className="sticky bottom-0 z-10 bg-white p-6">
-          <Button type="submit">Save</Button>
+          <Button type="submit" disabled={savedState === SaveState.LOADING}>
+            {savedState === SaveState.SAVED ? "Saved!" : "Update"}
+          </Button>
         </Group>
       </form>
     </>

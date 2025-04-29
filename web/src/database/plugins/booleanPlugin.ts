@@ -41,7 +41,9 @@ export class BooleanPlugin<DB> implements KyselyPlugin {
   }
 }
 
-export function asInt(value: boolean | undefined) {
+// TODO: See if there's a way to make typescript complain
+// if we try to use a regular boolean when setting values
+export function asSqliteBoolean(value: boolean | undefined) {
   if (value === undefined) return value
   return (value ? 1 : 0) as unknown as boolean
 }

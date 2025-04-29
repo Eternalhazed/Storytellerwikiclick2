@@ -10,8 +10,6 @@ import {
 import {
   persistCustomEpubCover,
   persistCustomAudioCover,
-  getCustomEpubCover,
-  getEpubCoverFilename,
 } from "@/assets/covers"
 import { getEpubAlignedFilepath } from "@/assets/paths"
 import { withHasPermission } from "@/auth"
@@ -20,8 +18,11 @@ import {
   deleteBook,
   getBook,
   getBookUuid,
+  SeriesRelation,
   updateBook,
 } from "@/database/books"
+import { writeMetadataToEpub } from "@/process/processEpub"
+import { UUID } from "@/uuid"
 import { isProcessing, isQueued } from "@/work/distributor"
 import { Epub } from "@smoores/epub"
 import { extension } from "mime-types"
@@ -54,11 +55,19 @@ export const PUT = withHasPermission<Params>("bookUpdate")(async (
   }
 
   const language = formData.get("language")?.valueOf() ?? null
-  if (typeof language !== "string") {
+  if (typeof language !== "string" && language !== null) {
     return NextResponse.json(
       {
         message: "Invalid language",
       },
+      { status: 405 },
+    )
+  }
+
+  const statusUuid = formData.get("statusUuid")?.valueOf()
+  if (typeof statusUuid !== "string") {
+    return NextResponse.json(
+      { message: "Book must have a status" },
       { status: 405 },
     )
   }
@@ -68,7 +77,18 @@ export const PUT = withHasPermission<Params>("bookUpdate")(async (
     (authorString) =>
       JSON.parse(authorString.valueOf() as string) as AuthorRelation,
   )
-  const updated = await updateBook(bookUuid, { title, language }, { authors })
+
+  const seriesStrings = formData.getAll("series")
+  const series = seriesStrings.map(
+    (seriesString) =>
+      JSON.parse(seriesString.valueOf() as string) as SeriesRelation,
+  )
+
+  const updated = await updateBook(
+    bookUuid,
+    { title, language, statusUuid: statusUuid as UUID },
+    { authors, series },
+  )
 
   const textCover = formData.get("textCover")?.valueOf()
   if (typeof textCover === "object") {
@@ -94,30 +114,7 @@ export const PUT = withHasPermission<Params>("bookUpdate")(async (
   ) {
     const alignedEpubPath = getEpubAlignedFilepath(updated.uuid)
     const epub = await Epub.from(alignedEpubPath)
-    await epub.setTitle(updated.title)
-    if (updated.language) {
-      await epub.setLanguage(new Intl.Locale(updated.language))
-    }
-    const epubAuthors = await epub.getCreators()
-    for (let i = 0; i < epubAuthors.length; i++) {
-      await epub.removeCreator(i)
-    }
-    for (const author of updated.authors) {
-      await epub.addCreator({
-        name: author.name,
-        fileAs: author.fileAs,
-        role: author.role ?? "aut",
-      })
-    }
-    const epubCover = await getCustomEpubCover(bookUuid)
-    const epubFilename = await getEpubCoverFilename(bookUuid)
-    if (epubCover) {
-      const prevCoverItem = await epub.getCoverImageItem()
-      await epub.setCoverImage(
-        prevCoverItem?.href ?? `images/${epubFilename}`,
-        epubCover,
-      )
-    }
+    await writeMetadataToEpub(updated, epub)
     await epub.writeToFile(alignedEpubPath)
     await epub.close()
   }

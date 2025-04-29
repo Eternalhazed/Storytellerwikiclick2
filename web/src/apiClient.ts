@@ -10,8 +10,11 @@ import {
   UserRequest,
 } from "./apiModels"
 import { UserPermissionSet } from "./database/users"
-import { AuthorRelation, BookUpdate } from "./database/books"
+import { AuthorRelation, Book, SeriesRelation } from "./database/books"
 import { BookEvent } from "./events"
+import { Status } from "./database/statuses"
+import { Author } from "./database/authors"
+import { Series } from "./database/series"
 
 export class ApiClientError extends Error {
   constructor(
@@ -499,21 +502,32 @@ export class ApiClient {
   }
 
   async updateBook(
-    update: BookUpdate & { authors: AuthorRelation[] },
+    update: {
+      uuid: Book["uuid"]
+      title: Book["title"]
+      language: Book["language"]
+      statusUuid: Book["statusUuid"]
+      authors: AuthorRelation[]
+      series: SeriesRelation[]
+    },
     textCover: File | null,
     audioCover: File | null,
   ): Promise<BookDetail> {
     const url = new URL(`${this.rootPath}/v2/books/${update.uuid}`, this.origin)
 
     const body = new FormData()
-    if (update.title != undefined) {
-      body.append("title", update.title)
-    }
+    body.append("title", update.title)
     if (update.language != undefined) {
       body.append("language", update.language)
     }
+    body.append("statusUuid", update.statusUuid)
+
     for (const author of update.authors) {
       body.append("authors", JSON.stringify(author))
+    }
+
+    for (const series of update.series) {
+      body.append("series", JSON.stringify(series))
     }
 
     if (textCover !== null) {
@@ -551,5 +565,53 @@ export class ApiClient {
     return () => {
       eventSource.close()
     }
+  }
+
+  async getStatuses() {
+    const url = new URL(`${this.rootPath}/v2/statuses`, this.origin)
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const statuses = (await response.json()) as Status[]
+    return statuses
+  }
+
+  async getAuthors() {
+    const url = new URL(`${this.rootPath}/v2/authors`, this.origin)
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const authors = (await response.json()) as Author[]
+    return authors
+  }
+
+  async getSeries() {
+    const url = new URL(`${this.rootPath}/v2/series`, this.origin)
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const series = (await response.json()) as Series[]
+    return series
   }
 }
