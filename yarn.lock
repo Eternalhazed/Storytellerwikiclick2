@@ -6712,6 +6712,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mantine/dates@npm:^7.17.5":
+  version: 7.17.5
+  resolution: "@mantine/dates@npm:7.17.5"
+  dependencies:
+    clsx: "npm:^2.1.1"
+  peerDependencies:
+    "@mantine/core": 7.17.5
+    "@mantine/hooks": 7.17.5
+    dayjs: ">=1.0.0"
+    react: ^18.x || ^19.x
+    react-dom: ^18.x || ^19.x
+  checksum: 10c0/b234fdc77d879dca8321ebfb8936f701a8eb1d7593163e07e1255f5ae16e9762069f37cb32d7a6db6dd6b2a42880932e643106e1924d229d2176ebf9a11824fb
+  languageName: node
+  linkType: hard
+
 "@mantine/form@npm:^7.15.1":
   version: 7.15.1
   resolution: "@mantine/form@npm:7.15.1"
@@ -8558,6 +8573,7 @@ __metadata:
     "@echogarden/espeak-ng-emscripten": "npm:^0.3.3"
     "@esfx/async-semaphore": "npm:^1.0.0"
     "@mantine/core": "npm:^7.15.1"
+    "@mantine/dates": "npm:^7.17.5"
     "@mantine/form": "npm:^7.15.1"
     "@mantine/hooks": "npm:^7.15.1"
     "@scalar/nextjs-openapi": "npm:^0.1.13"
@@ -8584,6 +8600,7 @@ __metadata:
     classnames: "npm:^2.5.1"
     content-disposition: "npm:^1.0.0"
     date-fns: "npm:^3.6.0"
+    dayjs: "npm:^1.11.13"
     dbgate-query-splitter: "npm:^4.11.3"
     echogarden: "npm:^2.3.1"
     esbuild: "npm:^0.23.0"
@@ -13441,6 +13458,13 @@ __metadata:
   version: 4.6.3
   resolution: "dateformat@npm:4.6.3"
   checksum: 10c0/e2023b905e8cfe2eb8444fb558562b524807a51cdfe712570f360f873271600b5c94aebffaf11efb285e2c072264a7cf243eadb68f3eba0f8cc85fb86cd25df6
+  languageName: node
+  linkType: hard
+
+"dayjs@npm:^1.11.13":
+  version: 1.11.13
+  resolution: "dayjs@npm:1.11.13"
+  checksum: 10c0/a3caf6ac8363c7dade9d1ee797848ddcf25c1ace68d9fe8678ecf8ba0675825430de5d793672ec87b24a69bf04a1544b176547b2539982275d5542a7955f35b7
   languageName: node
   linkType: hard
 

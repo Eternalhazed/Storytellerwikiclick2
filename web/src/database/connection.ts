@@ -45,7 +45,7 @@ export function getDatabase(): Kysely<DB> {
   }
 
   db = new Kysely<DB>({
-    log: ["error", "query"],
+    // log: ["error", "query"],
     dialect: new SqliteDialect({ database: sqlite }),
     plugins: [
       new CamelCasePlugin(),
@@ -57,6 +57,7 @@ export function getDatabase(): Kysely<DB> {
           "bookProcess",
           "bookDownload",
           "bookList",
+          "collectionCreate",
           "userCreate",
           "userList",
           "userRead",
@@ -68,6 +69,7 @@ export function getDatabase(): Kysely<DB> {
           "inviteDelete",
           "userUpdate",
           "isDefault",
+          "public",
         ],
       }),
     ],

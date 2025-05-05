@@ -1,6 +1,5 @@
 import { getDatabase } from "./connection"
 import { NewUserPermission } from "./users"
-import { asSqliteBoolean } from "./plugins/booleanPlugin"
 
 export type Invite = {
   email: string
@@ -17,22 +16,22 @@ export async function createInvite(
   const { uuid } = await db
     .insertInto("userPermission")
     .values({
-      bookCreate: asSqliteBoolean(permissions.bookCreate),
-      bookUpdate: asSqliteBoolean(permissions.bookUpdate),
-      bookList: asSqliteBoolean(permissions.bookList),
-      bookDelete: asSqliteBoolean(permissions.bookDelete),
-      bookDownload: asSqliteBoolean(permissions.bookDownload),
-      bookProcess: asSqliteBoolean(permissions.bookProcess),
-      inviteDelete: asSqliteBoolean(permissions.inviteDelete),
-      inviteList: asSqliteBoolean(permissions.inviteList),
-      settingsUpdate: asSqliteBoolean(permissions.settingsUpdate),
-      userCreate: asSqliteBoolean(permissions.userCreate),
-      userList: asSqliteBoolean(permissions.userList),
-      userRead: asSqliteBoolean(permissions.userRead),
-      userDelete: asSqliteBoolean(permissions.userDelete),
-      userUpdate: asSqliteBoolean(permissions.userUpdate),
+      bookCreate: permissions.bookCreate,
+      bookUpdate: permissions.bookUpdate,
+      bookList: permissions.bookList,
+      bookDelete: permissions.bookDelete,
+      bookDownload: permissions.bookDownload,
+      bookProcess: permissions.bookProcess,
+      inviteDelete: permissions.inviteDelete,
+      inviteList: permissions.inviteList,
+      settingsUpdate: permissions.settingsUpdate,
+      userCreate: permissions.userCreate,
+      userList: permissions.userList,
+      userRead: permissions.userRead,
+      userDelete: permissions.userDelete,
+      userUpdate: permissions.userUpdate,
     })
-    .returning(["uuid"])
+    .returning(["uuid as uuid"])
     .executeTakeFirstOrThrow()
 
   await db

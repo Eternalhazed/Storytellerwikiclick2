@@ -9,7 +9,6 @@ import { BookEvents } from "@/events"
 import { DB } from "./schema"
 import { Insertable, Selectable, Updateable } from "kysely"
 import { Epub } from "@smoores/epub"
-import { asSqliteBoolean } from "./plugins/booleanPlugin"
 import { NewAuthor } from "./authors"
 import { NewSeries } from "./series"
 import { syncRelations } from "./relations"
@@ -49,10 +48,6 @@ export type ProcessingStatus = {
   status: ProcessingTaskStatus
 }
 
-export type Collection = Selectable<DB["collection"]>
-export type NewCollection = Insertable<DB["collection"]>
-export type CollectionUpdate = Updateable<DB["collection"]>
-
 export type BookToCollection = Selectable<DB["bookToCollection"]>
 export type NewBookToCollection = Insertable<DB["bookToCollection"]>
 export type BookToCollectionUpdate = Updateable<DB["bookToCollection"]>
@@ -71,7 +66,6 @@ export type BookToSeriesUpdate = Updateable<DB["bookToSeries"]>
 
 export type AuthorRelation = NewAuthor & NewAuthorToBook
 export type SeriesRelation = NewSeries & NewBookToSeries
-export type CollectionRelation = NewCollection & NewBookToCollection
 export type TagRelation = NewTag & NewBookToTag
 
 export type Book = Selectable<DB["book"]>
@@ -132,7 +126,7 @@ export async function createBook(
   const { uuid } = await db
     .insertInto("book")
     .values(insert)
-    .returning(["uuid"])
+    .returning(["uuid as uuid"])
     .executeTakeFirstOrThrow()
 
   if (relations.authors) {
@@ -141,8 +135,8 @@ export async function createBook(
       relations: relations.authors,
       relatedTable: "author",
       relationTable: "authorToBook",
-      relatedPrimaryKeyColumn: "author.uuid",
-      identifierColumn: "author.name",
+      relatedPrimaryKeyColumn: "uuid",
+      identifierColumn: "name",
       relatedForeignKeyColumn: "authorToBook.authorUuid",
       entityForeignKeyColumn: "authorToBook.bookUuid",
       extractRelatedValues: (values) => ({
@@ -166,8 +160,8 @@ export async function createBook(
       relations: relations.series,
       relatedTable: "series",
       relationTable: "bookToSeries",
-      relatedPrimaryKeyColumn: "series.uuid",
-      identifierColumn: "series.name",
+      relatedPrimaryKeyColumn: "uuid",
+      identifierColumn: "name",
       relatedForeignKeyColumn: "bookToSeries.seriesUuid",
       entityForeignKeyColumn: "bookToSeries.bookUuid",
       extractRelatedValues: (values) => ({
@@ -178,11 +172,11 @@ export async function createBook(
         seriesUuid: seriesUuid,
         bookUuid: uuid,
         position: values.position,
-        featured: asSqliteBoolean(values.featured),
+        featured: values.featured,
       }),
       extractRelationUpdateValues: (values) => ({
         position: values.position,
-        featured: asSqliteBoolean(values.featured),
+        featured: values.featured,
       }),
     })
   }
@@ -362,7 +356,11 @@ export async function deleteBook(bookUuid: UUID) {
 export async function updateBook(
   uuid: UUID,
   update: BookUpdate | null,
-  relations: { authors?: AuthorRelation[]; series?: SeriesRelation[] } = {},
+  relations: {
+    authors?: AuthorRelation[]
+    series?: SeriesRelation[]
+    collections?: UUID[]
+  } = {},
 ) {
   const db = getDatabase()
 
@@ -376,8 +374,8 @@ export async function updateBook(
       relations: relations.authors,
       relatedTable: "author",
       relationTable: "authorToBook",
-      relatedPrimaryKeyColumn: "author.uuid",
-      identifierColumn: "author.name",
+      relatedPrimaryKeyColumn: "uuid",
+      identifierColumn: "name",
       relatedForeignKeyColumn: "authorToBook.authorUuid",
       entityForeignKeyColumn: "authorToBook.bookUuid",
       extractRelatedValues: (values) => ({
@@ -401,8 +399,8 @@ export async function updateBook(
       relations: relations.series,
       relatedTable: "series",
       relationTable: "bookToSeries",
-      relatedPrimaryKeyColumn: "series.uuid",
-      identifierColumn: "series.name",
+      relatedPrimaryKeyColumn: "uuid",
+      identifierColumn: "name",
       relatedForeignKeyColumn: "bookToSeries.seriesUuid",
       entityForeignKeyColumn: "bookToSeries.bookUuid",
       extractRelatedValues: (values) => ({
@@ -413,13 +411,31 @@ export async function updateBook(
         seriesUuid: seriesUuid,
         bookUuid: uuid,
         position: values.position,
-        featured: asSqliteBoolean(values.featured),
+        featured: values.featured,
       }),
       extractRelationUpdateValues: (values) => ({
         position: values.position,
-        featured: asSqliteBoolean(values.featured),
+        featured: values.featured,
       }),
     })
+  }
+
+  if (relations.collections) {
+    await db
+      .insertInto("bookToCollection")
+      .values(
+        relations.collections.map((collection) => ({
+          bookUuid: uuid,
+          collectionUuid: collection,
+        })),
+      )
+      .execute()
+
+    await db
+      .deleteFrom("bookToCollection")
+      .where("bookUuid", "=", uuid)
+      .where("collectionUuid", "not in", relations.collections)
+      .execute()
   }
 
   const book = await getBook(uuid)

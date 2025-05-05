@@ -28,6 +28,10 @@ import { Epub } from "@smoores/epub"
 import { extension } from "mime-types"
 import { NextResponse } from "next/server"
 
+function isIso8601(dateString: string) {
+  return dateString === new Date(dateString).toISOString()
+}
+
 export const dynamic = "force-dynamic"
 
 type Params = Promise<{
@@ -64,6 +68,19 @@ export const PUT = withHasPermission<Params>("bookUpdate")(async (
     )
   }
 
+  const publicationDate = formData.get("publicationDate")?.valueOf() ?? null
+  if (
+    (typeof publicationDate !== "string" && publicationDate !== null) ||
+    (publicationDate && !isIso8601(publicationDate))
+  ) {
+    return NextResponse.json(
+      {
+        message: "Invalid publicationDate",
+      },
+      { status: 405 },
+    )
+  }
+
   const statusUuid = formData.get("statusUuid")?.valueOf()
   if (typeof statusUuid !== "string") {
     return NextResponse.json(
@@ -72,22 +89,22 @@ export const PUT = withHasPermission<Params>("bookUpdate")(async (
     )
   }
 
-  const authorStrings = formData.getAll("authors")
-  const authors = authorStrings.map(
-    (authorString) =>
-      JSON.parse(authorString.valueOf() as string) as AuthorRelation,
-  )
+  const authors = formData
+    .getAll("authors")
+    .map((entry) => JSON.parse(entry.valueOf() as string) as AuthorRelation)
 
-  const seriesStrings = formData.getAll("series")
-  const series = seriesStrings.map(
-    (seriesString) =>
-      JSON.parse(seriesString.valueOf() as string) as SeriesRelation,
-  )
+  const series = formData
+    .getAll("series")
+    .map((entry) => JSON.parse(entry.valueOf() as string) as SeriesRelation)
+
+  const collections = formData
+    .getAll("collections")
+    .map((entry) => entry.valueOf() as UUID)
 
   const updated = await updateBook(
     bookUuid,
-    { title, language, statusUuid: statusUuid as UUID },
-    { authors, series },
+    { title, language, statusUuid: statusUuid as UUID, publicationDate },
+    { authors, series, collections },
   )
 
   const textCover = formData.get("textCover")?.valueOf()

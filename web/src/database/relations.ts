@@ -63,8 +63,8 @@ type ColumnType<
 export async function syncRelations<
   RelatedTable extends keyof DB,
   RelationTable extends keyof DB,
-  PK extends AnyColumnWithTable<DB, RelatedTable>,
-  IdentifierColumn extends AnyColumnWithTable<DB, RelatedTable>,
+  PK extends AnyColumn<DB, RelatedTable>,
+  IdentifierColumn extends AnyColumn<DB, RelatedTable>,
   RelatedFKColumn extends AnyColumnWithTable<DB, RelationTable>,
   EntityFKColumn extends AnyColumnWithTable<DB, RelationTable>,
 >({
@@ -104,6 +104,7 @@ export async function syncRelations<
   for (const relationValues of relations) {
     const { [relatedPrimaryKeyColumn]: relatedPrimaryKey, ...values } =
       relationValues
+
     if (!relatedPrimaryKey) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       let existing = (await db
@@ -122,7 +123,9 @@ export async function syncRelations<
         existing = (await db
           .insertInto(relatedTable)
           .values(extractRelatedValues(values))
-          .returning([relatedPrimaryKeyColumn])
+          .returning([
+            `${relatedPrimaryKeyColumn} as ${relatedPrimaryKeyColumn}`,
+          ])
           .executeTakeFirstOrThrow()) as unknown as Record<
           PK,
           ColumnType<DB, RelatedTable, PK>

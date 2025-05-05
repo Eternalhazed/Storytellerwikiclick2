@@ -1,5 +1,5 @@
 import { createAuthedApiClient } from "@/authedApiClient"
-import { BookEditForm } from "./BookEditForm"
+import { BookEditForm } from "./edit/BookEditForm"
 import { UUID } from "@/uuid"
 
 interface Props {
@@ -8,9 +8,11 @@ interface Props {
 
 export async function BookEdit({ bookUuid }: Props) {
   const client = await createAuthedApiClient()
-  const statuses = await client.getStatuses()
-  const authors = await client.getAuthors()
-  const series = await client.getSeries()
+  const statuses = await client.listStatuses()
+  const authors = await client.listAuthors()
+  const series = await client.listSeries()
+  const collections = await client.listCollections()
+  const users = await client.listUsers()
 
   return (
     <BookEditForm
@@ -18,6 +20,8 @@ export async function BookEdit({ bookUuid }: Props) {
       statuses={statuses}
       authors={authors}
       series={series}
+      collections={collections}
+      users={users}
     />
   )
 }

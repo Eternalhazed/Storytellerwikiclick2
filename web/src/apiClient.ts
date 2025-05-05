@@ -15,6 +15,8 @@ import { BookEvent } from "./events"
 import { Status } from "./database/statuses"
 import { Author } from "./database/authors"
 import { Series } from "./database/series"
+import { Collection } from "./database/collections"
+import { UUID } from "./uuid"
 
 export class ApiClientError extends Error {
   constructor(
@@ -507,8 +509,10 @@ export class ApiClient {
       title: Book["title"]
       language: Book["language"]
       statusUuid: Book["statusUuid"]
+      publicationDate: Book["publicationDate"]
       authors: AuthorRelation[]
       series: SeriesRelation[]
+      collections: UUID[]
     },
     textCover: File | null,
     audioCover: File | null,
@@ -517,8 +521,11 @@ export class ApiClient {
 
     const body = new FormData()
     body.append("title", update.title)
-    if (update.language != undefined) {
+    if (update.language !== null) {
       body.append("language", update.language)
+    }
+    if (update.publicationDate) {
+      body.append("publicationDate", update.publicationDate)
     }
     body.append("statusUuid", update.statusUuid)
 
@@ -528,6 +535,10 @@ export class ApiClient {
 
     for (const series of update.series) {
       body.append("series", JSON.stringify(series))
+    }
+
+    for (const collection of update.collections) {
+      body.append("collections", collection)
     }
 
     if (textCover !== null) {
@@ -567,7 +578,7 @@ export class ApiClient {
     }
   }
 
-  async getStatuses() {
+  async listStatuses() {
     const url = new URL(`${this.rootPath}/v2/statuses`, this.origin)
     const response = await fetch(url, {
       method: "GET",
@@ -583,7 +594,7 @@ export class ApiClient {
     return statuses
   }
 
-  async getAuthors() {
+  async listAuthors() {
     const url = new URL(`${this.rootPath}/v2/authors`, this.origin)
     const response = await fetch(url, {
       method: "GET",
@@ -599,7 +610,7 @@ export class ApiClient {
     return authors
   }
 
-  async getSeries() {
+  async listSeries() {
     const url = new URL(`${this.rootPath}/v2/series`, this.origin)
     const response = await fetch(url, {
       method: "GET",
@@ -613,5 +624,51 @@ export class ApiClient {
 
     const series = (await response.json()) as Series[]
     return series
+  }
+
+  async listCollections() {
+    const url = new URL(`${this.rootPath}/v2/collections`, this.origin)
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const collections = (await response.json()) as Collection[]
+    return collections
+  }
+
+  async createCollection(values: {
+    name: string
+    description: string
+    public: boolean
+    users: string[]
+  }) {
+    const url = new URL(`${this.rootPath}/v2/collections`, this.origin)
+
+    const body = {
+      name: values.name,
+      description: values.description,
+      public: values.public,
+      ...(!values.public && { users: values.users }),
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.getHeaders(),
+      credentials: "include",
+      body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const collection = (await response.json()) as Collection
+    return collection
   }
 }
