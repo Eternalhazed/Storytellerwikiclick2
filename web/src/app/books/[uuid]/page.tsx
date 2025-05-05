@@ -3,7 +3,7 @@ import { BookDetail } from "@/apiModels"
 import { redirect } from "next/navigation"
 import { createAuthedApiClient } from "@/authedApiClient"
 import { logger } from "@/logging"
-import { Stack, Title } from "@mantine/core"
+import { Stack, Text, Title } from "@mantine/core"
 import { BookStatus } from "@/components/books/BookStatus"
 import { BookEdit } from "@/components/books/BookEdit"
 
@@ -52,6 +52,32 @@ export default async function BookEditPage(props: Props) {
     <Stack gap={24}>
       <Title order={2}>{book.title}</Title>
       <BookStatus bookUuid={book.uuid} />
+      {(book.alignedAt ||
+        book.alignedWith ||
+        book.alignedByStorytellerVersion) && (
+        <Stack className="rounded bg-gray-100 p-4">
+          {book.alignedAt && (
+            <Text>
+              <span className="font-bold">Last aligned:</span>{" "}
+              {new Date(book.alignedAt).toLocaleString()}
+            </Text>
+          )}
+          {book.alignedWith && (
+            <Text>
+              <span className="font-bold">Transcription engine:</span>{" "}
+              {book.alignedWith}
+            </Text>
+          )}
+          {book.alignedByStorytellerVersion && (
+            <Text>
+              <span className="font-bold">
+                Storyteller version used to align:
+              </span>{" "}
+              {book.alignedByStorytellerVersion}
+            </Text>
+          )}
+        </Stack>
+      )}
       <BookEdit bookUuid={book.uuid} />
     </Stack>
   )
