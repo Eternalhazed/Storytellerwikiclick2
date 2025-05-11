@@ -45,7 +45,7 @@ export function getDatabase(): Kysely<DB> {
   }
 
   db = new Kysely<DB>({
-    log: ["error", "query"],
+    // log: ["error", "query"],
     dialect: new SqliteDialect({ database: sqlite }),
     plugins: [
       new CamelCasePlugin(),
