@@ -1,3 +1,6 @@
 releases:
   "@storyteller/docs": patch
   "@storyteller/web": minor
+
+declined:
+  - "@smoores/epub"
