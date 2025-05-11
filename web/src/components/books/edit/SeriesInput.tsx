@@ -22,7 +22,7 @@ interface Props {
   series: Series[]
 }
 
-export function SeriessInput({
+export function SeriesInput({
   values,
   getInputProps,
   removeSeries,

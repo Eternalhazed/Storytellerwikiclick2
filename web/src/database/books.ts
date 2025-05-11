@@ -52,7 +52,6 @@ export type BookToCollection = Selectable<DB["bookToCollection"]>
 export type NewBookToCollection = Insertable<DB["bookToCollection"]>
 export type BookToCollectionUpdate = Updateable<DB["bookToCollection"]>
 
-export type Tag = Selectable<DB["tag"]>
 export type NewTag = Insertable<DB["tag"]>
 export type TagUpdate = Updateable<DB["tag"]>
 
@@ -244,7 +243,7 @@ export async function getBooks(
           .selectFrom("tag")
           .innerJoin("bookToTag", "bookToTag.tagUuid", "tag.uuid")
           .select(["tag.uuid", "tag.name", "tag.createdAt", "tag.updatedAt"])
-          .whereRef("bookToTag.tagUuid", "=", "book.uuid"),
+          .whereRef("bookToTag.bookUuid", "=", "book.uuid"),
       ).as("tags"),
       jsonArrayFrom(
         eb
@@ -360,6 +359,7 @@ export async function updateBook(
     authors?: AuthorRelation[]
     series?: SeriesRelation[]
     collections?: UUID[]
+    tags?: string[]
   } = {},
 ) {
   const db = getDatabase()
@@ -421,20 +421,123 @@ export async function updateBook(
   }
 
   if (relations.collections) {
-    await db
-      .insertInto("bookToCollection")
-      .values(
-        relations.collections.map((collection) => ({
-          bookUuid: uuid,
-          collectionUuid: collection,
-        })),
-      )
-      .execute()
+    const collections = relations.collections
+    if (collections.length) {
+      await db
+        .insertInto("bookToCollection")
+        .columns(["bookUuid", "collectionUuid"])
+        .expression((eb) =>
+          eb
+            .selectFrom(() =>
+              collections
+                .map((collection) =>
+                  db
+                    .selectNoFrom([
+                      eb.val(uuid).as("bookUuid"),
+                      eb.val(collection).as("collectionUuid"),
+                    ])
+                    .where((web) =>
+                      web.not(
+                        web.exists(
+                          web
+                            .selectFrom("bookToCollection")
+                            .select([web.lit(1).as("one")])
+                            .where("bookUuid", "=", uuid)
+                            .where("collectionUuid", "=", collection),
+                        ),
+                      ),
+                    ),
+                )
+                .reduce((acc, expr) => acc.unionAll(expr))
+                .as("values"),
+            )
+            .selectAll(),
+        )
+        .execute()
+    }
 
     await db
       .deleteFrom("bookToCollection")
       .where("bookUuid", "=", uuid)
       .where("collectionUuid", "not in", relations.collections)
+      .execute()
+  }
+
+  if (relations.tags) {
+    const tags = relations.tags
+    if (tags.length) {
+      await db
+        .insertInto("tag")
+        .columns(["name"])
+        .expression((eb) =>
+          eb
+            .selectFrom(() =>
+              tags
+                .map((tag) =>
+                  db.selectNoFrom([eb.val(tag).as("name")]).where((web) =>
+                    web.not(
+                      web.exists(
+                        web
+                          .selectFrom("tag")
+                          .select([web.lit(1).as("one")])
+                          .where("tag.name", "=", tag),
+                      ),
+                    ),
+                  ),
+                )
+                .reduce((acc, expr) => acc.unionAll(expr))
+                .as("values"),
+            )
+            .selectAll(),
+        )
+        .execute()
+
+      await db
+        .insertInto("bookToTag")
+        .columns(["bookUuid", "tagUuid"])
+        .expression((eb) =>
+          eb
+            .selectFrom(() =>
+              tags
+                .map((tag) =>
+                  eb
+                    .selectFrom("tag")
+                    .select([
+                      eb.val(uuid).as("bookUuid"),
+                      "tag.uuid as tagUuid",
+                    ])
+                    .where("tag.name", "=", tag)
+                    .where((web) =>
+                      web.not(
+                        web.exists(
+                          web
+                            .selectFrom("bookToTag")
+                            .select([web.lit(1).as("one")])
+                            .innerJoin("tag", "tag.uuid", "tagUuid")
+                            .where("bookUuid", "=", uuid)
+                            .where("tag.name", "=", tag),
+                        ),
+                      ),
+                    ),
+                )
+                .reduce((acc, expr) => acc.unionAll(expr))
+                .as("values"),
+            )
+            .selectAll(),
+        )
+        .execute()
+    }
+
+    await db
+      .deleteFrom("bookToTag")
+      .where("bookUuid", "=", uuid)
+      .where((web) =>
+        web(
+          "tagUuid",
+          "not in",
+          web.selectFrom("tag").select(["uuid"]).where("tag.name", "in", tags),
+        ),
+      )
       .execute()
   }
 

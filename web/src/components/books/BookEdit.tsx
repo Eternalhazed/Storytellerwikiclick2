@@ -13,6 +13,7 @@ export async function BookEdit({ bookUuid }: Props) {
   const series = await client.listSeries()
   const collections = await client.listCollections()
   const users = await client.listUsers()
+  const tags = await client.listTags()
 
   return (
     <BookEditForm
@@ -22,6 +23,7 @@ export async function BookEdit({ bookUuid }: Props) {
       series={series}
       collections={collections}
       users={users}
+      tags={tags}
     />
   )
 }

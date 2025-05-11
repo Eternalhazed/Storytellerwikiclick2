@@ -513,6 +513,7 @@ export class ApiClient {
       authors: AuthorRelation[]
       series: SeriesRelation[]
       collections: UUID[]
+      tags: string[]
     },
     textCover: File | null,
     audioCover: File | null,
@@ -528,6 +529,10 @@ export class ApiClient {
       body.append("publicationDate", update.publicationDate)
     }
     body.append("statusUuid", update.statusUuid)
+
+    for (const tag of update.tags) {
+      body.append("tags", tag)
+    }
 
     for (const author of update.authors) {
       body.append("authors", JSON.stringify(author))
@@ -640,6 +645,22 @@ export class ApiClient {
 
     const collections = (await response.json()) as Collection[]
     return collections
+  }
+
+  async listTags() {
+    const url = new URL(`${this.rootPath}/v2/tags`, this.origin)
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const tags = (await response.json()) as Collection[]
+    return tags
   }
 
   async createCollection(values: {

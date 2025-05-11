@@ -89,6 +89,8 @@ export const PUT = withHasPermission<Params>("bookUpdate")(async (
     )
   }
 
+  const tags = formData.getAll("tags").map((entry) => entry.valueOf() as string)
+
   const authors = formData
     .getAll("authors")
     .map((entry) => JSON.parse(entry.valueOf() as string) as AuthorRelation)
@@ -104,7 +106,7 @@ export const PUT = withHasPermission<Params>("bookUpdate")(async (
   const updated = await updateBook(
     bookUuid,
     { title, language, statusUuid: statusUuid as UUID, publicationDate },
-    { authors, series, collections },
+    { authors, series, collections, tags },
   )
 
   const textCover = formData.get("textCover")?.valueOf()

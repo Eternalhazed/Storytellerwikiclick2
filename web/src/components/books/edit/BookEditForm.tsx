@@ -5,7 +5,7 @@ import { useRef, useState } from "react"
 import { useForm } from "@mantine/form"
 import { Button, Group, Stack, TextInput } from "@mantine/core"
 import { DateInput } from "@mantine/dates"
-import { AuthorRelation, SeriesRelation, TagRelation } from "@/database/books"
+import { AuthorRelation, SeriesRelation } from "@/database/books"
 import { Status } from "@/database/statuses"
 import { UUID } from "@/uuid"
 import { useBook } from "../LiveBooksProvider"
@@ -14,12 +14,14 @@ import { Series } from "@/database/series"
 import { StatusInput } from "./StatusInput"
 import { CoverImageInput } from "./CoverImageInput"
 import { AuthorsInput } from "./AuthorsInput"
-import { SeriessInput } from "./SeriesInput"
+import { SeriesInput } from "./SeriesInput"
 import { Collection } from "@/database/collections"
 import { CollectionsInput } from "./CollectionsInput"
 import { User } from "@/apiModels"
 import { SaveState } from "@/components/forms"
 import { useCurrentUser } from "@/contexts/UserPermissions"
+import { TagsInput } from "./TagsInput"
+import { Tag } from "@/database/tags"
 
 type Props = {
   bookUuid: UUID
@@ -28,6 +30,7 @@ type Props = {
   series: Series[]
   collections: Collection[]
   users: User[]
+  tags: Tag[]
 }
 
 export function BookEditForm({
@@ -37,6 +40,7 @@ export function BookEditForm({
   series,
   collections: initialCollections,
   users,
+  tags,
 }: Props) {
   const client = useApiClient()
   const currentUser = useCurrentUser()
@@ -58,7 +62,7 @@ export function BookEditForm({
       rating: update.rating,
       description: update.description ?? "",
       narrator: update.narrator ?? "",
-      tags: update.tags as TagRelation[],
+      tags: update.tags.map((tag) => tag.name),
       textCover: null,
       audioCover: null,
     })
@@ -76,7 +80,7 @@ export function BookEditForm({
       rating: book.rating,
       description: book.description ?? "",
       narrator: book.narrator ?? "",
-      tags: book.tags as TagRelation[],
+      tags: book.tags.map((tag) => tag.name),
       textCover: null as File | null,
       audioCover: null as File | null,
     },
@@ -150,6 +154,7 @@ export function BookEditForm({
               label="Title"
               {...form.getInputProps("title")}
             />
+            <TagsInput tags={tags} {...form.getInputProps("tags")} />
             <TextInput
               className="m-0"
               label="Language"
@@ -171,7 +176,7 @@ export function BookEditForm({
               }}
               authors={authors}
             />
-            <SeriessInput
+            <SeriesInput
               values={bookSeries}
               getInputProps={form.getInputProps}
               removeSeries={(i) => {
