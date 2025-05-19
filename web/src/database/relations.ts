@@ -81,7 +81,7 @@ export async function syncRelations<
   extractRelationUpdateValues,
 }: {
   entityUuid: UUID
-  relations: Array<Insertable<DB[RelatedTable] & DB[RelationTable]>>
+  relations: Array<Partial<Insertable<DB[RelatedTable] & DB[RelationTable]>>>
   relatedTable: RelatedTable
   relationTable: RelationTable
   relatedPrimaryKeyColumn: PK
@@ -89,15 +89,15 @@ export async function syncRelations<
   relatedForeignKeyColumn: RelatedFKColumn
   entityForeignKeyColumn: EntityFKColumn
   extractRelatedValues: (
-    values: Omit<Insertable<DB[RelatedTable] & DB[RelationTable]>, PK>,
+    values: Omit<Partial<Insertable<DB[RelatedTable] & DB[RelationTable]>>, PK>,
   ) => InsertObject<DB, RelatedTable>
   extractRelationValues: (
     relatedPrimaryKey: ColumnType<DB, RelatedTable, PK>,
-    values: Omit<Insertable<DB[RelatedTable] & DB[RelationTable]>, PK>,
+    values: Omit<Partial<Insertable<DB[RelatedTable] & DB[RelationTable]>>, PK>,
   ) => InsertObject<DB, RelationTable>
   extractRelationUpdateValues: (
     values: Omit<Insertable<DB[RelatedTable] & DB[RelationTable]>, PK>,
-  ) => InsertObject<DB, RelationTable>
+  ) => Partial<InsertObject<DB, RelationTable>>
 }) {
   const db = getDatabase()
   const relatedPrimaryKeys: unknown[] = []

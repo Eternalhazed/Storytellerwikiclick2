@@ -36,7 +36,7 @@ export function LoginForm({ action }: Props) {
         <Stack>
           <TextInput
             label="Username or email address"
-            name="username"
+            name="usernameOrEmail"
             autoCapitalize="none"
             autoCorrect="off"
           />

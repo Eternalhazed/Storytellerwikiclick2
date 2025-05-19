@@ -1,5 +1,5 @@
 import { withHasPermission } from "@/auth"
-import { getInvite } from "@/database/invites"
+import { getInvite } from "@/database/users"
 import { sendInvite } from "@/invites"
 import { NextResponse } from "next/server"
 

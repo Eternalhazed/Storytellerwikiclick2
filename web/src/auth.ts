@@ -1,12 +1,138 @@
 import { hash, verify as verifyPassword } from "argon2"
 
-import { Permission, getUser, userHasPermission } from "./database/users"
+import {
+  Permission,
+  UserPermissionSet,
+  getUserByUsernameOrEmail,
+} from "./database/users"
 import { add } from "date-fns/fp/add"
-import { verify as verifyJwt, sign, JwtPayload } from "jsonwebtoken"
+import { sign } from "jsonwebtoken"
 import { NextRequest, NextResponse } from "next/server"
-import { isTokenRevoked } from "./database/tokenRevokations"
-import { RequestCookie } from "next/dist/compiled/@edge-runtime/cookies"
 import { readFileSync } from "node:fs"
+import NextAuth, {
+  type NextAuthResult,
+  type DefaultSession,
+  NextAuthConfig,
+} from "next-auth"
+import Credentials from "next-auth/providers/credentials"
+import { KyselyAdapter } from "./database/authAdapter"
+import { getDatabase } from "./database/connection"
+import { NextAuthRequest } from "next-auth"
+import { Session } from "next-auth"
+import { UUID } from "./uuid"
+import { randomUUID } from "node:crypto"
+
+declare module "next-auth" {
+  interface Session {
+    user: Awaited<ReturnType<typeof getUserByUsernameOrEmail>> &
+      DefaultSession["user"]
+  }
+
+  interface User {
+    username: string | null
+    permissions: UserPermissionSet | null
+    userPermissionUuid: UUID
+  }
+}
+
+function fromDate(time: number, date = Date.now()) {
+  return new Date(date + time * 1000)
+}
+
+const adapter = KyselyAdapter(getDatabase())
+
+// 30 days
+const maxAge = 30 * 24 * 60 * 60
+
+export const config: NextAuthConfig = {
+  providers: [
+    Credentials({
+      credentials: {
+        usernameOrEmail: {
+          type: "text",
+          label: "Username or email",
+        },
+        password: {
+          type: "password",
+          label: "Password",
+          placeholder: "********",
+        },
+      },
+      async authorize(credentials) {
+        return authenticateUser(
+          credentials.usernameOrEmail as string,
+          credentials.password as string,
+        )
+      },
+    }),
+  ],
+  cookies: {
+    sessionToken: { name: "st_token" },
+  },
+  session: {
+    maxAge,
+  },
+  adapter,
+  jwt: {
+    encode() {
+      return ""
+    },
+    decode() {
+      return null
+    },
+  },
+  callbacks: {
+    session({ session, user }) {
+      return {
+        ...session,
+        user,
+      }
+    },
+    async signIn({ user, credentials }) {
+      if (credentials) {
+        const sessionToken = randomUUID()
+        const sessionExpiry = fromDate(maxAge)
+        await adapter.createSession?.({
+          sessionToken,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          userId: user.id!,
+          expires: sessionExpiry,
+        })
+      }
+      return true
+    },
+  },
+  basePath: "/api/v2/auth",
+}
+
+const authResult = NextAuth(config)
+
+export const { handlers, signIn, signOut } = authResult
+export const auth: NextAuthResult["auth"] = authResult.auth
+
+/**
+ * AppRouteHandlerFnContext is the context that is passed to the handler as the
+ * second argument.
+ */
+export type AppRouteHandlerFnContext = {
+  params: Promise<unknown>
+}
+/**
+ * Handler function for app routes. If a non-Response value is returned, an error
+ * will be thrown.
+ */
+export type AppRouteHandlerFn = (
+  /**
+   * Incoming request object.
+   */
+  req: NextRequest,
+  /**
+   * Context properties on the request (including the parameters if this was a
+   * dynamic route).
+   */
+  ctx: AppRouteHandlerFnContext,
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+) => void | Response | Promise<void | Response>
 
 const JWT_SECRET_KEY_FILE = process.env["STORYTELLER_SECRET_KEY_FILE"]
 const DEFAULT_SECRET_KEY_FILE = "/run/secrets/secret_key"
@@ -45,10 +171,13 @@ export async function hashPassword(password: string) {
   return await hash(password)
 }
 
-export async function authenticateUser(username: string, password: string) {
-  const user = await getUser(username)
+export async function authenticateUser(
+  usernameOrEmail: string,
+  password: string,
+) {
+  const user = await getUserByUsernameOrEmail(usernameOrEmail)
 
-  if (!user) return null
+  if (!user?.hashedPassword) return null
 
   if (!(await verifyPassword(user.hashedPassword, password))) {
     return null
@@ -79,91 +208,45 @@ function extractTokenFromHeader(request: NextRequest) {
   return authToken
 }
 
-function extractTokenFromCookie(cookie: RequestCookie | undefined) {
-  if (!cookie) return null
+// function extractTokenFromCookie(cookie: RequestCookie | undefined) {
+//   if (!cookie) return null
 
-  return cookie.value
+//   return cookie.value
+// }
+
+export function extractToken(request: NextAuthRequest) {
+  return request.auth?.user
 }
 
-export function extractToken(request: NextRequest) {
-  return (
-    extractTokenFromHeader(request) ??
-    extractTokenFromCookie(request.cookies.get("st_token"))
-  )
-}
+type VerifiedAuthRequest = NextRequest & { auth: Session }
 
-export function withToken<
+export function withUser<
   Params extends Promise<Record<string, unknown>> = Promise<
     Record<string, unknown>
   >,
 >(
   handler: (
-    request: NextRequest,
-    context: { params: Params },
-    token: string,
-  ) => Promise<Response>,
-) {
-  return async function (request: NextRequest, context: { params: Params }) {
-    const token = extractToken(request)
-    if (!token) {
-      return NextResponse.json(
-        { message: "Not authenticated" },
-        { status: 401, headers: { "WWW-Authenticate": "Bearer" } },
-      )
+    request: VerifiedAuthRequest,
+    context: { params: Promise<Params> },
+  ) => Promise<Response> | Response,
+): AppRouteHandlerFn {
+  return function (request, context) {
+    const token = extractTokenFromHeader(request)
+    if (token) {
+      request.cookies.set("st_token", token)
     }
+    return auth(async (request, context) => {
+      const user = request.auth?.user
+      if (!user) {
+        return NextResponse.json(
+          { message: "Not authenticated" },
+          { status: 401, headers: { "WWW-Authenticate": "Bearer" } },
+        )
+      }
 
-    return handler(request, context, token)
+      return handler(request as VerifiedAuthRequest, context)
+    })(request, context)
   }
-}
-
-export async function verifyToken(token: string) {
-  const isRevoked = await isTokenRevoked(token)
-  if (isRevoked) return null
-
-  try {
-    const payload = verifyJwt(token, JWT_SECRET_KEY, {
-      algorithms: [JWT_ALGORITHM],
-      complete: false,
-    }) as JwtPayload
-
-    const username = payload.sub
-
-    if (!username) return null
-
-    return { username }
-  } catch (_) {
-    return null
-  }
-}
-
-export function withVerifyToken<
-  Params extends Promise<Record<string, unknown>> = Promise<
-    Record<string, unknown>
-  >,
->(
-  handler: (
-    request: NextRequest,
-    context: { params: Params },
-    token: string,
-    tokenData: { username: string },
-  ) => Response | Promise<Response>,
-) {
-  return withToken<Params>(async function (request, context, token) {
-    const tokenData = await verifyToken(token)
-    if (!tokenData) {
-      return NextResponse.json(
-        {
-          message: "Invalid authentication credentials",
-        },
-        {
-          status: 401,
-          headers: { "WWW-Authenticate": "Bearer" },
-        },
-      )
-    }
-
-    return handler(request, context, token, tokenData)
-  })
 }
 
 export function withHasPermission<
@@ -173,38 +256,37 @@ export function withHasPermission<
 >(permission: Permission) {
   return function (
     handler: (
-      request: NextRequest,
-      context: { params: Params },
-      token: string,
-      tokenData: { username: string },
+      request: VerifiedAuthRequest,
+      context: { params: Promise<Params> },
     ) => Promise<Response> | Response,
-  ) {
-    return withVerifyToken<Params>(
-      async (request, context, token, tokenData) => {
-        const hasPermission = await userHasPermission(
-          tokenData.username,
-          permission,
-        )
+  ): AppRouteHandlerFn {
+    return function (request, context) {
+      const token = extractTokenFromHeader(request)
+      if (token) {
+        request.cookies.set("st_token", token)
+      }
+      return auth(async (request, context) => {
+        if (!request.auth) {
+          return NextResponse.json(
+            { message: "Not authenticated" },
+            { status: 401, headers: { "WWW-Authenticate": "Bearer" } },
+          )
+        }
+        const hasPermission = request.auth.user.permissions?.[permission]
 
         if (!hasPermission) {
           return NextResponse.json({ message: "Forbidden" }, { status: 403 })
         }
 
-        return handler(request, context, token, tokenData)
-      },
-    )
+        return handler(request as VerifiedAuthRequest, context)
+      })(request, context)
+    }
   }
 }
 
-export async function hasPermission(
+export function hasPermission(
   permission: Permission,
-  cookie: RequestCookie | undefined,
+  user: Session["user"] | undefined,
 ) {
-  const token = extractTokenFromCookie(cookie)
-  if (!token) return false
-
-  const tokenData = await verifyToken(token)
-  if (!tokenData) return false
-
-  return userHasPermission(tokenData.username, permission)
+  return !!user?.permissions?.[permission]
 }

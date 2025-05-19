@@ -12,6 +12,7 @@ import {
 } from "kysely"
 import { DB } from "./schema"
 import { BooleanPlugin } from "./plugins/booleanPlugin"
+import { DatePlugin } from "./plugins/datePlugin"
 
 let db: Kysely<DB> | undefined
 
@@ -45,11 +46,12 @@ export function getDatabase(): Kysely<DB> {
   }
 
   db = new Kysely<DB>({
-    // log: ["error", "query"],
+    log: ["error", "query"],
     dialect: new SqliteDialect({ database: sqlite }),
     plugins: [
       new CamelCasePlugin(),
       new ParseJSONResultsPlugin(),
+      new DatePlugin(),
       new BooleanPlugin<DB>({
         fields: [
           "featured",

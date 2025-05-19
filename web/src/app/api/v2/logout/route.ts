@@ -1,5 +1,4 @@
-import { withVerifyToken } from "@/auth"
-import { revokeToken } from "@/database/tokenRevokations"
+import { signOut } from "@/auth"
 
 export const dynamic = "force-dynamic"
 
@@ -7,8 +6,6 @@ export const dynamic = "force-dynamic"
  * @summary Log out
  * @desc '
  */
-export const POST = withVerifyToken(async (_request, _context, token) => {
-  await revokeToken(token)
-
-  return new Response(null, { status: 204 })
-})
+export const POST = async () => {
+  await signOut({ redirectTo: "/" })
+}

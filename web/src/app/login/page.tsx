@@ -12,9 +12,11 @@ export default function Login() {
     "use server"
 
     try {
-      const username = data.get("username")?.valueOf() as string | undefined
+      const usernameOrEmail = data.get("usernameOrEmail")?.valueOf() as
+        | string
+        | undefined
       const password = data.get("password")?.valueOf() as string | undefined
-      if (!username || !password) return
+      if (!usernameOrEmail || !password) return
 
       const cookieOrigin = (await headers()).get("Origin")
 
@@ -24,7 +26,7 @@ export default function Login() {
       const client = new ApiClient(apiHost, proxyRootPath)
       let token: Token
       try {
-        token = await client.login({ username, password })
+        token = await client.login({ usernameOrEmail, password })
       } catch (e) {
         return "bad-creds"
       }

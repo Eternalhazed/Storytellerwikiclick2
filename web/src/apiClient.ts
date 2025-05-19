@@ -72,9 +72,12 @@ export class ApiClient {
     return true
   }
 
-  async login(creds: { username: string; password: string }): Promise<Token> {
+  async login(creds: {
+    usernameOrEmail: string
+    password: string
+  }): Promise<Token> {
     const formData = new FormData()
-    formData.set("username", creds.username)
+    formData.set("usernameOrEmail", creds.usernameOrEmail)
     formData.set("password", creds.password)
 
     const url = new URL(`${this.rootPath}/v2/token`, this.origin)

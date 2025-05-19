@@ -1,5 +1,5 @@
 import { withHasPermission } from "@/auth"
-import { deleteInvite, getInvite } from "@/database/invites"
+import { deleteInvite, getInvite } from "@/database/users"
 import { NextRequest, NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -17,7 +17,7 @@ export async function GET(
   context: { params: Promise<Params> },
 ) {
   const { inviteKey } = await context.params
-  const invite = getInvite(inviteKey)
+  const invite = await getInvite(inviteKey)
   return NextResponse.json(invite)
 }
 

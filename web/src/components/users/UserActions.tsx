@@ -29,7 +29,7 @@ export function UserActions({ user, onEdit, onUpdate }: Props) {
           variant="subtle"
           color="red"
           onClick={async () => {
-            await client.deleteUser(user.uuid)
+            await client.deleteUser(user.id)
             onUpdate()
           }}
         >

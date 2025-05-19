@@ -9,3 +9,13 @@ export async function getStatuses() {
 
   return db.selectFrom("status").selectAll().execute()
 }
+
+export async function getDefaultStatus() {
+  const db = getDatabase()
+
+  return db
+    .selectFrom("status")
+    .selectAll("status")
+    .where("isDefault", "=", true)
+    .executeTakeFirstOrThrow()
+}
