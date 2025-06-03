@@ -1,5 +1,5 @@
 import { InviteRequest } from "@/apiModels"
-import { withHasPermission } from "@/auth"
+import { withHasPermission } from "@/auth/auth"
 import { createUser, getInvites } from "@/database/users"
 import { sendInvite } from "@/invites"
 import { logger } from "@/logging"

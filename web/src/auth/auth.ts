@@ -3,24 +3,26 @@ import { hash, verify as verifyPassword } from "argon2"
 import {
   Permission,
   UserPermissionSet,
+  acceptInvite,
+  getInvite,
   getUserByUsernameOrEmail,
-} from "./database/users"
+  updateUserByEmail,
+} from "../database/users"
 import { add } from "date-fns/fp/add"
 import { sign } from "jsonwebtoken"
 import { NextRequest, NextResponse } from "next/server"
 import { readFileSync } from "node:fs"
-import NextAuth, {
-  type NextAuthResult,
-  type DefaultSession,
-  NextAuthConfig,
-} from "next-auth"
+import NextAuth, { type DefaultSession, NextAuthConfig } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
-import { KyselyAdapter } from "./database/authAdapter"
-import { getDatabase } from "./database/connection"
-import { NextAuthRequest } from "next-auth"
-import { Session } from "next-auth"
-import { UUID } from "./uuid"
+import { KyselyAdapter } from "../database/authAdapter"
+import { db } from "../database/connection"
+import { Session, NextAuthRequest } from "next-auth"
+import { OAuth2Config, OAuthUserConfig, OIDCConfig } from "next-auth/providers"
+import { UUID } from "../uuid"
 import { randomUUID } from "node:crypto"
+import { getSettings } from "../database/settings"
+import { Providers } from "./providers"
+import { cookies } from "next/headers"
 
 declare module "next-auth" {
   interface Session {
@@ -39,38 +41,41 @@ function fromDate(time: number, date = Date.now()) {
   return new Date(date + time * 1000)
 }
 
-const adapter = KyselyAdapter(getDatabase())
+const adapter = KyselyAdapter(db)
 
 // 30 days
 const maxAge = 30 * 24 * 60 * 60
 
+const credentialsProvider = Credentials({
+  credentials: {
+    usernameOrEmail: {
+      type: "text",
+      label: "Username or email",
+    },
+    password: {
+      type: "password",
+      label: "Password",
+      placeholder: "********",
+    },
+  },
+  async authorize(credentials) {
+    return authenticateUser(
+      credentials.usernameOrEmail as string,
+      credentials.password as string,
+    )
+  },
+})
+
 export const config: NextAuthConfig = {
-  providers: [
-    Credentials({
-      credentials: {
-        usernameOrEmail: {
-          type: "text",
-          label: "Username or email",
-        },
-        password: {
-          type: "password",
-          label: "Password",
-          placeholder: "********",
-        },
-      },
-      async authorize(credentials) {
-        return authenticateUser(
-          credentials.usernameOrEmail as string,
-          credentials.password as string,
-        )
-      },
-    }),
-  ],
+  providers: [credentialsProvider],
   cookies: {
     sessionToken: { name: "st_token" },
   },
   session: {
     maxAge,
+  },
+  pages: {
+    signIn: "/login",
   },
   adapter,
   jwt: {
@@ -105,10 +110,77 @@ export const config: NextAuthConfig = {
   basePath: "/api/v2/auth",
 }
 
-const authResult = NextAuth(config)
+async function syncProviders() {
+  const settings = await getSettings()
+  const additionalProviders = settings.authProviders.map((provider) => {
+    if (provider.kind === "built-in") {
+      const providerFactory = Providers[provider.id] as (
+        config: OAuthUserConfig<unknown>,
+      ) => OIDCConfig<unknown>
 
-export const { handlers, signIn, signOut } = authResult
-export const auth: NextAuthResult["auth"] = authResult.auth
+      return providerFactory({
+        clientId: provider.clientId,
+        clientSecret: provider.clientSecret,
+        ...(provider.issuer && { issuer: provider.issuer }),
+      })
+    }
+
+    return {
+      id: provider.name
+        .toLowerCase()
+        .replaceAll(/ +/g, "-")
+        .replaceAll(/[^a-zA-Z0-9-]/g, ""),
+      name: provider.name,
+      type: provider.type,
+      clientId: provider.clientId,
+      clientSecret: provider.clientSecret,
+      issuer: provider.issuer,
+      ...(provider.type === "oidc" && {
+        checks: ["pkce" as const, "state" as const],
+      }),
+    }
+  })
+
+  config.providers = [credentialsProvider, ...additionalProviders]
+}
+
+await syncProviders()
+
+async function createConfig(request: NextRequest | undefined) {
+  if (!request?.nextUrl.pathname.includes("/auth/callback")) {
+    return config
+  }
+
+  const cookieJar = await cookies()
+  const inviteKeyCookie = cookieJar.get("st_invite")
+
+  if (!inviteKeyCookie) return config
+
+  const invite = await getInvite(inviteKeyCookie.value)
+  if (!invite) return config
+
+  await acceptInvite(invite.email, invite.inviteKey)
+
+  await updateUserByEmail(invite.email, { username: invite.email, name: "" })
+
+  return {
+    ...config,
+    providers: config.providers.map(
+      (provider) =>
+        ({
+          ...provider,
+          allowDangerousEmailAccountLinking: true,
+        }) as OAuth2Config<unknown>,
+    ),
+  }
+}
+
+export let nextAuth = NextAuth(createConfig)
+
+export async function refreshNextAuth() {
+  await syncProviders()
+  nextAuth = NextAuth(createConfig)
+}
 
 /**
  * AppRouteHandlerFnContext is the context that is passed to the handler as the
@@ -230,12 +302,12 @@ export function withUser<
     context: { params: Promise<Params> },
   ) => Promise<Response> | Response,
 ): AppRouteHandlerFn {
-  return function (request, context) {
+  return async function (request, context) {
     const token = extractTokenFromHeader(request)
     if (token) {
       request.cookies.set("st_token", token)
     }
-    return auth(async (request, context) => {
+    const h = nextAuth.auth(async (request, context) => {
       const user = request.auth?.user
       if (!user) {
         return NextResponse.json(
@@ -245,7 +317,12 @@ export function withUser<
       }
 
       return handler(request as VerifiedAuthRequest, context)
-    })(request, context)
+      // We have to do a cast here because NextAuthResult is
+      // typed incorrectly: the `auth` function becmomes async
+      // when passed a lazy init function
+    }) as unknown as Promise<ReturnType<typeof nextAuth.auth>>
+
+    return (await h)(request, context)
   }
 }
 
@@ -260,12 +337,12 @@ export function withHasPermission<
       context: { params: Promise<Params> },
     ) => Promise<Response> | Response,
   ): AppRouteHandlerFn {
-    return function (request, context) {
+    return async function (request, context) {
       const token = extractTokenFromHeader(request)
       if (token) {
         request.cookies.set("st_token", token)
       }
-      return auth(async (request, context) => {
+      const h = nextAuth.auth(async (request, context) => {
         if (!request.auth) {
           return NextResponse.json(
             { message: "Not authenticated" },
@@ -279,7 +356,12 @@ export function withHasPermission<
         }
 
         return handler(request as VerifiedAuthRequest, context)
-      })(request, context)
+        // We have to do a cast here because NextAuthResult is
+        // typed incorrectly: the `auth` function becmomes async
+        // when passed a lazy init function
+      }) as unknown as Promise<ReturnType<typeof nextAuth.auth>>
+
+      return (await h)(request, context)
     }
   }
 }

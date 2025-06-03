@@ -1,4 +1,4 @@
-import { signOut } from "@/auth"
+import { nextAuth } from "@/auth/auth"
 
 export const dynamic = "force-dynamic"
 
@@ -7,5 +7,5 @@ export const dynamic = "force-dynamic"
  * @desc '
  */
 export const POST = async () => {
-  await signOut({ redirectTo: "/" })
+  await nextAuth.signOut({ redirectTo: "/login" })
 }

@@ -1,6 +1,6 @@
 import { Insertable, Selectable, Updateable } from "kysely"
 import { DB } from "./schema"
-import { getDatabase } from "./connection"
+import { db } from "./connection"
 import { UUID } from "@/uuid"
 
 export type Collection = Selectable<DB["collection"]>
@@ -8,8 +8,6 @@ export type NewCollection = Insertable<DB["collection"]>
 export type CollectionUpdate = Updateable<DB["collection"]>
 
 export async function getCollections(userId: UUID) {
-  const db = getDatabase()
-
   return await db
     .selectFrom("collection")
     .selectAll("collection")
@@ -22,7 +20,7 @@ export async function getCollections(userId: UUID) {
         )
         .where((eb) =>
           eb.or([
-            eb("collectionToUser.userUuid", "=", userId),
+            eb("collectionToUser.userId", "=", userId),
             eb("collection.public", "=", true),
           ]),
         ),
@@ -34,8 +32,6 @@ export async function createCollection(
   insert: NewCollection,
   relations: { users?: UUID[] } = {},
 ) {
-  const db = getDatabase()
-
   const collection = await db
     .insertInto("collection")
     .values(insert)
@@ -55,7 +51,7 @@ export async function createCollection(
       .values(
         relations.users.map((user) => ({
           collectionUuid: collection.uuid,
-          userUuid: user,
+          userId: user,
         })),
       )
       .execute()

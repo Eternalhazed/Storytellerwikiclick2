@@ -1,4 +1,4 @@
-import { withHasPermission } from "@/auth"
+import { withHasPermission } from "@/auth/auth"
 import { getInvite } from "@/database/users"
 import { sendInvite } from "@/invites"
 import { NextResponse } from "next/server"
@@ -19,6 +19,8 @@ export const POST = withHasPermission<Params>("userCreate")(async (
   const key = inviteKey
 
   const invite = await getInvite(key)
+
+  if (!invite) return new Response(null, { status: 404 })
 
   await sendInvite(invite.email, key)
 

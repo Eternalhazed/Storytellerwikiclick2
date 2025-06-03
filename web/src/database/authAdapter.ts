@@ -18,24 +18,14 @@ import { Insertable, Kysely } from "kysely"
 
 import { type Adapter } from "@auth/core/adapters"
 import { DB } from "./schema"
-import {
-  getUser,
-  getUserByAccount,
-  getUserByUsernameOrEmail,
-  NewUser,
-} from "./users"
+import { getUser, getUserByAccount, getUserByUsernameOrEmail } from "./users"
 import { UUID } from "@/uuid"
 import { jsonObjectFrom } from "kysely/helpers/sqlite"
 
 export function KyselyAdapter(db: Kysely<DB>): Adapter {
   return {
-    async createUser(data) {
-      const { id } = await db
-        .insertInto("user")
-        .values(data as NewUser)
-        .returning("id as id")
-        .executeTakeFirstOrThrow()
-      return { ...data, id }
+    createUser() {
+      throw new Error("No automatic signups allowed")
     },
     async getUser(id) {
       return getUser(id as UUID)
@@ -70,6 +60,11 @@ export function KyselyAdapter(db: Kysely<DB>): Adapter {
         expires_at: expiresAt,
         ...values
       } = account
+
+      const user = await getUser(account.userId as UUID)
+      if (user?.inviteKey && !user.inviteAccepted) {
+        throw new Error("Cannot link account for unaccepted invite")
+      }
 
       await db
         .insertInto("account")

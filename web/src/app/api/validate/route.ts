@@ -1,4 +1,4 @@
-import { withUser } from "@/auth"
+import { withUser } from "@/auth/auth"
 
 export const dynamic = "force-dynamic"
 

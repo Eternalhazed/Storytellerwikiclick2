@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation"
-import { apiHost, proxyRootPath } from "../../apiHost"
+import { apiHost, proxyRootPath } from "../../../apiHost"
 import { ApiClient } from "@/apiClient"
 import { cookies, headers } from "next/headers"
 import { getCookieDomain } from "@/cookies"
-import { Button, PasswordInput, TextInput, Title } from "@mantine/core"
+import { Title } from "@mantine/core"
+import { AcceptInviteForm } from "@/components/invites/AcceptInviteForm"
+import { nextAuth } from "@/auth/auth"
 
 export const dynamic = "force-dynamic"
 
@@ -14,10 +16,11 @@ type Props = {
 }
 
 export default async function InvitePage(props: Props) {
+  const { inviteKey } = await props.params
   const client = new ApiClient(apiHost, proxyRootPath)
-  const invite = await client.getInvite((await props.params).inviteKey)
+  const invite = await client.getInvite(inviteKey)
 
-  async function acceptInvite(data: FormData) {
+  async function acceptCredentialsInvite(data: FormData) {
     "use server"
 
     const name = data.get("name")?.valueOf() as string | undefined
@@ -29,13 +32,14 @@ export default async function InvitePage(props: Props) {
     const domain = getCookieDomain(cookieOrigin)
 
     const client = new ApiClient(apiHost, proxyRootPath)
-    const token = await client.acceptInvite({
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const token = (await client.acceptInvite({
       email: invite.email,
       name,
       username,
       password,
-      inviteKey: (await props.params).inviteKey,
-    })
+      inviteKey: inviteKey,
+    }))!
 
     const cookieStore = await cookies()
     cookieStore.set("st_token", token.access_token, {
@@ -47,42 +51,32 @@ export default async function InvitePage(props: Props) {
     redirect("/")
   }
 
+  async function acceptOauthInvite(data: FormData) {
+    "use server"
+
+    const providerId = data.get("provider")?.valueOf() as string | undefined
+    if (!providerId) return
+
+    const cookieJar = await cookies()
+    cookieJar.set("st_invite", inviteKey)
+
+    await nextAuth.signIn(providerId, { redirectTo: "/" })
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { credentials: _, ...providers } = await client.listProviders()
+
   return (
     <>
       <header>
         <Title order={2}>Accept Invite</Title>
       </header>
-      <form action={acceptInvite}>
-        <TextInput
-          label="email"
-          name="email"
-          type="email"
-          defaultValue={invite.email}
-          disabled
-          withAsterisk
-          required
-        />
-        <TextInput
-          label="Full name"
-          name="name"
-          type="text"
-          withAsterisk
-          required
-        />
-        <TextInput
-          label="Username"
-          name="username"
-          type="text"
-          autoCapitalize="none"
-          autoCorrect="off"
-          withAsterisk
-          required
-        />
-        <PasswordInput label="Password" name="password" withAsterisk required />
-        <Button mt={16} type="submit">
-          Accept
-        </Button>
-      </form>
+      <AcceptInviteForm
+        credentialsAction={acceptCredentialsInvite}
+        oauthAction={acceptOauthInvite}
+        invite={invite}
+        providers={Object.values(providers)}
+      />
     </>
   )
 }

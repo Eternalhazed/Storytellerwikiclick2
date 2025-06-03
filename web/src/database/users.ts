@@ -1,5 +1,5 @@
 import { UUID } from "@/uuid"
-import { getDatabase } from "./connection"
+import { db } from "./connection"
 import { Insertable, Selectable, Updateable } from "kysely"
 import { DB } from "./schema"
 import { jsonObjectFrom } from "kysely/helpers/sqlite"
@@ -17,10 +17,9 @@ export type Permission = keyof UserPermissionSet
 
 export type User = Selectable<DB["user"]>
 export type NewUser = Insertable<DB["user"]>
+export type UserUpdate = Updateable<DB["user"]>
 
 export async function getUserByUsernameOrEmail(usernameOrEmail: string) {
-  const db = getDatabase()
-
   const row = await db
     .selectFrom("user")
     .selectAll("user")
@@ -64,8 +63,6 @@ export async function getUserByAccount(
   providerAccountId: string,
   provider: string,
 ) {
-  const db = getDatabase()
-
   const row = await db
     .selectFrom("user")
     .innerJoin("account", "user.id", "account.userId")
@@ -103,8 +100,6 @@ export async function getUserByAccount(
 }
 
 export async function getUser(id: UUID) {
-  const db = getDatabase()
-
   const row = await db
     .selectFrom("user")
     .selectAll("user")
@@ -140,8 +135,6 @@ export async function getUser(id: UUID) {
 }
 
 export async function getUserCount() {
-  const db = getDatabase()
-
   const { count } = await db
     .selectFrom("user")
     .select([(eb) => eb.fn.count("id").as("count")])
@@ -151,8 +144,6 @@ export async function getUserCount() {
 }
 
 export async function getUsers() {
-  const db = getDatabase()
-
   const rows = await db
     .selectFrom("user")
     .selectAll("user")
@@ -181,6 +172,12 @@ export async function getUsers() {
           .whereRef("user.userPermissionUuid", "=", "userPermission.uuid"),
       ).as("permissions"),
     ])
+    .where((eb) =>
+      eb.or([
+        eb("user.inviteKey", "is", null),
+        eb("user.inviteAccepted", "is not", null),
+      ]),
+    )
     .execute()
 
   return rows
@@ -192,8 +189,6 @@ export async function createAdminUser(
   email: string,
   hashedPassword: string,
 ) {
-  const db = getDatabase()
-
   const { uuid } = await db
     .insertInto("userPermission")
     .columns([
@@ -255,16 +250,20 @@ export async function createAdminUser(
     .execute()
 }
 
-export async function deleteUser(userUuid: UUID) {
-  const db = getDatabase()
+export async function deleteUser(userId: UUID) {
+  await db.deleteFrom("position").where("userId", "=", userId).execute()
+
+  await db.deleteFrom("account").where("userId", "=", userId).execute()
+
+  await db.deleteFrom("session").where("userId", "=", userId).execute()
 
   const { userPermissionUuid } = await db
     .selectFrom("user")
     .select(["userPermissionUuid"])
-    .where("id", "=", userUuid)
+    .where("id", "=", userId)
     .executeTakeFirstOrThrow()
 
-  await db.deleteFrom("user").where("id", "=", userUuid).execute()
+  await db.deleteFrom("user").where("id", "=", userId).execute()
 
   await db
     .deleteFrom("userPermission")
@@ -277,8 +276,6 @@ export async function createUser(
   inviteKey: string,
   permissions: UserPermissionSet,
 ) {
-  const db = getDatabase()
-
   const { uuid } = await db
     .insertInto("userPermission")
     .values({
@@ -310,21 +307,63 @@ export async function createUser(
     .execute()
 }
 
-export async function acceptInvite(
-  username: string,
-  name: string,
-  email: string,
-  hashedPassword: string,
-  inviteKey: string,
-) {
-  const db = getDatabase()
+export async function updateUserByEmail(email: string, update: UserUpdate) {
+  const existingUser = await getUserByUsernameOrEmail(email)
+  if (!existingUser)
+    throw new Error(`Failed to update user, no user exists with email ${email}`)
 
-  const { id } = await db
+  if (!existingUser.hashedPassword && update.hashedPassword) {
+    await createCredentialsAccount(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      update.username ?? existingUser.username!,
+      update.name ?? existingUser.name,
+      update.email ?? existingUser.email,
+      update.hashedPassword,
+    )
+  }
+
+  await db.updateTable("user").set(update).where("email", "=", email).execute()
+}
+
+export async function updateUser(id: UUID, update: UserUpdate) {
+  const existingUser = await getUser(id)
+  if (!existingUser)
+    throw new Error(`Failed to update user, no user exists with id ${id}`)
+
+  if (!existingUser.hashedPassword && update.hashedPassword) {
+    await createCredentialsAccount(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      update.username ?? existingUser.username!,
+      update.name ?? existingUser.name,
+      update.email ?? existingUser.email,
+      update.hashedPassword,
+    )
+  }
+
+  await db.updateTable("user").set(update).where("id", "=", id).execute()
+}
+
+export async function acceptInvite(email: string, inviteKey: string) {
+  await db
     .updateTable("user")
-    .set({ username, name, hashedPassword, inviteAccepted: new Date() })
+    .set({ inviteAccepted: new Date() })
     .where("email", "=", email)
     .where("inviteKey", "=", inviteKey)
     .where("inviteAccepted", "is", null)
+    .returning("id as id")
+    .executeTakeFirstOrThrow()
+}
+
+export async function createCredentialsAccount(
+  username: string,
+  name: string | null,
+  email: string,
+  hashedPassword: string,
+) {
+  const { id } = await db
+    .updateTable("user")
+    .set({ username, name, hashedPassword })
+    .where("email", "=", email)
     .returning("id as id")
     .executeTakeFirstOrThrow()
 
@@ -339,11 +378,17 @@ export async function acceptInvite(
     .execute()
 }
 
+export async function getAccounts(id: UUID) {
+  return db
+    .selectFrom("account")
+    .select(["account.provider", "account.providerAccountId"])
+    .where("account.userId", "=", id)
+    .execute()
+}
+
 export async function getInvites(): Promise<
   { email: string; inviteKey: string }[]
 > {
-  const db = getDatabase()
-
   const results = await db
     .selectFrom("user")
     .select(["user.email", "user.inviteKey"])
@@ -355,21 +400,17 @@ export async function getInvites(): Promise<
 }
 
 export async function getInvite(key: string) {
-  const db = getDatabase()
-
   const row = await db
     .selectFrom("user")
     .select(["user.email", "user.inviteKey"])
     .where("user.inviteKey", "=", key)
     .where("user.inviteAccepted", "is", null)
-    .executeTakeFirstOrThrow()
+    .executeTakeFirst()
 
-  return row as { email: string; inviteKey: string }
+  return row as { email: string; inviteKey: string } | undefined
 }
 
 export async function verifyInvite(email: string, inviteKey: string) {
-  const db = getDatabase()
-
   const row = await db
     .selectFrom("user")
     .select(["user.id"])
@@ -382,7 +423,6 @@ export async function verifyInvite(email: string, inviteKey: string) {
 }
 
 export async function deleteInvite(key: string) {
-  const db = getDatabase()
   await db.deleteFrom("user").where("inviteKey", "=", key).execute()
 }
 
@@ -390,8 +430,6 @@ export async function userHasPermission(
   username: string,
   permission: Permission,
 ) {
-  const db = getDatabase()
-
   const result = await db
     .selectFrom("userPermission")
     .select([permission])
@@ -410,8 +448,6 @@ export async function updateUserPermissions(
   userUuid: UUID,
   permissions: UserPermissionUpdate,
 ) {
-  const db = getDatabase()
-
   const { userPermissionUuid } = await db
     .selectFrom("userPermission")
     .select(["userPermission.uuid as userPermissionUuid"])
@@ -443,8 +479,6 @@ export async function updateUserPermissions(
 }
 
 export async function getCurrentUserSession(usernameOrEmail: string) {
-  const db = getDatabase()
-
   return await db
     .selectFrom("session")
     .selectAll("session")

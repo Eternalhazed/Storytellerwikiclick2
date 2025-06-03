@@ -102,7 +102,7 @@ export interface CollectionToUser {
   collectionUuid: import("@/uuid").UUID
   createdAt: Generated<string>
   updatedAt: Generated<string>
-  userUuid: import("@/uuid").UUID
+  userId: import("@/uuid").UUID
   uuid: Generated<import("@/uuid").UUID>
 }
 
@@ -120,7 +120,7 @@ export interface Position {
   locator: string
   timestamp: number
   updatedAt: Generated<string>
-  userUuid: import("@/uuid").UUID
+  userId: import("@/uuid").UUID
   uuid: Generated<import("@/uuid").UUID>
 }
 

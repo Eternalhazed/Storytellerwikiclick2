@@ -2,7 +2,7 @@ import { ApiClient } from "@/apiClient"
 import { getCookieDomain } from "@/cookies"
 import { headers, cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { apiHost, proxyRootPath } from "../apiHost"
+import { apiHost, proxyRootPath } from "../../apiHost"
 import { Button, PasswordInput, TextInput, Title } from "@mantine/core"
 
 export default function InitPage() {

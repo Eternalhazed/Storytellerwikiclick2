@@ -1,6 +1,6 @@
-import { withUser } from "@/auth"
-import { UserPermissionSet } from "@/database/users"
-import { NextResponse } from "next/server"
+import { User } from "@/apiModels"
+import { withUser } from "@/auth/auth"
+import { getUser, updateUser, UserPermissionSet } from "@/database/users"
 
 export const dynamic = "force-dynamic"
 
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic"
 export const GET = withUser((request) => {
   const user = request.auth.user
 
-  return NextResponse.json({
+  return Response.json({
     id: user.id,
     name: user.name,
     username: user.username,
@@ -33,6 +33,43 @@ export const GET = withUser((request) => {
       userList: user.permissions?.userList ?? false,
       userRead: user.permissions?.userRead ?? false,
       userUpdate: user.permissions?.userUpdate ?? false,
+    } satisfies UserPermissionSet,
+  })
+})
+
+export const PUT = withUser(async (request) => {
+  const user = request.auth.user
+
+  const update = (await request.json()) as User
+
+  await updateUser(user.id, update)
+
+  const updated = await getUser(user.id)
+
+  if (!updated) return new Response(null, { status: 500 })
+
+  return Response.json({
+    id: updated.id,
+    name: updated.name,
+    username: updated.username,
+    email: updated.email,
+    permissions: {
+      bookCreate: updated.permissions?.bookCreate ?? false,
+      bookDelete: updated.permissions?.bookDelete ?? false,
+      bookDownload: updated.permissions?.bookDownload ?? false,
+      bookList: updated.permissions?.bookList ?? false,
+      bookProcess: updated.permissions?.bookProcess ?? false,
+      bookRead: updated.permissions?.bookRead ?? false,
+      bookUpdate: updated.permissions?.bookUpdate ?? false,
+      collectionCreate: updated.permissions?.collectionCreate ?? false,
+      inviteDelete: updated.permissions?.inviteDelete ?? false,
+      inviteList: updated.permissions?.inviteList ?? false,
+      settingsUpdate: updated.permissions?.settingsUpdate ?? false,
+      userCreate: updated.permissions?.userCreate ?? false,
+      userDelete: updated.permissions?.userDelete ?? false,
+      userList: updated.permissions?.userList ?? false,
+      userRead: updated.permissions?.userRead ?? false,
+      userUpdate: updated.permissions?.userUpdate ?? false,
     } satisfies UserPermissionSet,
   })
 })

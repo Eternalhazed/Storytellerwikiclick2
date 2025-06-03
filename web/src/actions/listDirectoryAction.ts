@@ -1,6 +1,6 @@
 "use server"
 
-import { auth, hasPermission } from "@/auth"
+import { nextAuth, hasPermission } from "@/auth/auth"
 import { readdir, stat } from "fs/promises"
 import { join } from "node:path"
 
@@ -19,7 +19,7 @@ export type DirectoryEntry =
 export async function listDirectoryAction(
   directory: string,
 ): Promise<DirectoryEntry[]> {
-  const session = await auth()
+  const session = await nextAuth.auth()
   if (!hasPermission("bookCreate", session?.user)) {
     throw new Error("Forbidden")
   }

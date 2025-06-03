@@ -4,13 +4,16 @@ import {
   getAccessTokenExpireDate,
   hashPassword,
   withHasPermission,
-} from "@/auth"
+} from "@/auth/auth"
+
 import {
   acceptInvite,
+  createCredentialsAccount,
   getUsers,
   UserPermissionSet,
   verifyInvite,
 } from "@/database/users"
+
 import { NextRequest, NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -56,6 +59,7 @@ export const GET = withHasPermission("userList")(async () => {
  */
 export async function POST(request: NextRequest) {
   const invite = (await request.json()) as InviteAccept
+
   const verified = await verifyInvite(invite.email, invite.inviteKey)
   if (!verified) {
     return NextResponse.json(
@@ -68,12 +72,13 @@ export async function POST(request: NextRequest) {
 
   const hashedPassword = await hashPassword(invite.password)
 
-  await acceptInvite(
+  await acceptInvite(invite.email, invite.inviteKey)
+
+  await createCredentialsAccount(
     invite.username,
     invite.name,
     invite.email,
     hashedPassword,
-    invite.inviteKey,
   )
 
   const accessTokenExpires = getAccessTokenExpireDate()

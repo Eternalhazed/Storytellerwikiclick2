@@ -1,5 +1,5 @@
 import { UUID } from "@/uuid"
-import { getDatabase } from "./connection"
+import { db } from "./connection"
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite"
 import {
   ProcessingTaskType,
@@ -29,7 +29,6 @@ export async function getBookUuid(bookIdOrUuid: string): Promise<UUID> {
   // Otherwise, parse into an int and fetch the UUID from the db
   const bookId = parseInt(bookIdOrUuid, 10)
 
-  const db = getDatabase()
   const { uuid } = await db
     .selectFrom("book")
     .select(["uuid"])
@@ -126,8 +125,6 @@ export async function createBook(
   insert: NewBook,
   relations: { authors?: AuthorRelation[]; series?: SeriesRelation[] } = {},
 ) {
-  const db = getDatabase()
-
   const { uuid } = await db
     .insertInto("book")
     .values(insert)
@@ -209,8 +206,6 @@ export async function getBooks(
   bookUuids: UUID[] | null = null,
   alignedOnly = false,
 ) {
-  const db = getDatabase()
-
   const books = await db
     .selectFrom("book")
     .selectAll("book")
@@ -315,8 +310,6 @@ export async function getBook(uuid: UUID) {
 }
 
 export async function deleteBook(bookUuid: UUID) {
-  const db = getDatabase()
-
   await db
     .deleteFrom("processingTask")
     .where("bookUuid", "=", bookUuid)
@@ -368,8 +361,6 @@ export async function updateBook(
     tags?: string[]
   } = {},
 ) {
-  const db = getDatabase()
-
   if (update) {
     await db.updateTable("book").set(update).where("uuid", "=", uuid).execute()
   }

@@ -7,7 +7,7 @@ import {
 } from "kysely"
 import { DB } from "./schema"
 import { UUID } from "@/uuid"
-import { getDatabase } from "./connection"
+import { db } from "./connection"
 
 type ExtractColumnType<DB, TB extends keyof DB, C> = {
   [T in TB]: C extends keyof DB[T] ? DB[T][C] : never
@@ -99,7 +99,6 @@ export async function syncRelations<
     values: Omit<Insertable<DB[RelatedTable] & DB[RelationTable]>, PK>,
   ) => Partial<InsertObject<DB, RelationTable>>
 }) {
-  const db = getDatabase()
   const relatedPrimaryKeys: unknown[] = []
   for (const relationValues of relations) {
     const { [relatedPrimaryKeyColumn]: relatedPrimaryKey, ...values } =

@@ -1,14 +1,17 @@
 import { ApiClient } from "@/apiClient"
 import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
-import { apiHost, proxyRootPath } from "../apiHost"
+import { apiHost, proxyRootPath } from "../../apiHost"
 import { getCookieDomain, getCookieSecure } from "@/cookies"
 import { LoginForm } from "@/components/login/LoginForm"
 import { Token } from "@/apiModels"
 import { Title } from "@mantine/core"
+import { createAuthedApiClient } from "@/authedApiClient"
+import { nextAuth } from "@/auth/auth"
+import { AuthError } from "next-auth"
 
-export default function Login() {
-  async function login(data: FormData) {
+export default async function Login() {
+  async function credentialsLogin(data: FormData) {
     "use server"
 
     try {
@@ -45,12 +48,33 @@ export default function Login() {
     redirect("/")
   }
 
+  async function oauthLogin(providerId: string) {
+    "use server"
+    try {
+      await nextAuth.signIn(providerId)
+    } catch (error) {
+      if (error instanceof AuthError) {
+        console.error(error)
+        return
+      }
+      throw error
+    }
+  }
+
+  const client = await createAuthedApiClient()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { credentials: _, ...providers } = await client.listProviders()
+
   return (
     <>
       <header>
         <Title order={2}>Login</Title>
       </header>
-      <LoginForm action={login} />
+      <LoginForm
+        credentialsLoginAction={credentialsLogin}
+        oauthLoginAction={oauthLogin}
+        providers={Object.values(providers)}
+      />
     </>
   )
 }

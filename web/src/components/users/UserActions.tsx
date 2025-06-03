@@ -33,8 +33,8 @@ export function UserActions({ user, onEdit, onUpdate }: Props) {
             onUpdate()
           }}
         >
-          <Tooltip position="right" label="Delete invite">
-            <IconTrash aria-label="Delete invite" />
+          <Tooltip position="right" label="Delete user">
+            <IconTrash aria-label="Delete user" />
           </Tooltip>{" "}
         </ActionIcon>
       )}

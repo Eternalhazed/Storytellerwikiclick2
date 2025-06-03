@@ -1,4 +1,4 @@
-import { config } from "@/auth"
+import { config } from "@/auth/auth"
 import { NextRequest } from "next/server"
 import { Auth, createActionURL, raw, skipCSRFCheck } from "@auth/core"
 import { headers as nextHeaders } from "next/headers"

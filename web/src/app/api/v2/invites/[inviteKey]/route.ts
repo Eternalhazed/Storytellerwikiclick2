@@ -1,4 +1,4 @@
-import { withHasPermission } from "@/auth"
+import { withHasPermission } from "@/auth/auth"
 import { deleteInvite, getInvite } from "@/database/users"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -18,6 +18,8 @@ export async function GET(
 ) {
   const { inviteKey } = await context.params
   const invite = await getInvite(inviteKey)
+  if (!invite) return new Response(null, { status: 404 })
+
   return NextResponse.json(invite)
 }
 
