@@ -7,7 +7,7 @@ import { CredentialsSignin } from "next-auth"
 export const dynamic = "force-dynamic"
 
 /**
- * @summary Create an auth token
+ * @summary deprecated - Create an auth token
  * @desc '
  */
 export async function POST(request: NextRequest) {
