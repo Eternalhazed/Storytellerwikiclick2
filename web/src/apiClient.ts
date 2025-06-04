@@ -18,7 +18,6 @@ import { Series } from "./database/series"
 import { Collection } from "./database/collections"
 import { UUID } from "./uuid"
 import { PublicProvider } from "@auth/core/types"
-import { parse } from "set-cookie-parser"
 
 export class ApiClientError extends Error {
   constructor(
@@ -716,49 +715,5 @@ export class ApiClient {
 
     const providers = (await response.json()) as Record<string, PublicProvider>
     return providers
-  }
-
-  async oauth(providerId: string, csrfToken?: string) {
-    if (!csrfToken) {
-      const csrfResponse = await fetch(
-        new URL(`${this.rootPath}/v2/auth/csrf`, this.origin),
-      )
-
-      const cookies = csrfResponse.headers.getSetCookie()
-      const csrfCookie = cookies.find((cookie) =>
-        cookie.startsWith("authjs.csrf-token"),
-      )
-
-      csrfToken = csrfCookie?.split(";")[0]?.replace("authjs.csrf-token=", "")
-      csrfToken &&= decodeURIComponent(csrfToken)
-    }
-
-    const url = new URL(
-      `${this.rootPath}/v2/auth/signin/${providerId}`,
-      this.origin,
-    )
-
-    const response = await fetch(url, {
-      method: "POST",
-      redirect: "manual",
-      headers: {
-        "Content-Type": "application/json",
-        cookie: `authjs.csrf-token=${csrfToken}`,
-      },
-      body: JSON.stringify({ csrfToken: csrfToken?.split("|")[0] }),
-    })
-
-    if (response.status !== 302) {
-      throw new ApiClientError(response.status, response.statusText)
-    }
-
-    const location = response.headers.get("location")
-    return {
-      location,
-      setCookies: parse(response.headers.getSetCookie()),
-    }
-
-    // const result = (await response.json()) as { url: string }
-    // return result.url
   }
 }

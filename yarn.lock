@@ -8693,7 +8693,6 @@ __metadata:
     "@types/nodemailer": "npm:^6"
     "@types/react": "npm:^19.0.0"
     "@types/react-dom": "npm:^19.0.0"
-    "@types/set-cookie-parser": "npm:^2"
     "@zip.js/zip.js": "npm:^2.7.40"
     argon2: "npm:^0.40.1"
     autoprefixer: "npm:^10.4.20"
@@ -8730,7 +8729,6 @@ __metadata:
     react: "npm:^19.0.0"
     react-circular-progressbar: "npm:^2.2.0"
     react-dom: "npm:^19.0.0"
-    set-cookie-parser: "npm:^2.7.1"
     sharp: "npm:^0.33.2"
     simple-git: "npm:^3.25.0"
     tailwindcss: "npm:^3.4.17"
@@ -9824,15 +9822,6 @@ __metadata:
     "@types/mime": "npm:*"
     "@types/node": "npm:*"
   checksum: 10c0/811d1a2f7e74a872195e7a013bcd87a2fb1edf07eaedcb9dcfd20c1eb4bc56ad4ea0d52141c13192c91ccda7c8aeb8a530d8a7e60b9c27f5990d7e62e0fecb03
-  languageName: node
-  linkType: hard
-
-"@types/set-cookie-parser@npm:^2":
-  version: 2.4.10
-  resolution: "@types/set-cookie-parser@npm:2.4.10"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 10c0/010b0c582ea70a2088618b4725808e80c30cce296c19ec58e51d94e0fd1038201b7b99238bf3ea74e1894163c8037d10a4f1729de62b2801ce240ff070f43e76
   languageName: node
   linkType: hard
 
@@ -27440,13 +27429,6 @@ __metadata:
   version: 2.6.0
   resolution: "set-cookie-parser@npm:2.6.0"
   checksum: 10c0/739da029f0e56806a103fcd5501d9c475e19e77bd8274192d7ae5c374ae714a82bba9a7ac00b0330a18227c5644b08df9e442240527be578f5a6030f9bb2bb80
-  languageName: node
-  linkType: hard
-
-"set-cookie-parser@npm:^2.7.1":
-  version: 2.7.1
-  resolution: "set-cookie-parser@npm:2.7.1"
-  checksum: 10c0/060c198c4c92547ac15988256f445eae523f57f2ceefeccf52d30d75dedf6bff22b9c26f756bd44e8e560d44ff4ab2130b178bd2e52ef5571bf7be3bd7632d9a
   languageName: node
   linkType: hard
 
