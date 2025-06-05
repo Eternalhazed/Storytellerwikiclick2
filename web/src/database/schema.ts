@@ -27,6 +27,25 @@ export interface Account {
   userId: string
 }
 
+export interface AlignedBook {
+  audiobookUuid: string
+  bookUuid: string
+  createdAt: Generated<string>
+  ebookUuid: string
+  filepath: string | null
+  status: Generated<string>
+  updatedAt: Generated<string>
+  uuid: Generated<string>
+}
+
+export interface Audiobook {
+  bookUuid: string
+  createdAt: Generated<string>
+  filepath: string
+  updatedAt: Generated<string>
+  uuid: Generated<string>
+}
+
 export interface Author {
   createdAt: Generated<string>
   fileAs: string
@@ -104,6 +123,14 @@ export interface CollectionToUser {
   updatedAt: Generated<string>
   userId: import("@/uuid").UUID
   uuid: Generated<import("@/uuid").UUID>
+}
+
+export interface Ebook {
+  bookUuid: string
+  createdAt: Generated<string>
+  filepath: string
+  updatedAt: Generated<string>
+  uuid: Generated<string>
 }
 
 export interface Migration {
@@ -229,6 +256,8 @@ export interface VerificationToken {
 
 export interface DB {
   account: Account
+  alignedBook: AlignedBook
+  audiobook: Audiobook
   author: Author
   authorToBook: AuthorToBook
   book: Book
@@ -237,6 +266,7 @@ export interface DB {
   bookToTag: BookToTag
   collection: Collection
   collectionToUser: CollectionToUser
+  ebook: Ebook
   migration: Migration
   position: Position
   processingTask: ProcessingTask
