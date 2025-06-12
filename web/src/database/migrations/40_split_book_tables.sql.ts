@@ -13,6 +13,10 @@ export default async function migrate() {
   const bookIds = books.map((book) => book.uuid)
 
   for (const uuid of bookIds) {
+    // TODO: Confirm that the original paths exist
+    // If they've been deleted, we need to recreate them?
+    // Or maybe just skip them, and then create them
+    // on demand.
     await db
       .updateTable("ebook")
       .set({ filepath: resolve(getEpubFilepath(uuid)) })

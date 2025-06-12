@@ -24,11 +24,12 @@ import {
   PasswordInput,
 } from "@mantine/core"
 import {
-  IconBook2,
   IconUser,
   IconSettings,
   IconLogout,
   IconUsers,
+  IconHome,
+  IconBooks,
 } from "@tabler/icons-react"
 import { ReactNode } from "react"
 import { useDisclosure } from "@mantine/hooks"
@@ -39,6 +40,7 @@ import { CurrentBookProgress } from "./layout/CurrentBookProgress"
 import { BookDetail } from "@/apiModels"
 import dayjs from "dayjs"
 import customParseFormat from "dayjs/plugin/customParseFormat"
+import { Collection } from "@/database/collections"
 
 dayjs.extend(customParseFormat)
 
@@ -123,10 +125,11 @@ interface Props {
   version: string
   children: ReactNode
   books: BookDetail[]
+  collections: Collection[]
 }
 
-export function AppShell({ children, version, books }: Props) {
-  const [opened, { close }] = useDisclosure(false)
+export function AppShell({ children, version, books, collections }: Props) {
+  const [opened, { close, toggle }] = useDisclosure(false)
   const pathname = usePathname()
   const currentUser = useCurrentUser()
   const permissions = usePermissions()
@@ -150,7 +153,7 @@ export function AppShell({ children, version, books }: Props) {
                 <Burger
                   opened={opened}
                   color="st-orange"
-                  onClick={close}
+                  onClick={toggle}
                   hiddenFrom="sm"
                   size="lg"
                 />
@@ -180,16 +183,43 @@ export function AppShell({ children, version, books }: Props) {
                 Version: {version}
               </Text>
               <CurrentBookProgress />
-              {(permissions.bookCreate || permissions.bookList) && (
-                <NavLink
-                  onClick={close}
-                  component={NextLink}
-                  href="/"
-                  leftSection={<IconBook2 />}
-                  label="Books"
-                  active={pathname === "/"}
-                />
-              )}
+              {permissions.bookCreate || permissions.bookList ? (
+                <>
+                  <NavLink
+                    onClick={close}
+                    component={NextLink}
+                    href="/"
+                    leftSection={<IconHome />}
+                    label="Home"
+                    active={pathname === "/"}
+                  />
+                  <Title
+                    order={4}
+                    className="flex items-center gap-2 px-2 py-2 font-sans text-base font-normal"
+                  >
+                    <IconBooks /> Collections
+                  </Title>
+                  <NavLink
+                    className="pl-10"
+                    onClick={close}
+                    component={NextLink}
+                    href={`/collections/none`}
+                    label={<span className="italic">Uncollected</span>}
+                    active={pathname === `/collections/none`}
+                  />
+                  {collections.map((collection) => (
+                    <NavLink
+                      className="pl-10"
+                      key={collection.uuid}
+                      onClick={close}
+                      component={NextLink}
+                      href={`/collections/${collection.uuid}`}
+                      label={collection.name}
+                      active={pathname === `/collections/${collection.uuid}`}
+                    />
+                  ))}
+                </>
+              ) : null}
               <NavLink
                 onClick={close}
                 component={NextLink}
@@ -198,7 +228,7 @@ export function AppShell({ children, version, books }: Props) {
                 label="Account"
                 active={pathname === "/accounts"}
               />
-              {(permissions.userCreate || permissions.userList) && (
+              {permissions.userCreate || permissions.userList ? (
                 <NavLink
                   onClick={close}
                   component={NextLink}
@@ -207,8 +237,8 @@ export function AppShell({ children, version, books }: Props) {
                   label="Users"
                   active={pathname === "/users"}
                 />
-              )}
-              {permissions.settingsUpdate && (
+              ) : null}
+              {permissions.settingsUpdate ? (
                 <NavLink
                   onClick={close}
                   component={NextLink}
@@ -217,7 +247,7 @@ export function AppShell({ children, version, books }: Props) {
                   label="Settings"
                   active={pathname === "/settings"}
                 />
-              )}
+              ) : null}
               <NavLink
                 onClick={close}
                 component="a"

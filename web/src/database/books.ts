@@ -257,6 +257,8 @@ export async function getBooks(
           .select([
             "collection.uuid",
             "collection.name",
+            "collection.description",
+            "collection.public",
             "collection.createdAt",
             "collection.updatedAt",
           ])

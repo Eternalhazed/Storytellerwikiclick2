@@ -654,6 +654,86 @@ export class ApiClient {
     return collections
   }
 
+  async getCollection(uuid: UUID) {
+    const url = new URL(`${this.rootPath}/v2/collections/${uuid}`, this.origin)
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.getHeaders(),
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const collection = (await response.json()) as Collection
+    return collection
+  }
+
+  async updateCollection(
+    uuid: UUID,
+    update: {
+      name?: string
+      description?: string
+      public?: boolean
+      users?: UUID[]
+      books?: UUID[]
+    },
+  ) {
+    const url = new URL(`${this.rootPath}/v2/collections/${uuid}`, this.origin)
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: this.getHeaders(),
+      credentials: "include",
+      body: JSON.stringify(update),
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+
+    const collection = (await response.json()) as Collection
+    return collection
+  }
+
+  async addBooksToCollections(collections: UUID[], books: UUID[]) {
+    const url = new URL(`${this.rootPath}/v2/collections/books`, this.origin)
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.getHeaders(),
+      credentials: "include",
+      body: JSON.stringify({
+        collections,
+        books,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+  }
+
+  async deleteBooksFromCollections(collections: UUID[], books: UUID[]) {
+    const url = new URL(`${this.rootPath}/v2/collections/books`, this.origin)
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: this.getHeaders(),
+      credentials: "include",
+      body: JSON.stringify({
+        collections,
+        books,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new ApiClientError(response.status, response.statusText)
+    }
+  }
+
   async listTags() {
     const url = new URL(`${this.rootPath}/v2/tags`, this.origin)
     const response = await fetch(url, {

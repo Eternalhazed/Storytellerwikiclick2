@@ -10,6 +10,7 @@ import { ColorSchemeScript } from "@mantine/core"
 import "./globals.css"
 import { BookDetail } from "@/apiModels"
 import { getCurrentVersion } from "@/versions"
+import { Collection } from "@/database/collections"
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
@@ -39,9 +40,11 @@ export default async function RootLayout({
   const client = await createAuthedApiClient()
 
   let books: BookDetail[] = []
+  let collections: Collection[] = []
 
   try {
     books = await client.listBooks()
+    collections = await client.listCollections()
   } catch {
     // pass
   }
@@ -58,7 +61,7 @@ export default async function RootLayout({
       <body suppressHydrationWarning>
         <ApiHostContextProvider value={{ rootPath: proxyRootPath }}>
           <CurrentUserProvider value={currentUser}>
-            <AppShell version={version} books={books}>
+            <AppShell version={version} books={books} collections={collections}>
               {children}
             </AppShell>
           </CurrentUserProvider>

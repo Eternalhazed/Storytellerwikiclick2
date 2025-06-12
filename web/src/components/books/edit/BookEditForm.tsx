@@ -50,19 +50,21 @@ export function BookEditForm({
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const book = useBook(bookUuid, (update) => {
+    const updated = { ...book, ...update }
+
     form.setValues({
-      title: update.title,
-      language: update.language ?? "",
-      authors: update.authors,
-      series: update.series,
-      statusUuid: update.statusUuid,
-      collections: update.collections.map((collection) => collection.uuid),
+      title: updated.title,
+      language: updated.language ?? "",
+      authors: updated.authors,
+      series: updated.series,
+      statusUuid: updated.statusUuid,
+      collections: updated.collections.map((collection) => collection.uuid),
       publicationDate:
-        update.publicationDate && new Date(update.publicationDate),
-      rating: update.rating,
-      description: update.description ?? "",
-      narrator: update.narrator ?? "",
-      tags: update.tags.map((tag) => tag.name),
+        updated.publicationDate && new Date(updated.publicationDate),
+      rating: updated.rating,
+      description: updated.description ?? "",
+      narrator: updated.narrator ?? "",
+      tags: updated.tags.map((tag) => tag.name),
       textCover: null,
       audioCover: null,
     })
