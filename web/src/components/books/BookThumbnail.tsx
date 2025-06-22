@@ -9,10 +9,10 @@ import {
   ActionIcon,
   Tooltip,
 } from "@mantine/core"
-import { useApiClient } from "@/hooks/useApiClient"
 import { BookDetail } from "@/apiModels"
 import Link from "next/link"
 import { IconDotsCircleHorizontal, IconProgressX } from "@tabler/icons-react"
+import { getCoverUrl, useCancelProcessingMutation } from "@/store/api"
 
 interface Props {
   book: BookDetail
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export function BookThumbnail({ book, link, onClick }: Props) {
-  const client = useApiClient()
+  const [cancelProcessing] = useCancelProcessingMutation()
 
   const inner = (
     <Stack gap={2}>
@@ -33,7 +33,7 @@ export function BookThumbnail({ book, link, onClick }: Props) {
           width={147}
           alt=""
           aria-hidden
-          src={client.getCoverUrl(book.uuid)}
+          src={getCoverUrl(book.uuid)}
         />
         {book.processingStatus === "queued" && (
           <IconDotsCircleHorizontal
@@ -69,7 +69,7 @@ export function BookThumbnail({ book, link, onClick }: Props) {
             <ActionIcon
               className="absolute right-[6px] top-[6px] hidden rounded-full group-hover:block"
               color="red"
-              onClick={() => client.cancelProcessing(book.uuid)}
+              onClick={() => cancelProcessing({ uuid: book.uuid })}
             >
               <IconProgressX
                 aria-label={

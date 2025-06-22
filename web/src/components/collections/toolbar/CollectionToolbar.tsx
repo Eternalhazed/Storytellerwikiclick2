@@ -9,7 +9,7 @@ import { Collection } from "@/database/collections"
 import { AddBooksModal } from "../modals/AddBooksModal"
 
 interface Props {
-  collection: Collection
+  collection?: Collection | undefined
   books: BookDetail[]
   selected: Set<UUID>
   setSelected: (action: SetStateAction<Set<UUID>>) => void
@@ -43,7 +43,7 @@ export function CollectionToolbar({
           <ActionMenu selected={selected} />
         </>
       )}
-      <AddBooksModal collection={collection} />
+      {collection && <AddBooksModal collection={collection} />}
     </Group>
   )
 }

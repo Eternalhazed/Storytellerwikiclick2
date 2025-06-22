@@ -2,17 +2,28 @@ import { List, Checkbox } from "@mantine/core"
 import { BookThumbnail } from "./BookThumbnail"
 import { BookDetail } from "@/apiModels"
 import { UUID } from "@/uuid"
+import cx from "classnames"
 
 interface Props {
+  className?: string
   books: BookDetail[]
   isSelecting: boolean
   selected: Set<UUID>
   onSelect: (book: UUID) => void
 }
 
-export function BookGrid({ books, isSelecting, selected, onSelect }: Props) {
+export function BookGrid({
+  className,
+  books,
+  isSelecting,
+  selected,
+  onSelect,
+}: Props) {
   return (
-    <List listStyleType="none" className="flex flex-row flex-wrap gap-8">
+    <List
+      listStyleType="none"
+      className={cx("flex flex-row flex-wrap gap-8", className)}
+    >
       {books.map((book) => (
         <List.Item
           key={book.uuid}

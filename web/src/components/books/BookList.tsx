@@ -1,34 +1,50 @@
 "use client"
 
-import { usePermission } from "@/contexts/UserPermissions"
 import { Group, Stack, Text } from "@mantine/core"
 import { useFilterSortedBooks } from "@/hooks/useFilterSortedBooks"
+import { usePermission } from "@/hooks/usePermission"
 import { Search } from "./Search"
 import { Sort } from "./Sort"
-import { useBooks } from "./LiveBooksProvider"
 import { UUID } from "@/uuid"
 import { useState } from "react"
 import { CollectionToolbar } from "../collections/toolbar/CollectionToolbar"
 import { BookGrid } from "./BookGrid"
+import { useListBooksQuery, useListCollectionsQuery } from "@/store/api"
+import { AddBooksModal } from "../collections/modals/AddBooksModal"
 
 interface Props {
-  collection?: UUID | null
+  collectionUuid?: UUID | null
 }
 
-export function BookList({ collection }: Props) {
+export function BookList({ collectionUuid }: Props) {
   const canListBooks = usePermission("bookList")
 
-  const liveBooks = useBooks()
-  const collectionBooks =
-    typeof collection === "string"
-      ? liveBooks.filter((book) =>
-          book.collections.some((c) => c.uuid === collection),
-        )
-      : collection === null
-        ? liveBooks.filter((book) => book.collections.length === 0)
-        : liveBooks
+  const { collectionBooks } = useListBooksQuery(undefined, {
+    selectFromResult: (result) => ({
+      ...result,
+      collectionBooks:
+        typeof collectionUuid === "string"
+          ? result.data?.filter((book) =>
+              book.collections.some((c) => c.uuid === collectionUuid),
+            )
+          : collectionUuid === null
+            ? result.data?.filter((book) => book.collections.length === 0)
+            : result.data,
+    }),
+  })
+
+  // TODO: Should this just be passed in as a prop?
+  const { collection } = useListCollectionsQuery(undefined, {
+    selectFromResult: (result) => ({
+      ...result,
+      collection: result.data?.find(
+        (collection) => collection.uuid === collectionUuid,
+      ),
+    }),
+  })
+
   const { books, onFilterChange, filter, sort, onSortChange } =
-    useFilterSortedBooks(collectionBooks)
+    useFilterSortedBooks(collectionBooks ?? [])
 
   const [selected, setSelected] = useState(() => new Set<UUID>())
   const [isEditing, setIsEditing] = useState(false)
@@ -66,13 +82,20 @@ export function BookList({ collection }: Props) {
                 })
               }}
             />
-          ) : collection === null ? (
+          ) : collectionUuid === null ? (
             <Text>
               There’s nothing here! Congrats on being so well organized!
             </Text>
           ) : (
             <Stack>
               <Text>There’s nothing here!</Text>
+              {collection && (
+                <AddBooksModal
+                  className="self-start"
+                  variant="filled"
+                  collection={collection}
+                />
+              )}
             </Stack>
           )}
         </Stack>

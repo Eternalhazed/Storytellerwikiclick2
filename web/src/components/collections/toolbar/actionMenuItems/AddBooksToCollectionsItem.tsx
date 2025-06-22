@@ -1,8 +1,11 @@
-import { User } from "@/apiModels"
 import { CollectionsInput } from "@/components/books/edit/CollectionsInput"
-import { useCurrentUser } from "@/contexts/UserPermissions"
-import { Collection } from "@/database/collections"
-import { useApiClient } from "@/hooks/useApiClient"
+import {
+  useAddBooksToCollectionsMutation,
+  useCreateCollectionMutation,
+  useGetCurrentUserQuery,
+  useListCollectionsQuery,
+  useListUsersQuery,
+} from "@/store/api"
 import { UUID } from "@/uuid"
 import { Button, MenuItem, Modal } from "@mantine/core"
 import { useForm } from "@mantine/form"
@@ -14,14 +17,16 @@ interface Props {
 }
 
 export function AddBooksToCollectionsItem({ selected }: Props) {
-  const client = useApiClient()
-  const currentUser = useCurrentUser()
+  const { data: currentUser } = useGetCurrentUserQuery()
 
-  const [users, setUsers] = useState<User[]>([])
-  const [collections, setCollections] = useState<Collection[]>([])
+  const [addBooksToCollections, { isLoading }] =
+    useAddBooksToCollectionsMutation()
+  const [createCollection] = useCreateCollectionMutation()
+
+  const { data: users = [] } = useListUsersQuery()
+  const { data: collections = [] } = useListCollectionsQuery()
 
   const [isOpen, setIsOpen] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
 
   const form = useForm({
     initialValues: {
@@ -42,13 +47,11 @@ export function AddBooksToCollectionsItem({ selected }: Props) {
         <form
           className="flex flex-col gap-4"
           onSubmit={form.onSubmit(async (values) => {
-            setIsSaving(true)
-            await client.addBooksToCollections(
-              values.collections,
-              Array.from(selected),
-            )
+            await addBooksToCollections({
+              collections: values.collections,
+              books: Array.from(selected),
+            })
 
-            setIsSaving(false)
             setIsOpen(false)
           })}
         >
@@ -65,25 +68,18 @@ export function AddBooksToCollectionsItem({ selected }: Props) {
               ) {
                 values.users.push(currentUser.id)
               }
-              const newCollection = await client.createCollection(values)
-              setCollections((collections) => [...collections, newCollection])
+              await createCollection(values)
             }}
           />
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving…" : "Save"}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving…" : "Save"}
           </Button>
         </form>
       </Modal>
       <MenuItem
         leftSection={<IconBooks size={14} />}
-        onClick={async () => {
+        onClick={() => {
           setIsOpen(true)
-          const [collections, users] = await Promise.all([
-            client.listCollections(),
-            client.listUsers(),
-          ])
-          setCollections(collections)
-          setUsers(users)
         }}
       >
         Add to collection

@@ -3,6 +3,7 @@ import { DB } from "./schema"
 import { db } from "./connection"
 import { BookEvents } from "@/events"
 import { UUID } from "@/uuid"
+import { getBooks } from "./books"
 
 export type Collection = Selectable<DB["collection"]>
 export type NewCollection = Insertable<DB["collection"]>
@@ -153,29 +154,47 @@ export async function addBooksToCollections(
     .execute()
 
   const collections = await getCollections()
+  const books = await getBooks(bookUuids)
 
-  bookUuids.forEach((bookUuid) => {
+  books.forEach((book) => {
     BookEvents.emit("message", {
       type: "bookUpdated",
-      bookUuid,
+      bookUuid: book.uuid,
       payload: {
-        collections: collectionUuids
-          .map((collectionUuid) =>
-            collections.find((c) => c.uuid === collectionUuid),
-          )
-          .filter((c) => !!c),
+        collections: [
+          ...book.collections,
+          ...collectionUuids
+            .map((collectionUuid) =>
+              collections.find((c) => c.uuid === collectionUuid),
+            )
+            .filter((c) => !!c),
+        ],
       },
     })
   })
 }
 
-export async function deleteBooksFromCollections(
-  collections: UUID[],
-  books: UUID[],
+export async function removeBooksFromCollections(
+  collectionUuids: UUID[],
+  bookUuids: UUID[],
 ) {
   await db
     .deleteFrom("bookToCollection")
-    .where("bookUuid", "in", books)
-    .where("collectionUuid", "in", collections)
+    .where("bookUuid", "in", bookUuids)
+    .where("collectionUuid", "in", collectionUuids)
     .execute()
+
+  const books = await getBooks(bookUuids)
+
+  books.forEach((book) => {
+    BookEvents.emit("message", {
+      type: "bookUpdated",
+      bookUuid: book.uuid,
+      payload: {
+        collections: book.collections.filter((c) =>
+          collectionUuids.includes(c.uuid),
+        ),
+      },
+    })
+  })
 }

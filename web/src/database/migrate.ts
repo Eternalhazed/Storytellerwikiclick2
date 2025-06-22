@@ -37,7 +37,7 @@ async function getMigration(hash: string) {
       .where("hash", "=", hash)
       .execute()
     return row ?? null
-  } catch (e) {
+  } catch {
     return null
   }
 }

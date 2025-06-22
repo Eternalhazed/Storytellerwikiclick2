@@ -1,37 +1,41 @@
-import { useBooks } from "@/components/books/LiveBooksProvider"
 import { Collection } from "@/database/collections"
-import { useApiClient } from "@/hooks/useApiClient"
+import {
+  useListBooksQuery,
+  useRemoveBooksFromCollectionsMutation,
+} from "@/store/api"
 import { UUID } from "@/uuid"
 import { Button, MenuItem, Modal, MultiSelect } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { IconBooks } from "@tabler/icons-react"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 
 interface Props {
   selected: Set<UUID>
 }
 
 export function RemoveBooksFromCollectionsItem({ selected }: Props) {
-  const client = useApiClient()
+  const { collections } = useListBooksQuery(undefined, {
+    selectFromResult: (result) => ({
+      ...result,
+      collections: result.data
+        ? Array.from(
+            result.data
+              .reduce((acc, book) => {
+                book.collections.forEach((collection) => {
+                  acc.set(collection.uuid, collection)
+                })
+                return acc
+              }, new Map<UUID, Collection>())
+              .values(),
+          )
+        : [],
+    }),
+  })
 
-  const books = useBooks()
-  const collections = useMemo(
-    () =>
-      Array.from(
-        books
-          .reduce((acc, book) => {
-            book.collections.forEach((collection) => {
-              acc.set(collection.uuid, collection)
-            })
-            return acc
-          }, new Map<UUID, Collection>())
-          .values(),
-      ),
-    [books],
-  )
+  const [removeBooksFromCollections, { isLoading }] =
+    useRemoveBooksFromCollectionsMutation()
 
   const [isOpen, setIsOpen] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
 
   const form = useForm({
     initialValues: {
@@ -52,13 +56,11 @@ export function RemoveBooksFromCollectionsItem({ selected }: Props) {
         <form
           className="flex flex-col gap-4"
           onSubmit={form.onSubmit(async (values) => {
-            setIsSaving(true)
-            await client.deleteBooksFromCollections(
-              values.collections,
-              Array.from(selected),
-            )
+            await removeBooksFromCollections({
+              collections: values.collections,
+              books: Array.from(selected),
+            })
 
-            setIsSaving(false)
             setIsOpen(false)
           })}
         >
@@ -71,8 +73,8 @@ export function RemoveBooksFromCollectionsItem({ selected }: Props) {
             }))}
             {...form.getInputProps("collections")}
           />
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving…" : "Save"}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving…" : "Save"}
           </Button>
         </form>
       </Modal>

@@ -18,6 +18,7 @@ import { Series } from "./database/series"
 import { Collection } from "./database/collections"
 import { UUID } from "./uuid"
 import { PublicProvider } from "@auth/core/types"
+import { Tag } from "./database/tags"
 
 export class ApiClientError extends Error {
   constructor(
@@ -716,7 +717,7 @@ export class ApiClient {
     }
   }
 
-  async deleteBooksFromCollections(collections: UUID[], books: UUID[]) {
+  async removeBooksFromCollections(collections: UUID[], books: UUID[]) {
     const url = new URL(`${this.rootPath}/v2/collections/books`, this.origin)
 
     const response = await fetch(url, {
@@ -746,7 +747,7 @@ export class ApiClient {
       throw new ApiClientError(response.status, response.statusText)
     }
 
-    const tags = (await response.json()) as Collection[]
+    const tags = (await response.json()) as Tag[]
     return tags
   }
 

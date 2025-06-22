@@ -57,7 +57,7 @@ export default async function CollectionPage({ params }: Props) {
           ? collection.description
           : "Books that have not yet been added to any collections."}
       </Text>
-      <BookList collection={collection?.uuid ?? null} />
+      <BookList collectionUuid={collection?.uuid ?? null} />
     </Stack>
   )
 }

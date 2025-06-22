@@ -1,10 +1,10 @@
 import { BookDetail } from "@/apiModels"
-import { useApiClient } from "@/hooks/useApiClient"
-import { usePermissions } from "@/contexts/UserPermissions"
+import { usePermissions } from "@/hooks/usePermissions"
 import { ProcessingItems } from "./ProcessingItems"
 import { ActionIcon, Button, Group, Modal, Stack, Tooltip } from "@mantine/core"
 import { IconTrash } from "@tabler/icons-react"
 import { useDisclosure } from "@mantine/hooks"
+import { useDeleteBookMutation } from "@/store/api"
 
 type Props = {
   book: BookDetail
@@ -13,9 +13,10 @@ type Props = {
 
 export function BookOptions({ book, aligned }: Props) {
   const [opened, { open, close }] = useDisclosure()
-  const client = useApiClient()
 
   const permissions = usePermissions()
+
+  const [deleteBook] = useDeleteBookMutation()
 
   return (
     <>
@@ -35,7 +36,7 @@ export function BookOptions({ book, aligned }: Props) {
             </Button>
             <Button
               onClick={() => {
-                void client.deleteBook(book.uuid)
+                void deleteBook({ uuid: book.uuid })
               }}
             >
               Delete
@@ -44,12 +45,12 @@ export function BookOptions({ book, aligned }: Props) {
         </Stack>
       </Modal>
       <Stack>
-        {permissions.bookProcess &&
+        {permissions?.bookProcess &&
           book.processingTask &&
           book.originalFilesExist && (
             <ProcessingItems aligned={aligned} book={book} />
           )}
-        {permissions.bookDelete && (
+        {permissions?.bookDelete && (
           <ActionIcon variant="subtle" color="red" onClick={open}>
             <Tooltip position="right" label="Delete book">
               <IconTrash aria-label="Delete" />

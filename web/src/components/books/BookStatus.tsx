@@ -1,16 +1,19 @@
 "use client"
 
-import { useApiClient } from "@/hooks/useApiClient"
 import { BookOptions } from "./BookOptions"
 import { ProcessingFailedMessage } from "./ProcessingFailedMessage"
-import { usePermissions } from "@/contexts/UserPermissions"
 import {
   ProcessingTaskStatus,
   ProcessingTaskType,
 } from "@/apiModels/models/ProcessingStatus"
 import { Paper, Group, Stack, Box, Text, Button, Progress } from "@mantine/core"
 import { UUID } from "@/uuid"
-import { useBook } from "./LiveBooksProvider"
+import {
+  getAlignedDownloadUrl,
+  useListBooksQuery,
+  useProcessBookMutation,
+} from "@/store/api"
+import { usePermissions } from "@/hooks/usePermissions"
 
 type Props = {
   bookUuid: UUID
@@ -23,11 +26,18 @@ export const ProcessingTaskTypes = {
 }
 
 export function BookStatus({ bookUuid }: Props) {
-  const client = useApiClient()
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const book = useBook(bookUuid)!
+  const { book } = useListBooksQuery(undefined, {
+    selectFromResult: (result) => ({
+      ...result,
+      book: result.data?.find((book) => book.uuid === bookUuid),
+    }),
+  })
 
   const permissions = usePermissions()
+
+  const [processBook] = useProcessBookMutation()
+
+  if (!book) return null
 
   const aligned =
     book.processingTask?.type === ProcessingTaskType.SYNC_CHAPTERS &&
@@ -39,7 +49,7 @@ export function BookStatus({ bookUuid }: Props) {
       book.processingTask.type as keyof typeof ProcessingTaskTypes
     ]
 
-  if (!permissions.bookRead) return null
+  if (!permissions?.bookRead) return null
 
   return (
     <Paper className="max-w-[600px]">
@@ -48,7 +58,7 @@ export function BookStatus({ bookUuid }: Props) {
           {aligned ? (
             permissions.bookDownload && (
               <a
-                href={client.getAlignedDownloadUrl(book.uuid)}
+                href={getAlignedDownloadUrl(book.uuid)}
                 className="text-st-orange-600 underline"
                 download={`${book.title}.epub`}
               >
@@ -73,7 +83,7 @@ export function BookStatus({ bookUuid }: Props) {
             <Button
               className="self-start"
               onClick={() => {
-                void client.processBook(book.uuid)
+                void processBook({ uuid: book.uuid })
               }}
             >
               Start processing

@@ -1,7 +1,7 @@
 import { withHasPermission } from "@/auth/auth"
 import {
   addBooksToCollections,
-  deleteBooksFromCollections,
+  removeBooksFromCollections,
 } from "@/database/collections"
 import { UUID } from "@/uuid"
 
@@ -22,7 +22,7 @@ export const DELETE = withHasPermission("bookUpdate")(async (request) => {
     books: UUID[]
   }
 
-  await deleteBooksFromCollections(collections, books)
+  await removeBooksFromCollections(collections, books)
 
   return new Response(null, { status: 204 })
 })

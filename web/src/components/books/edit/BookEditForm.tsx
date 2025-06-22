@@ -1,77 +1,104 @@
 "use client"
 
-import { useApiClient } from "@/hooks/useApiClient"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "@mantine/form"
 import { Button, Group, Stack, TextInput } from "@mantine/core"
 import { DateInput } from "@mantine/dates"
 import { AuthorRelation, SeriesRelation } from "@/database/books"
-import { Status } from "@/database/statuses"
 import { UUID } from "@/uuid"
-import { useBook } from "../LiveBooksProvider"
-import { Author } from "@/database/authors"
-import { Series } from "@/database/series"
 import { StatusInput } from "./StatusInput"
 import { CoverImageInput } from "./CoverImageInput"
 import { AuthorsInput } from "./AuthorsInput"
 import { SeriesInput } from "./SeriesInput"
-import { Collection } from "@/database/collections"
 import { CollectionsInput } from "./CollectionsInput"
-import { User } from "@/apiModels"
 import { SaveState } from "@/components/forms"
-import { useCurrentUser } from "@/contexts/UserPermissions"
 import { TagsInput } from "./TagsInput"
-import { Tag } from "@/database/tags"
+import {
+  getCoverUrl,
+  useCreateCollectionMutation,
+  useGetCurrentUserQuery,
+  useListAuthorsQuery,
+  useListBooksQuery,
+  useListCollectionsQuery,
+  useListSeriesQuery,
+  useListStatusesQuery,
+  useListTagsQuery,
+  useListUsersQuery,
+  useUpdateBookMutation,
+} from "@/store/api"
 
 type Props = {
   bookUuid: UUID
-  authors: Author[]
-  statuses: Status[]
-  series: Series[]
-  collections: Collection[]
-  users: User[]
-  tags: Tag[]
 }
 
-export function BookEditForm({
-  bookUuid,
-  statuses,
-  authors,
-  series,
-  collections: initialCollections,
-  users,
-  tags,
-}: Props) {
-  const client = useApiClient()
-  const currentUser = useCurrentUser()
+export function BookEditForm({ bookUuid }: Props) {
+  const { data: currentUser } = useGetCurrentUserQuery()
+
+  const [createCollection] = useCreateCollectionMutation()
+  const [updateBook] = useUpdateBookMutation()
+
   const clearSavedTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const [collections, setCollections] = useState(initialCollections)
+  const { data: collections = [] } = useListCollectionsQuery()
+  const { data: tags = [] } = useListTagsQuery()
+  const { data: statuses = [] } = useListStatusesQuery()
+  const { data: series = [] } = useListSeriesQuery()
+  const { data: authors = [] } = useListAuthorsQuery()
+  const { data: users = [] } = useListUsersQuery()
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const book = useBook(bookUuid, (update) => {
-    const updated = { ...book, ...update }
-
-    form.setValues({
-      title: updated.title,
-      language: updated.language ?? "",
-      authors: updated.authors,
-      series: updated.series,
-      statusUuid: updated.statusUuid,
-      collections: updated.collections.map((collection) => collection.uuid),
-      publicationDate:
-        updated.publicationDate && new Date(updated.publicationDate),
-      rating: updated.rating,
-      description: updated.description ?? "",
-      narrator: updated.narrator ?? "",
-      tags: updated.tags.map((tag) => tag.name),
-      textCover: null,
-      audioCover: null,
-    })
-  })!
+  const { book } = useListBooksQuery(undefined, {
+    selectFromResult: (result) => ({
+      ...result,
+      book: result.data?.find((b) => b.uuid === bookUuid),
+    }),
+  })
 
   const form = useForm({
-    initialValues: {
+    initialValues: book
+      ? {
+          title: book.title,
+          language: book.language ?? "",
+          authors: book.authors as AuthorRelation[],
+          series: book.series as SeriesRelation[],
+          statusUuid: book.statusUuid,
+          collections: book.collections.map((collection) => collection.uuid),
+          publicationDate:
+            book.publicationDate && new Date(book.publicationDate),
+          rating: book.rating,
+          description: book.description ?? "",
+          narrator: book.narrator ?? "",
+          tags: book.tags.map((tag) => tag.name),
+          textCover: null as File | null,
+          audioCover: null as File | null,
+        }
+      : {
+          title: "",
+          language: "",
+          authors: [],
+          series: [],
+          statusUuid: "" as UUID,
+          collections: [],
+          publicationDate: null,
+          rating: null,
+          description: "",
+          narrator: "",
+          tags: [],
+          textCover: null,
+          audioCover: null,
+        },
+    enhanceGetInputProps: (payload) => {
+      if (!payload.form.initialized) {
+        return { disabled: true }
+      }
+
+      return {}
+    },
+  })
+
+  useEffect(() => {
+    if (!book) return
+
+    form.initialize({
       title: book.title,
       language: book.language ?? "",
       authors: book.authors as AuthorRelation[],
@@ -85,8 +112,9 @@ export function BookEditForm({
       tags: book.tags.map((tag) => tag.name),
       textCover: null as File | null,
       audioCover: null as File | null,
-    },
-  })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book])
 
   const {
     textCover,
@@ -99,6 +127,8 @@ export function BookEditForm({
 
   const [savedState, setSavedState] = useState<SaveState>(SaveState.CLEAN)
 
+  if (!book) return "Loading…"
+
   return (
     <>
       {savedState === SaveState.ERROR && (
@@ -109,8 +139,8 @@ export function BookEditForm({
           setSavedState(SaveState.LOADING)
           const { textCover, audioCover, ...update } = values
           try {
-            await client.updateBook(
-              {
+            await updateBook({
+              update: {
                 ...book,
                 ...update,
                 publicationDate:
@@ -119,7 +149,7 @@ export function BookEditForm({
               },
               textCover,
               audioCover,
-            )
+            })
           } catch (_) {
             setSavedState(SaveState.ERROR)
             return
@@ -146,8 +176,8 @@ export function BookEditForm({
           <CoverImageInput
             textCover={textCover}
             audioCover={audioCover}
-            textFallback={client.getCoverUrl(book.uuid)}
-            audioFallback={client.getCoverUrl(book.uuid)}
+            textFallback={getCoverUrl(book.uuid)}
+            audioFallback={getCoverUrl(book.uuid)}
             getInputProps={form.getInputProps}
           />
           <Stack gap={32} className="grow">
@@ -202,8 +232,7 @@ export function BookEditForm({
                 ) {
                   values.users.push(currentUser.id)
                 }
-                const newCollection = await client.createCollection(values)
-                setCollections((collections) => [...collections, newCollection])
+                await createCollection(values)
               }}
             />
           </Stack>
