@@ -6,7 +6,6 @@ import { getCoverUrl, useListBooksQuery } from "@/store/api"
 export function CurrentBookProgress() {
   const { currentBook } = useListBooksQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       currentBook: result.data?.find(
         (book) => book.processingStatus === "processing",
       ),

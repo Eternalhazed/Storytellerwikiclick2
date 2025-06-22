@@ -14,7 +14,6 @@ type Props = {
 export function InviteActions({ invite }: Props) {
   const { permissions } = useGetCurrentUserQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       permissions: result.data?.permissions,
     }),
   })

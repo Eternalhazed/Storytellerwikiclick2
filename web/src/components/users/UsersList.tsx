@@ -13,7 +13,6 @@ import {
 export function UsersList() {
   const { permissions } = useGetCurrentUserQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       permissions: result.data?.permissions,
     }),
   })

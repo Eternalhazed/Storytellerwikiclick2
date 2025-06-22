@@ -21,7 +21,6 @@ export function BookList({ collectionUuid }: Props) {
 
   const { collectionBooks } = useListBooksQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       collectionBooks:
         typeof collectionUuid === "string"
           ? result.data?.filter((book) =>
@@ -36,7 +35,6 @@ export function BookList({ collectionUuid }: Props) {
   // TODO: Should this just be passed in as a prop?
   const { collection } = useListCollectionsQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       collection: result.data?.find(
         (collection) => collection.uuid === collectionUuid,
       ),

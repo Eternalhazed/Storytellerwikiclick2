@@ -10,7 +10,8 @@ import {
   Group,
 } from "@mantine/core"
 import { UserPermissionSet } from "@/database/users"
-import { useCreateInviteMutation, useGetCurrentUserQuery } from "@/store/api"
+import { useCreateInviteMutation } from "@/store/api"
+import { usePermission } from "@/hooks/usePermission"
 
 export const ADMIN_PERMISSIONS: Array<keyof UserPermissionSet> = [
   "bookCreate",
@@ -79,12 +80,7 @@ export function CreateInviteForm() {
   const [createInvite, { isError, isUninitialized, isSuccess }] =
     useCreateInviteMutation()
 
-  const { canAddUser } = useGetCurrentUserQuery(undefined, {
-    selectFromResult: (result) => ({
-      ...result,
-      canAddUser: result.data?.permissions?.userCreate,
-    }),
-  })
+  const canAddUser = usePermission("userCreate")
 
   if (!canAddUser) return null
 

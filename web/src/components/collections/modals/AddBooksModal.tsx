@@ -21,7 +21,6 @@ interface Props {
 export function AddBooksModal({ collection, className, variant }: Props) {
   const { potentialBooks } = useListBooksQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       potentialBooks: result.data?.filter(
         (book) => !book.collections.some((c) => c.uuid === collection.uuid),
       ),

@@ -4,7 +4,6 @@ import { useGetCurrentUserQuery } from "@/store/api"
 export function usePermission(permission: Permission) {
   const { hasPermission } = useGetCurrentUserQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       hasPermission: result.data?.permissions?.[permission],
     }),
   })

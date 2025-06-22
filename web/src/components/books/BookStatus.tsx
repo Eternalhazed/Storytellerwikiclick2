@@ -28,7 +28,6 @@ export const ProcessingTaskTypes = {
 export function BookStatus({ bookUuid }: Props) {
   const { book } = useListBooksQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       book: result.data?.find((book) => book.uuid === bookUuid),
     }),
   })

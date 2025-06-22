@@ -16,7 +16,6 @@ interface Props {
 export function RemoveBooksFromCollectionsItem({ selected }: Props) {
   const { collections } = useListBooksQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       collections: result.data
         ? Array.from(
             result.data

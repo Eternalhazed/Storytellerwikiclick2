@@ -11,7 +11,6 @@ type Props = {
 export function UserActions({ user, onEdit }: Props) {
   const { permissions } = useGetCurrentUserQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       permissions: result.data?.permissions,
     }),
   })

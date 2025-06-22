@@ -48,7 +48,6 @@ export function BookEditForm({ bookUuid }: Props) {
 
   const { book } = useListBooksQuery(undefined, {
     selectFromResult: (result) => ({
-      ...result,
       book: result.data?.find((b) => b.uuid === bookUuid),
     }),
   })
