@@ -1,0 +1,59 @@
+# Securely Share Your Storyteller Server with Tailscale (Guide for Non- Techies!)
+For those of you who want to open your Storyteller Server (StS) up to the internet — and maybe share with family — but want to do so safely, here are some basic instructions for how to do it (these are Mac specific, but should be translatable!)
+
+1. **Create a Tailnet** 
+  1. Watch this video and follow these super easy instructions: https://tailscale.com/kb/1017/install
+  2. Install Tailscale on the computer where your StS is located.
+  3. Install Tailscale on any devices that you want to be able to connect to your StS. (This includes other computers as well as your reading devices.)
+2. **Give your Tailnet a cute name** by going to the DNS tab and clicking the Rename Tailnet button. (Optional)
+3. **Make your connection secure!** This lets you access your Storyteller Server securely via HTTPS *inside* your Tailnet. (Required for reader app connections.)
+  - In Terminal run: tailscale serve --https=443 --bg 8001
+  - I had to add: /Applications/Tailscale.app/Contents/MacOS/ to the beginning. It didn’t want to find the CLI otherwise. :/
+  - Possible error
+    - You may get told :
+      '''
+    Serve is not enabled on your tailnet.
+    To enable, visit:
+    https://login.tailscale.com/f/serve?node=...
+    '''
+
+    - If so, just paste the link into a brower and follow the instructions. Your terminal window will update with something like this:
+      ' Success.
+            '''
+        Available within your tailnet:
+      
+      https://storyteller-server.lemur-dragon.ts.net/
+     |-- proxy http://127.0.0.1:8001
+    
+      Serve started and running in the background.
+      To disable the proxy, run: tailscale serve --https=443 off
+      '''
+
+4. **Re-point all your connections** to the StS inside your Tailnet.
+    1. You do not need the :8001 when your connection is secure!
+    2. You do need to make sure you have the S in https://
+    3. Remember that TailScale must be running on your device in order to resolve the URL. This is true for both the web interface and the Reader app on all devices.
+
+  5. Position syncing and book downloads now **available to you everywhere!**
+
+## Bonus: Sharing your Storyteller Server with friends and family
+
+### You need to 
+1. **Invite them to your Tailnet.**
+    1. Go to the Tailscale Admin Console: https://login.tailscale.com/admin/machines
+    2. Find your StS computer in the list and click it.
+    3. Click “Share this device”.
+    4. Enter your friend’s email.
+    5. Hit “Send Invite”.
+2. **Invite them to your StS.**
+    1. Go to Users.
+    2. Click the “+Invite User” button and follow the instructions
+    3. ***Tip***: If you haven’t set up your email in Settings, you can just copy-paste the invite link that is generated and send it to them whichever way you want.
+
+### Your friend needs to
+1. **Download and install TailScale.** (this will need to run when they are running Storyteller Reader.)
+    1. Log in to TailScale with the address you invited them with.
+    2. Accept the device share invite (they’ll get a link in email and see it in their Tailscale UI)
+2. **Download and install Storyteller Reader.**
+    1. Once connected, they can open Storyteller reader and use your invite link to log in.
+3. **Books!!**
