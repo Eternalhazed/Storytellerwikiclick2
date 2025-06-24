@@ -2,14 +2,22 @@ import { getBooks } from "../books"
 import * as legacyPaths from "@/assets/legacy/paths"
 import * as paths from "@/assets/paths"
 import * as legacyCovers from "@/assets/legacy/covers"
-import { mkdirSync, renameSync, rmdirSync } from "node:fs"
-import { join, resolve } from "node:path"
+import { mkdirSync, renameSync, rmdirSync, rmSync } from "node:fs"
+import { dirname, join, resolve } from "node:path"
 import { db } from "../connection"
 import { logger } from "@/logging"
-import { AUDIO_DIR, TEXT_DIR } from "@/directories"
+import {
+  ASSETS_DIR,
+  AUDIO_DIR,
+  CACHE_DIR,
+  DATA_DIR,
+  TEXT_DIR,
+} from "@/directories"
 
 export default async function migrate() {
   logger.info("Migrating to new directory structure! Welcome to v2!")
+
+  mkdirSync(ASSETS_DIR, { recursive: true })
 
   const books = await getBooks()
 
@@ -17,8 +25,16 @@ export default async function migrate() {
     logger.info(`Migrating ${book.title}…`)
 
     const newBookDir = await paths.getBookDirectory(book.uuid)
-    mkdirSync(newBookDir, { recursive: true })
-    logger.info(`Created parent new folder: ${newBookDir}`)
+    try {
+      mkdirSync(newBookDir)
+      logger.info(`Created parent new folder: ${newBookDir}`)
+    } catch (e) {
+      logger.error(
+        `Failed to create parent folder for book ${book.title} (${book.uuid})`,
+      )
+      logger.error(e)
+      continue
+    }
 
     try {
       mkdirSync(await paths.getEpubDirectory(book.uuid))
@@ -29,13 +45,20 @@ export default async function migrate() {
 
       await db
         .updateTable("ebook")
-        .set({ filepath: resolve(await paths.getEpubFilepath(book.uuid)) })
+        .set({
+          filepath: resolve(await paths.getEpubFilepath(book.uuid)),
+        })
         .where("bookUuid", "=", book.uuid)
         .execute()
 
       logger.info("Migrated original ebook")
-    } catch {
-      logger.info("Skipped original ebook (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped original ebook (missing)")
+      } else {
+        logger.error(`Failed to migrate original ebook`)
+        logger.error(e)
+      }
     }
 
     try {
@@ -45,13 +68,20 @@ export default async function migrate() {
 
       await db
         .updateTable("audiobook")
-        .set({ filepath: resolve(await paths.getEpubFilepath(book.uuid)) })
+        .set({
+          filepath: resolve(await paths.getEpubFilepath(book.uuid)),
+        })
         .where("bookUuid", "=", book.uuid)
         .execute()
 
       logger.info("Migrated original audio files")
-    } catch {
-      logger.info("Skipped original audio files (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped original audio files (missing)")
+      } else {
+        logger.error(`Failed to migrate original audio files`)
+        logger.error(e)
+      }
     }
 
     try {
@@ -64,8 +94,13 @@ export default async function migrate() {
       renameSync(legacyTranscodedAudioDir, newTranscodedAudioDir)
 
       logger.info("Migrated transcoded/split audio files")
-    } catch {
-      logger.info("Skipped transcoded/split audio files (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped transcoded/split audio files (missing)")
+      } else {
+        logger.error(`Failed to migrate transcoded/split audio files`)
+        logger.error(e)
+      }
     }
 
     try {
@@ -78,8 +113,13 @@ export default async function migrate() {
       renameSync(legacyTranscriptionsDir, newTranscriptionsDir)
 
       logger.info("Migrated transcriptions")
-    } catch {
-      logger.info("Skipped transcriptions (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped transcriptions (missing)")
+      } else {
+        logger.error(`Failed to migrate transcriptions`)
+        logger.error(e)
+      }
     }
 
     try {
@@ -99,8 +139,13 @@ export default async function migrate() {
         .execute()
 
       logger.info("Migrated aligned ebook")
-    } catch {
-      logger.info("Skipped aligned ebook (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped aligned ebook (missing)")
+      } else {
+        logger.error(`Failed to migrate aligned ebook`)
+        logger.error(e)
+      }
     }
 
     try {
@@ -114,8 +159,13 @@ export default async function migrate() {
       }
 
       logger.info("Migrated ebook cover")
-    } catch {
-      logger.info("Skipped ebook cover (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped ebook cover (missing)")
+      } else {
+        logger.error(`Failed to migrate ebook cover`)
+        logger.error(e)
+      }
     }
 
     try {
@@ -131,8 +181,13 @@ export default async function migrate() {
       }
 
       logger.info("Migrated audio cover")
-    } catch {
-      logger.info("Skipped audio cover (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped audio cover (missing)")
+      } else {
+        logger.error(`Failed to migrate audio cover`)
+        logger.error(e)
+      }
     }
 
     try {
@@ -141,8 +196,13 @@ export default async function migrate() {
       renameSync(legacyEpubIndex, newEpubIndex)
 
       logger.info("Migrated ebook index file")
-    } catch {
-      logger.info("Skipped ebook index file (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped ebook index file (missing)")
+      } else {
+        logger.error(`Failed to migrate ebook index file`)
+        logger.error(e)
+      }
     }
 
     try {
@@ -154,11 +214,18 @@ export default async function migrate() {
       renameSync(legacyAudioIndex, newAudioIndex)
 
       logger.info("Migrated audio index file")
-    } catch {
-      logger.info("Skipped audio index file (missing)")
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        logger.info("Skipped audio index file (missing)")
+      } else {
+        logger.error(`Failed to migrate audio index file`)
+        logger.error(e)
+      }
     }
 
     try {
+      rmdirSync(dirname(legacyPaths.getEpubFilepath(book.uuid)))
+      rmdirSync(legacyPaths.getEpubSyncedDirectory(book.uuid))
       rmdirSync(legacyPaths.getEpubDirectory(book.uuid))
       logger.info("Cleaned up old ebook directory")
     } catch {
@@ -194,4 +261,7 @@ export default async function migrate() {
       `Left old audio directory in place — some content was not migrated: ${AUDIO_DIR}`,
     )
   }
+
+  rmSync(CACHE_DIR, { recursive: true, force: true })
+  rmSync(join(DATA_DIR, "dict"), { recursive: true, force: true })
 }

@@ -284,7 +284,7 @@ export async function processFile(
     COVER_IMAGE_FILE_EXTENSIONS.includes(ext) &&
     bareFilename.toLowerCase() === "cover"
   ) {
-    const coverFilepath = join(getAudioDirectory(bookUuid), filename)
+    const coverFilepath = join(await getAudioDirectory(bookUuid), filename)
     await copyFile(filepath, coverFilepath)
     await persistAudioCover(bookUuid, filename)
   }
@@ -362,7 +362,7 @@ export async function persistProcessedFilesList(
   const index = (await getAudioIndex(bookUuid)) ?? {}
   index.processed_files = audioFiles
 
-  await writeFile(getAudioIndexPath(bookUuid), JSON.stringify(index), {
+  await writeFile(await getAudioIndexPath(bookUuid), JSON.stringify(index), {
     encoding: "utf-8",
   })
 }
@@ -375,8 +375,8 @@ export async function processAudiobook(
   semaphore: AsyncSemaphore,
   onProgress?: (progress: number) => void,
 ) {
-  const originalAudioDirectory = getOriginalAudioFilepath(bookUuid)
-  const processedAudioDirectory = getProcessedAudioFilepath(bookUuid)
+  const originalAudioDirectory = await getOriginalAudioFilepath(bookUuid)
+  const processedAudioDirectory = await getProcessedAudioFilepath(bookUuid)
 
   await mkdir(processedAudioDirectory, { recursive: true })
 
@@ -389,7 +389,7 @@ export async function processAudiobook(
 
   await Promise.all(
     filenames.map(async (filename, index) => {
-      const filepath = getOriginalAudioFilepath(bookUuid, filename)
+      const filepath = await getOriginalAudioFilepath(bookUuid, filename)
 
       const processed = await processFile(
         bookUuid,
@@ -425,9 +425,12 @@ export async function getTranscriptions(bookUuid: UUID) {
     throw new Error(
       "Could not retrieve transcriptions: found no processed audio files",
     )
-  const transcriptionFilepaths = audioFiles.map((audioFile) =>
-    getTranscriptionsFilepath(bookUuid, getTranscriptionFilename(audioFile)),
+  const transcriptionFilepaths = await Promise.all(
+    audioFiles.map((audioFile) =>
+      getTranscriptionsFilepath(bookUuid, getTranscriptionFilename(audioFile)),
+    ),
   )
+
   const transcriptions = await Promise.all(
     transcriptionFilepaths.map(async (filepath) => {
       const transcriptionContents = await readFile(filepath, {

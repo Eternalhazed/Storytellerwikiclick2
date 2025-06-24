@@ -2,7 +2,7 @@ import {
   ProcessingTaskType,
   ProcessingTaskStatus,
 } from "@/apiModels/models/ProcessingStatus"
-import { getEpubAlignedFilepath, getEpubFilepath } from "@/assets/legacy/paths"
+import { getEpubAlignedFilepath, getEpubFilepath } from "@/assets/paths"
 import { withHasPermission } from "@/auth/auth"
 import { getBookUuid, getBook } from "@/database/books"
 import { Epub } from "@smoores/epub"
@@ -37,8 +37,8 @@ export const GET = withHasPermission<Params>("bookRead")(async (
       book.processingTask?.type === ProcessingTaskType.SYNC_CHAPTERS &&
       book.processingTask.status === ProcessingTaskStatus.COMPLETED
     const epubPath = synchronized
-      ? getEpubAlignedFilepath(book.uuid)
-      : getEpubFilepath(book.uuid)
+      ? await getEpubAlignedFilepath(book.uuid)
+      : await getEpubFilepath(book.uuid)
     const epub = await Epub.from(epubPath)
     const locale = await epub.getLanguage()
     if (locale) {

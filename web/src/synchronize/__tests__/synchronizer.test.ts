@@ -5,7 +5,6 @@ import { Synchronizer } from "../synchronizer"
 import transcription from "../../__fixtures__/mobydick_001_002_melville.json"
 import { StorytellerTranscription } from "../getSentenceRanges"
 import assert from "node:assert"
-import { SyncCache } from "../syncCache"
 import { TimelineEntry } from "echogarden/dist/utilities/Timeline"
 
 const stTranscription: StorytellerTranscription = {
@@ -27,12 +26,7 @@ void describe("Synchronizer", () => {
     const audiofiles = [
       join("src", "__fixtures__", "mobydick_001_002_melville.mp3"),
     ]
-    const syncCache = await SyncCache.init(
-      join("src", "__fixtures__", "__output__", "moby-dick-cache.json"),
-    )
-    const synchronizer = new Synchronizer(epub, syncCache, audiofiles, [
-      stTranscription,
-    ])
+    const synchronizer = new Synchronizer(epub, audiofiles, [stTranscription])
     await synchronizer.syncBook()
 
     const manifest = await epub.getManifest()

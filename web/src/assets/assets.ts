@@ -10,17 +10,17 @@ import {
   getOriginalAudioFilepath,
   getProcessedAudioFilepath,
   getTranscriptionsFilepath,
-} from "./legacy/paths"
+} from "./paths"
 
 export async function linkEpub(bookUuid: UUID, origin: string) {
-  const filepath = getEpubFilepath(bookUuid)
+  const filepath = await getEpubFilepath(bookUuid)
   const directory = dirname(filepath)
   await mkdir(directory, { recursive: true })
   await symlink(origin, filepath)
 }
 
 export async function persistEpub(bookUuid: UUID, tmpPath: string) {
-  const filepath = getEpubFilepath(bookUuid)
+  const filepath = await getEpubFilepath(bookUuid)
   const directory = dirname(filepath)
   await mkdir(directory, { recursive: true })
   await copyFile(tmpPath, filepath)
@@ -31,7 +31,7 @@ export async function linkAudio(bookUuid: UUID, origins: string[]) {
   await Promise.all(
     origins.map(async (origin) => {
       const base = basename(origin)
-      const filepath = getOriginalAudioFilepath(bookUuid, base)
+      const filepath = await getOriginalAudioFilepath(bookUuid, base)
       const directory = dirname(filepath)
       await mkdir(directory, { recursive: true })
 
@@ -44,7 +44,7 @@ export async function persistAudio(bookUuid: UUID, audioPaths: string[]) {
   await Promise.all(
     audioPaths.map(async (path) => {
       const filename = basename(path)
-      const filepath = getOriginalAudioFilepath(bookUuid, filename)
+      const filepath = await getOriginalAudioFilepath(bookUuid, filename)
       const directory = dirname(filepath)
       await mkdir(directory, { recursive: true })
       await copyFile(path, filepath)
@@ -55,7 +55,7 @@ export async function persistAudio(bookUuid: UUID, audioPaths: string[]) {
 
 export async function originalEpubExists(bookUuid: UUID) {
   try {
-    await stat(getEpubFilepath(bookUuid))
+    await stat(await getEpubFilepath(bookUuid))
     return true
   } catch {
     return false
@@ -63,7 +63,7 @@ export async function originalEpubExists(bookUuid: UUID) {
 }
 
 export async function originalAudioExists(bookUuid: UUID) {
-  const originalAudioDirectory = getOriginalAudioFilepath(bookUuid)
+  const originalAudioDirectory = await getOriginalAudioFilepath(bookUuid)
   try {
     const filenames = await readdir(originalAudioDirectory)
 
@@ -78,23 +78,32 @@ export async function originalAudioExists(bookUuid: UUID) {
 
 export async function deleteProcessed(bookUuid: UUID) {
   await Promise.all([
-    rm(getProcessedAudioFilepath(bookUuid), { recursive: true, force: true }),
-    rm(getTranscriptionsFilepath(bookUuid), { recursive: true, force: true }),
+    rm(await getProcessedAudioFilepath(bookUuid), {
+      recursive: true,
+      force: true,
+    }),
+    rm(await getTranscriptionsFilepath(bookUuid), {
+      recursive: true,
+      force: true,
+    }),
     rm(getSyncCachePath(bookUuid), { force: true }),
   ])
 }
 
 export async function deleteOriginals(bookUuid: UUID) {
   await Promise.all([
-    rm(getEpubFilepath(bookUuid), { force: true }),
-    rm(getOriginalAudioFilepath(bookUuid), { recursive: true, force: true }),
+    rm(await getEpubFilepath(bookUuid), { force: true }),
+    rm(await getOriginalAudioFilepath(bookUuid), {
+      recursive: true,
+      force: true,
+    }),
   ])
 }
 
 export async function deleteAssets(bookUuid: UUID) {
   await Promise.all([
-    rm(getEpubDirectory(bookUuid), { recursive: true, force: true }),
-    rm(getAudioDirectory(bookUuid), { recursive: true, force: true }),
+    rm(await getEpubDirectory(bookUuid), { recursive: true, force: true }),
+    rm(await getAudioDirectory(bookUuid), { recursive: true, force: true }),
     rm(getSyncCachePath(bookUuid), { force: true }),
   ])
 }

@@ -30,7 +30,6 @@ import {
   writeMetadataToEpub,
 } from "@/process/processEpub"
 import { getInitialPrompt } from "@/process/prompt"
-import { getSyncCache } from "@/synchronize/syncCache"
 import { Synchronizer } from "@/synchronize/synchronizer"
 import { installWhisper, transcribeTrack } from "@/transcribe"
 import { UUID } from "@/uuid"
@@ -48,7 +47,7 @@ export async function transcribeBook(
   onProgress?: (progress: number) => void,
 ) {
   const semaphore = new AsyncSemaphore(settings.parallelTranscribes)
-  const transcriptionsPath = getTranscriptionsFilepath(bookUuid)
+  const transcriptionsPath = await getTranscriptionsFilepath(bookUuid)
   await mkdir(transcriptionsPath, { recursive: true })
   const audioFiles = await getProcessedAudioFiles(bookUuid)
   if (!audioFiles) {
@@ -71,11 +70,14 @@ export async function transcribeBook(
     audioFiles.map(async (audioFile) => {
       await semaphore.wait()
       try {
-        const transcriptionFilepath = getTranscriptionsFilepath(
+        const transcriptionFilepath = await getTranscriptionsFilepath(
           bookUuid,
           getTranscriptionFilename(audioFile),
         )
-        const filepath = getProcessedAudioFilepath(bookUuid, audioFile.filename)
+        const filepath = await getProcessedAudioFilepath(
+          bookUuid,
+          audioFile.filename,
+        )
         try {
           const existingTranscription = await readFile(transcriptionFilepath, {
             encoding: "utf-8",
@@ -258,12 +260,12 @@ export default async function processBook({
           throw new Error(`No audio files found for book ${bookUuid}`)
         }
         logger.info("Syncing narration...")
-        const syncCache = await getSyncCache(bookUuid)
         const synchronizer = new Synchronizer(
           epub,
-          syncCache,
-          audioFiles.map((audioFile) =>
-            getProcessedAudioFilepath(bookUuid, audioFile.filename),
+          await Promise.all(
+            audioFiles.map((audioFile) =>
+              getProcessedAudioFilepath(bookUuid, audioFile.filename),
+            ),
           ),
           transcriptions,
         )
@@ -278,7 +280,7 @@ export default async function processBook({
 
         await writeMetadataToEpub(book, epub)
 
-        await epub.writeToFile(getEpubAlignedFilepath(bookUuid))
+        await epub.writeToFile(await getEpubAlignedFilepath(bookUuid))
         await epub.close()
       }
 

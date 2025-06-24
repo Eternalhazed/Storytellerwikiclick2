@@ -16,7 +16,7 @@ void describe("processFile", () => {
       "MobyDickOrTheWhalePart1_librivox.m4b",
     )
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -53,7 +53,7 @@ void describe("processFile", () => {
       "MobyDickOrTheWhalePart1_librivox.mp3",
     )
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -90,7 +90,7 @@ void describe("processFile", () => {
       "MobyDickOrTheWhalePart1_librivox.opus",
     )
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -123,7 +123,7 @@ void describe("processFile", () => {
   void it("can handle nonstandard audio file", async () => {
     const input = join("src", "__fixtures__", "mobydick.flac")
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -144,7 +144,7 @@ void describe("processFile", () => {
   void it("can transcode nonstandard audio file", async () => {
     const input = join("src", "__fixtures__", "mobydick.flac")
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -165,7 +165,7 @@ void describe("processFile", () => {
   void it("can process zip files", async () => {
     const input = join("src", "__fixtures__", "moby-dick-1-7-audio.zip")
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -188,7 +188,7 @@ void describe("processFile", () => {
   void it("can process cover image", async () => {
     const input = join("src", "__fixtures__", "Cover.png")
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -209,7 +209,7 @@ void describe("processFile", () => {
   void it("ignores unrecognized file", async () => {
     const input = join("src", "__fixtures__", "mobydick_001_002_melville.json")
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -230,7 +230,7 @@ void describe("processFile", () => {
   void it("splits files longer than the max length", async () => {
     const input = join("src", "__fixtures__", "moby-dick-1-7-audio.zip")
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,
@@ -269,7 +269,7 @@ void describe("processFile", () => {
       "MobyDickOrTheWhalePart1_librivox.m4b",
     )
     const uuid = randomUUID()
-    const outDir = getProcessedAudioFilepath(uuid)
+    const outDir = await getProcessedAudioFilepath(uuid)
     await mkdir(outDir, { recursive: true })
     await processFile(
       uuid,

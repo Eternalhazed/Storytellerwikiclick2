@@ -12,7 +12,7 @@ import { logger } from "@/logging"
 import { BookWithRelations } from "@/database/books"
 
 export async function readEpub(bookUuid: UUID) {
-  return Epub.from(getEpubFilepath(bookUuid))
+  return Epub.from(await getEpubFilepath(bookUuid))
 }
 
 export async function getFullText(epub: Epub) {

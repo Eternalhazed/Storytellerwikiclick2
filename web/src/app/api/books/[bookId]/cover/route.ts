@@ -8,7 +8,7 @@ import {
   getAudioCoverFilepath,
   getEpubCoverFilepath,
 } from "@/assets/legacy/covers"
-import { getEpubFilepath } from "@/assets/legacy/paths"
+import { getEpubFilepath } from "@/assets/paths"
 
 export const dynamic = "force-dynamic"
 
@@ -48,7 +48,7 @@ export const GET = withHasPermission<Params>("bookRead")(async (
       },
     })
   } catch (_) {
-    const epub = await Epub.from(getEpubFilepath(bookUuid))
+    const epub = await Epub.from(await getEpubFilepath(bookUuid))
     const coverImage = await epub.getCoverImage()
     if (!coverImage) return new NextResponse(null, { status: 404 })
 

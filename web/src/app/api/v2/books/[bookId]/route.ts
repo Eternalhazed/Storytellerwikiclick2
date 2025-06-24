@@ -11,7 +11,7 @@ import {
   persistCustomEpubCover,
   persistCustomAudioCover,
 } from "@/assets/legacy/covers"
-import { getEpubAlignedFilepath } from "@/assets/legacy/paths"
+import { getEpubAlignedFilepath } from "@/assets/paths"
 import { withHasPermission } from "@/auth/auth"
 import {
   AuthorRelation,
@@ -131,7 +131,7 @@ export const PUT = withHasPermission<Params>("bookUpdate")(async (
     updated.processingTask?.type === ProcessingTaskType.SYNC_CHAPTERS &&
     updated.processingTask.status === ProcessingTaskStatus.COMPLETED
   ) {
-    const alignedEpubPath = getEpubAlignedFilepath(updated.uuid)
+    const alignedEpubPath = await getEpubAlignedFilepath(updated.uuid)
     const epub = await Epub.from(alignedEpubPath)
     await writeMetadataToEpub(updated, epub)
     await epub.writeToFile(alignedEpubPath)
