@@ -11,16 +11,16 @@ For those of you who want to open your Storyteller Server (StS) up to the intern
   - I had to add: /Applications/Tailscale.app/Contents/MacOS/ to the beginning. It didn’t want to find the CLI otherwise. :/
   - Possible error
     - You may get told :
-      '''
+    '''
     Serve is not enabled on your tailnet.
     To enable, visit:
     https://login.tailscale.com/f/serve?node=...
     '''
 
     - If so, just paste the link into a brower and follow the instructions. Your terminal window will update with something like this:
-      ' Success.
-            '''
-        Available within your tailnet:
+      '''
+      Success.
+      Available within your tailnet:
       
       https://storyteller-server.lemur-dragon.ts.net/
      |-- proxy http://127.0.0.1:8001
