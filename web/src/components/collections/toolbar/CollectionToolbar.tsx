@@ -6,7 +6,7 @@ import { SetStateAction } from "react"
 import { SelectMenu } from "./SelectMenu"
 import { ActionMenu } from "./ActionMenu"
 import { Collection } from "@/database/collections"
-import { AddBooksModal } from "../modals/AddBooksModal"
+import { AddBooksMenu } from "@/components/books/AddBooksMenu"
 
 interface Props {
   collection?: Collection | undefined
@@ -43,7 +43,7 @@ export function CollectionToolbar({
           <ActionMenu selected={selected} />
         </>
       )}
-      {collection && <AddBooksModal collection={collection} />}
+      <AddBooksMenu collection={collection} />
     </Group>
   )
 }

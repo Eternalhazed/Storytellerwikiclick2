@@ -14,6 +14,9 @@ const jsMigrations: Record<string, Promise<() => Promise<void>>> = {
   "40_split_book_tables.sql": import(
     "./migrations/40_split_book_tables.sql"
   ).then((m) => m.default),
+  "41_reorganize_library.sql": import(
+    "./migrations/41_reorganize_library.sql"
+  ).then((m) => m.default),
 }
 
 async function isFirstStartup() {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useState, MouseEvent, FormEvent, Fragment } from "react"
-import { ServerFilePicker } from "./ServerFilePicker"
+import { ServerFilePicker } from "./modals/ServerFilePicker"
 import {
   Box,
   Button,

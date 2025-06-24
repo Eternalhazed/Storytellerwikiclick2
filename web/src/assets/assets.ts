@@ -10,7 +10,7 @@ import {
   getOriginalAudioFilepath,
   getProcessedAudioFilepath,
   getTranscriptionsFilepath,
-} from "./paths"
+} from "./legacy/paths"
 
 export async function linkEpub(bookUuid: UUID, origin: string) {
   const filepath = getEpubFilepath(bookUuid)

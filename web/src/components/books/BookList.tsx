@@ -10,7 +10,7 @@ import { useState } from "react"
 import { CollectionToolbar } from "../collections/toolbar/CollectionToolbar"
 import { BookGrid } from "./BookGrid"
 import { useListBooksQuery, useListCollectionsQuery } from "@/store/api"
-import { AddBooksModal } from "../collections/modals/AddBooksModal"
+import { AddBooksMenu } from "./AddBooksMenu"
 
 interface Props {
   collectionUuid?: UUID | null
@@ -87,13 +87,11 @@ export function BookList({ collectionUuid }: Props) {
           ) : (
             <Stack>
               <Text>There’s nothing here!</Text>
-              {collection && (
-                <AddBooksModal
-                  className="self-start"
-                  variant="filled"
-                  collection={collection}
-                />
-              )}
+              <AddBooksMenu
+                className="self-start"
+                variant="filled"
+                collection={collection}
+              />
             </Stack>
           )}
         </Stack>

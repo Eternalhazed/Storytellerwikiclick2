@@ -4,7 +4,7 @@ import { FileHandle, open } from "node:fs/promises"
 import { NextResponse } from "next/server"
 import { createHash } from "node:crypto"
 import { Epub } from "@smoores/epub"
-import { getEpubAlignedFilepath } from "@/assets/paths"
+import { getEpubAlignedFilepath } from "@/assets/legacy/paths"
 
 export const dynamic = "force-dynamic"
 

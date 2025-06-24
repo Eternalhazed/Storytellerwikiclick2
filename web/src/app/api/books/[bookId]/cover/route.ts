@@ -4,8 +4,11 @@ import { open } from "node:fs/promises"
 import { NextResponse } from "next/server"
 import { basename } from "node:path"
 import { Epub } from "@smoores/epub"
-import { getAudioCoverFilepath, getEpubCoverFilepath } from "@/assets/covers"
-import { getEpubFilepath } from "@/assets/paths"
+import {
+  getAudioCoverFilepath,
+  getEpubCoverFilepath,
+} from "@/assets/legacy/covers"
+import { getEpubFilepath } from "@/assets/legacy/paths"
 
 export const dynamic = "force-dynamic"
 

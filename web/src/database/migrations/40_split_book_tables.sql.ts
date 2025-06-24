@@ -2,7 +2,7 @@ import {
   getEpubAlignedFilepath,
   getEpubFilepath,
   getOriginalAudioFilepath,
-} from "@/assets/paths"
+} from "@/assets/legacy/paths"
 import { db } from "../connection"
 import { stat } from "node:fs/promises"
 import { resolve } from "node:path"

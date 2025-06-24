@@ -1,4 +1,4 @@
-import { getEpubFilepath, getEpubAlignedFilepath } from "@/assets/paths"
+import { getEpubFilepath, getEpubAlignedFilepath } from "@/assets/legacy/paths"
 import { BookUpdate, getBooks, SeriesRelation, updateBook } from "../books"
 import { Epub } from "@smoores/epub"
 import { db } from "../connection"

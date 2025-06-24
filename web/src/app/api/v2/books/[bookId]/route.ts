@@ -10,8 +10,8 @@ import {
 import {
   persistCustomEpubCover,
   persistCustomAudioCover,
-} from "@/assets/covers"
-import { getEpubAlignedFilepath } from "@/assets/paths"
+} from "@/assets/legacy/covers"
+import { getEpubAlignedFilepath } from "@/assets/legacy/paths"
 import { withHasPermission } from "@/auth/auth"
 import {
   AuthorRelation,

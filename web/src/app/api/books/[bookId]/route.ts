@@ -2,7 +2,7 @@ import {
   ProcessingTaskType,
   ProcessingTaskStatus,
 } from "@/apiModels/models/ProcessingStatus"
-import { getEpubAlignedFilepath, getEpubFilepath } from "@/assets/paths"
+import { getEpubAlignedFilepath, getEpubFilepath } from "@/assets/legacy/paths"
 import { withHasPermission } from "@/auth/auth"
 import { getBookUuid, getBook } from "@/database/books"
 import { Epub } from "@smoores/epub"

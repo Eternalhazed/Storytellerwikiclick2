@@ -5,8 +5,8 @@ import {
 } from "@/actions/listDirectoryAction"
 import { useEffect, useMemo, useState } from "react"
 import { matchSorter } from "match-sorter"
-import { FolderIcon } from "../icons/FolderIcon"
-import { FileIcon } from "../icons/FileIcon"
+import { FolderIcon } from "../../icons/FolderIcon"
+import { FileIcon } from "../../icons/FileIcon"
 import {
   Pill,
   Combobox,
