@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { Settings } from "@/apiModels"
-import { useApiClient } from "@/hooks/useApiClient"
-import { useRef, useState } from "react"
-import { useForm } from "@mantine/form"
+import { Settings } from "@/apiModels";
+import { useApiClient } from "@/hooks/useApiClient";
+import { useRef, useState } from "react";
+import { useForm } from "@mantine/form";
 import {
   ActionIcon,
   Anchor,
@@ -21,19 +21,19 @@ import {
   Stack,
   Text,
   TextInput,
-} from "@mantine/core"
-import { IconPlus, IconTrash } from "@tabler/icons-react"
-import { AuthProviderInput } from "./AuthProviderInput"
+} from "@mantine/core";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { AuthProviderInput } from "./AuthProviderInput";
 
 interface Props {
-  settings: Settings
+  settings: Settings;
 }
 
 export function SettingsForm({ settings }: Props) {
-  const [saved, setSaved] = useState(false)
-  const clearSavedTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [saved, setSaved] = useState(false);
+  const clearSavedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const client = useApiClient()
+  const client = useApiClient();
 
   const initialValues: Settings = {
     smtpHost: settings.smtpHost,
@@ -68,27 +68,27 @@ export function SettingsForm({ settings }: Props) {
     parallelTranscodes: settings.parallelTranscodes,
     parallelWhisperBuild: settings.parallelWhisperBuild,
     authProviders: settings.authProviders,
-  }
+  };
 
   const form = useForm({
     mode: "controlled",
     initialValues,
-  })
+  });
 
-  const state = form.values
+  const state = form.values;
 
   return (
     <form
       onSubmit={form.onSubmit(async (updatedSettings) => {
-        await client.updateSettings(updatedSettings)
-        setSaved(true)
+        await client.updateSettings(updatedSettings);
+        setSaved(true);
 
         if (clearSavedTimeoutRef.current) {
-          clearTimeout(clearSavedTimeoutRef.current)
+          clearTimeout(clearSavedTimeoutRef.current);
         }
         clearSavedTimeoutRef.current = setTimeout(() => {
-          setSaved(false)
-        }, 2000)
+          setSaved(false);
+        }, 2000);
       })}
     >
       <Fieldset legend="Library settings">
@@ -339,8 +339,8 @@ export function SettingsForm({ settings }: Props) {
               description={
                 <>
                   e.g. <Code>Systran/faster-distil-whisper-large-v3</Code> for
-                  Speaches&rsquo; large-v3 model, or{" "}
-                  <Code>whisper-1</Code> for large-v3 on OpenAI Cloud.
+                  Speaches&rsquo; large-v3 model, or <Code>whisper-1</Code> for
+                  large-v3 on OpenAI Cloud.
                 </>
               }
               {...form.getInputProps("open_ai_model_name")}
@@ -428,7 +428,7 @@ export function SettingsForm({ settings }: Props) {
                       issuer: "",
                       clientId: "",
                       clientSecret: "",
-                    })
+                    });
                   } else {
                     form.replaceListItem("authProviders", i, {
                       kind: "custom",
@@ -437,7 +437,7 @@ export function SettingsForm({ settings }: Props) {
                       clientId: "",
                       clientSecret: "",
                       type: "oidc",
-                    })
+                    });
                   }
                 }}
                 required
@@ -454,7 +454,7 @@ export function SettingsForm({ settings }: Props) {
                     form.replaceListItem("authProviders", i, {
                       ...provider,
                       id: value,
-                    })
+                    });
                   }}
                 />
               ) : (
@@ -524,7 +524,7 @@ export function SettingsForm({ settings }: Props) {
                 variant="subtle"
                 className="absolute right-4 top-0"
                 onClick={() => {
-                  form.removeListItem("authProviders", i)
+                  form.removeListItem("authProviders", i);
                 }}
               >
                 <IconTrash color="red" />
@@ -543,7 +543,7 @@ export function SettingsForm({ settings }: Props) {
                 clientId: "",
                 clientSecret: "",
                 issuer: "",
-              })
+              });
             }}
           >
             Add provider
@@ -588,5 +588,5 @@ export function SettingsForm({ settings }: Props) {
         <Button type="submit">{saved ? "Saved!" : "Update"}</Button>
       </Group>
     </form>
-  )
+  );
 }
