@@ -325,9 +325,9 @@ export function SettingsForm({ settings }: Props) {
                   Cloud-compatible service URL, such as a self-hosted{" "}
                   <a
                     className="text-st-orange-800 underline"
-                    href="https://github.com/fedirz/faster-whisper-server"
+                    href="https://github.com/speaches-ai/speaches"
                   >
-                    faster-whisper-server
+                    Speaches
                   </a>{" "}
                   instance.
                 </>
@@ -339,7 +339,7 @@ export function SettingsForm({ settings }: Props) {
               description={
                 <>
                   e.g. <Code>Systran/faster-distil-whisper-large-v3</Code> for
-                  faster-whisper-server&rsquo;s large-v3 model, or{" "}
+                  Speaches&rsquo; large-v3 model, or{" "}
                   <Code>whisper-1</Code> for large-v3 on OpenAI Cloud.
                 </>
               }
