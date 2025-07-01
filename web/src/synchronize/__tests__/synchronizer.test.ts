@@ -2,7 +2,7 @@ import { describe, it } from "node:test"
 import { Epub, XmlElement } from "@smoores/epub"
 import { join } from "node:path"
 import { Synchronizer } from "../synchronizer"
-import transcription from "../../__fixtures__/mobydick_001_002_melville.json"
+import transcription from "../../__fixtures__/transcriptions/mobydick_001_002_melville.json"
 import { StorytellerTranscription } from "../getSentenceRanges"
 import assert from "node:assert"
 import { TimelineEntry } from "echogarden/dist/utilities/Timeline"
@@ -15,6 +15,7 @@ const stTranscription: StorytellerTranscription = {
       "src",
       "synchronize",
       "__fixtures__",
+      "mp3",
       "mobydick_001_002_melville.mp3",
     ),
   })),

@@ -1,7 +1,6 @@
-import { getBook } from "@/database/books"
+import { Book } from "@/database/books"
 import { ASSETS_DIR } from "@/directories"
 import { UUID } from "@/uuid"
-import memoize from "memoize"
 import { join } from "node:path"
 
 const base62Chars =
@@ -24,13 +23,17 @@ function base62Encode(bytes: Uint8Array): string {
   return result.padStart(8, "0") // Ensure fixed length if desired
 }
 
-function shortenUuid(uuid: string, numBytes = 6): string {
+export function shortenUuid(uuid: UUID, numBytes = 6): string {
   const hex = uuid.replace(/-/g, "")
   const bytes = new Uint8Array(numBytes)
   for (let i = 0; i < numBytes; i++) {
     bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16)
   }
   return base62Encode(bytes)
+}
+
+export function getDefaultSuffix(uuid: UUID) {
+  return ` [${shortenUuid(uuid)}]`
 }
 
 function sanitizeFilename(title: string): string {
@@ -57,68 +60,57 @@ function truncate(input: string, byteLimit: number, suffix = ""): string {
   return result + suffix
 }
 
-export const getBookFilename = memoize(
-  async function getBookFilename(bookUuid: UUID, suffix: string = "") {
-    const book = await getBook(bookUuid)
-    if (!book) {
-      throw new Error(
-        `Failed to get EPUB directory for book ${bookUuid} — book does not exist`,
-      )
-    }
+export function getSafeFilepathSegment(name: string, suffix: string = "") {
+  return truncate(sanitizeFilename(name), 150, suffix)
+}
 
-    return truncate(sanitizeFilename(book.title), 150, suffix)
-  },
-  { cacheKey: (args) => `${args[0]}${args[1]}` },
-)
-
-export async function getBookDirectory(bookUuid: UUID) {
-  const shortid = shortenUuid(bookUuid)
-  const filename = await getBookFilename(bookUuid, ` [${shortid}]`)
+export function getInternalBookDirectory(book: Book) {
+  const filename = getSafeFilepathSegment(book.title, book.suffix)
   return join(ASSETS_DIR, filename)
 }
 
-export async function getEpubDirectory(bookUuid: UUID) {
-  return join(await getBookDirectory(bookUuid), "text")
+export function getInternalEpubDirectory(book: Book) {
+  return join(getInternalBookDirectory(book), "text")
 }
 
-export async function getEpubAlignedDirectory(bookUuid: UUID) {
-  return join(await getBookDirectory(bookUuid), "aligned")
+export function getInternalEpubAlignedDirectory(book: Book) {
+  return join(getInternalBookDirectory(book), "aligned")
 }
 
-export async function getEpubAlignedFilepath(bookUuid: UUID) {
+export function getInternalEpubAlignedFilepath(book: Book) {
   return join(
-    await getEpubAlignedDirectory(bookUuid),
-    await getBookFilename(bookUuid, ".epub"),
+    getInternalEpubAlignedDirectory(book),
+    getSafeFilepathSegment(book.title, ".epub"),
   )
 }
 
-export async function getEpubFilepath(bookUuid: UUID) {
+export function getInternalEpubFilepath(book: Book) {
   return join(
-    await getEpubDirectory(bookUuid),
-    await getBookFilename(bookUuid, ".epub"),
+    getInternalEpubDirectory(book),
+    getSafeFilepathSegment(book.title, ".epub"),
   )
 }
 
-export async function getEpubIndexPath(bookUuid: UUID) {
-  return join(await getEpubDirectory(bookUuid), ".storyteller-index.json")
+export function getInternalEpubIndexPath(book: Book) {
+  return join(getInternalEpubDirectory(book), ".storyteller-index.json")
 }
 
-export async function getAudioDirectory(bookUuid: UUID) {
-  return join(await getBookDirectory(bookUuid), "audio")
+export function getInternalAudioDirectory(book: Book) {
+  return join(getInternalBookDirectory(book), "audio")
 }
 
-export async function getAudioIndexPath(bookUuid: UUID) {
-  return join(await getAudioDirectory(bookUuid), ".storyteller-index.json")
+export function getInternalAudioIndexPath(book: Book) {
+  return join(getInternalAudioDirectory(book), ".storyteller-index.json")
 }
 
-export async function getOriginalAudioFilepath(bookUuid: UUID, filename = "") {
-  return join(await getAudioDirectory(bookUuid), filename)
+export function getInternalOriginalAudioFilepath(book: Book, filename = "") {
+  return join(getInternalAudioDirectory(book), filename)
 }
 
-export async function getProcessedAudioFilepath(bookUuid: UUID, filename = "") {
-  return join(await getBookDirectory(bookUuid), "transcoded audio", filename)
+export function getProcessedAudioFilepath(book: Book, filename = "") {
+  return join(getInternalBookDirectory(book), "transcoded audio", filename)
 }
 
-export async function getTranscriptionsFilepath(bookUuid: UUID, filename = "") {
-  return join(await getBookDirectory(bookUuid), "transcriptions", filename)
+export function getTranscriptionsFilepath(book: Book, filename = "") {
+  return join(getInternalBookDirectory(book), "transcriptions", filename)
 }

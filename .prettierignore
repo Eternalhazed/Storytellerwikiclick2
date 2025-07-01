@@ -16,7 +16,6 @@ tsbuild
 __fixtures__
 /web/work-dist
 /web/whisper-builds
-schema.sql
 
 mobile/android
 mobile/ios

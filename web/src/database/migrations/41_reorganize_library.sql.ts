@@ -1,4 +1,4 @@
-import { getBooks } from "../books"
+import { getBooks, updateBook } from "../books"
 import * as legacyPaths from "@/assets/legacy/paths"
 import * as paths from "@/assets/paths"
 import * as legacyCovers from "@/assets/legacy/covers"
@@ -21,32 +21,49 @@ export default async function migrate() {
 
   const books = await getBooks()
 
-  for (const book of books) {
+  for (let book of books) {
     logger.info(`Migrating ${book.title}…`)
 
-    const newBookDir = await paths.getBookDirectory(book.uuid)
+    let newBookDir = paths.getInternalBookDirectory(book)
     try {
       mkdirSync(newBookDir)
       logger.info(`Created parent new folder: ${newBookDir}`)
     } catch (e) {
-      logger.error(
-        `Failed to create parent folder for book ${book.title} (${book.uuid})`,
-      )
-      logger.error(e)
-      continue
+      if (e instanceof Error && "code" in e && e.code === "EEXIST") {
+        book = await updateBook(book.uuid, {
+          suffix: paths.getDefaultSuffix(book.uuid),
+        })
+        newBookDir = paths.getInternalBookDirectory(book)
+        try {
+          mkdirSync(newBookDir)
+          logger.info(`Created parent new folder: ${newBookDir}`)
+        } catch (e) {
+          logger.error(
+            `Failed to create parent folder for book ${book.title} (${book.uuid})`,
+          )
+          logger.error(e)
+          continue
+        }
+      } else {
+        logger.error(
+          `Failed to create parent folder for book ${book.title} (${book.uuid})`,
+        )
+        logger.error(e)
+        continue
+      }
     }
 
     try {
-      mkdirSync(await paths.getEpubDirectory(book.uuid))
+      mkdirSync(paths.getInternalEpubDirectory(book))
 
-      const legacyEpubDir = legacyPaths.getEpubFilepath(book.uuid)
-      const newEpubDir = await paths.getEpubFilepath(book.uuid)
-      renameSync(legacyEpubDir, newEpubDir)
+      const legacyEpubFilepath = legacyPaths.getEpubFilepath(book.uuid)
+      const newEpubFilepath = paths.getInternalEpubFilepath(book)
+      renameSync(legacyEpubFilepath, newEpubFilepath)
 
       await db
         .updateTable("ebook")
         .set({
-          filepath: resolve(await paths.getEpubFilepath(book.uuid)),
+          filepath: resolve(paths.getInternalEpubFilepath(book)),
         })
         .where("bookUuid", "=", book.uuid)
         .execute()
@@ -63,13 +80,13 @@ export default async function migrate() {
 
     try {
       const legacyAudioDir = legacyPaths.getOriginalAudioFilepath(book.uuid)
-      const newAudioDir = await paths.getAudioDirectory(book.uuid)
+      const newAudioDir = paths.getInternalAudioDirectory(book)
       renameSync(legacyAudioDir, newAudioDir)
 
       await db
         .updateTable("audiobook")
         .set({
-          filepath: resolve(await paths.getEpubFilepath(book.uuid)),
+          filepath: resolve(paths.getInternalEpubFilepath(book)),
         })
         .where("bookUuid", "=", book.uuid)
         .execute()
@@ -88,9 +105,7 @@ export default async function migrate() {
       const legacyTranscodedAudioDir = legacyPaths.getProcessedAudioFilepath(
         book.uuid,
       )
-      const newTranscodedAudioDir = await paths.getProcessedAudioFilepath(
-        book.uuid,
-      )
+      const newTranscodedAudioDir = paths.getProcessedAudioFilepath(book)
       renameSync(legacyTranscodedAudioDir, newTranscodedAudioDir)
 
       logger.info("Migrated transcoded/split audio files")
@@ -107,9 +122,7 @@ export default async function migrate() {
       const legacyTranscriptionsDir = legacyPaths.getTranscriptionsFilepath(
         book.uuid,
       )
-      const newTranscriptionsDir = await paths.getTranscriptionsFilepath(
-        book.uuid,
-      )
+      const newTranscriptionsDir = paths.getTranscriptionsFilepath(book)
       renameSync(legacyTranscriptionsDir, newTranscriptionsDir)
 
       logger.info("Migrated transcriptions")
@@ -123,17 +136,17 @@ export default async function migrate() {
     }
 
     try {
-      mkdirSync(await paths.getEpubAlignedDirectory(book.uuid))
+      mkdirSync(paths.getInternalEpubAlignedDirectory(book))
 
       const legacyAlignedDir = legacyPaths.getEpubAlignedFilepath(book.uuid)
-      const newAlignedDir = await paths.getEpubAlignedFilepath(book.uuid)
+      const newAlignedDir = paths.getInternalEpubAlignedFilepath(book)
       renameSync(legacyAlignedDir, newAlignedDir)
 
       await db
         .updateTable("alignedBook")
         .set({
           status: "ALIGNED",
-          filepath: resolve(await paths.getEpubAlignedFilepath(book.uuid)),
+          filepath: resolve(paths.getInternalEpubAlignedFilepath(book)),
         })
         .where("bookUuid", "=", book.uuid)
         .execute()
@@ -154,7 +167,7 @@ export default async function migrate() {
       if (legacyEpubCover && epubCoverName) {
         renameSync(
           legacyEpubCover,
-          join(await paths.getEpubDirectory(book.uuid), epubCoverName),
+          join(paths.getInternalEpubDirectory(book), epubCoverName),
         )
       }
 
@@ -176,7 +189,7 @@ export default async function migrate() {
       if (legacyAudioCover && audioCoverName) {
         renameSync(
           legacyAudioCover,
-          join(await paths.getAudioDirectory(book.uuid), audioCoverName),
+          join(paths.getInternalAudioDirectory(book), audioCoverName),
         )
       }
 
@@ -192,7 +205,7 @@ export default async function migrate() {
 
     try {
       const legacyEpubIndex = legacyPaths.getEpubIndexPath(book.uuid)
-      const newEpubIndex = await paths.getEpubIndexPath(book.uuid)
+      const newEpubIndex = paths.getInternalEpubIndexPath(book)
       renameSync(legacyEpubIndex, newEpubIndex)
 
       logger.info("Migrated ebook index file")
@@ -207,8 +220,8 @@ export default async function migrate() {
 
     try {
       const legacyAudioIndex = legacyPaths.getAudioIndexPath(book.uuid)
-      const newAudioIndex = await paths.getOriginalAudioFilepath(
-        book.uuid,
+      const newAudioIndex = paths.getInternalOriginalAudioFilepath(
+        book,
         ".storyteller-index.json",
       )
       renameSync(legacyAudioIndex, newAudioIndex)

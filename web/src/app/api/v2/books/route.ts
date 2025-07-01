@@ -1,13 +1,11 @@
 import {
-  linkAudio,
-  linkEpub,
   originalAudioExists,
   originalEpubExists,
   persistAudio,
   persistEpub,
-} from "@/assets/assets"
+} from "@/assets/fs"
 import { withHasPermission } from "@/auth/auth"
-import { createBookFromEpub, getBooks } from "@/database/books"
+import { createBookFromEpub, getBooks, updateBook } from "@/database/books"
 import { Epub } from "@smoores/epub"
 import { NextResponse } from "next/server"
 import { basename, join } from "node:path"
@@ -19,6 +17,11 @@ import { Readable } from "node:stream"
 import { ReadableStream } from "node:stream/web"
 import { logger } from "@/logging"
 import { isProcessing, isQueued } from "@/work/distributor"
+import {
+  getDefaultSuffix,
+  getInternalAudioDirectory,
+  getInternalEpubFilepath,
+} from "@/assets/paths"
 
 export const dynamic = "force-dynamic"
 
@@ -40,8 +43,8 @@ export const GET = withHasPermission("bookList")(async (request) => {
           ...book,
           originalFilesExist: (
             await Promise.all([
-              originalEpubExists(book.uuid),
-              originalAudioExists(book.uuid),
+              originalEpubExists(book),
+              originalAudioExists(book),
             ])
           ).every((originalsExist) => originalsExist),
           processingStatus: isProcessing(book.uuid)
@@ -64,9 +67,9 @@ export const GET = withHasPermission("bookList")(async (request) => {
  */
 export const POST = withHasPermission("bookCreate")(async (request) => {
   if (request.headers.get("Content-Type") === "application/json") {
-    const { epubPath, audioPaths } = (await request.json()) as {
+    const { epubPath, audioDirectory } = (await request.json()) as {
       epubPath: string
-      audioPaths: string[]
+      audioDirectory: string
     }
 
     try {
@@ -74,10 +77,10 @@ export const POST = withHasPermission("bookCreate")(async (request) => {
       const book = await createBookFromEpub(
         epub,
         basename(epubPath).replace(".epub", ""),
+        epubPath,
+        audioDirectory,
       )
       await epub.close()
-      await linkEpub(book.uuid, epubPath)
-      await linkAudio(book.uuid, audioPaths)
 
       return NextResponse.json(book)
     } catch (e) {
@@ -142,12 +145,34 @@ export const POST = withHasPermission("bookCreate")(async (request) => {
 
   const epub = await Epub.from(paths.epubFile)
 
-  const book = await createBookFromEpub(
+  let book = await createBookFromEpub(
     epub,
     basename(paths.epubFile).replace(".epub", ""),
   )
-  await persistEpub(book.uuid, paths.epubFile)
-  await persistAudio(book.uuid, paths.audioFiles)
+
+  book = await updateBook(
+    book.uuid,
+    {},
+    {
+      ebook: { filepath: getInternalEpubFilepath(book) },
+      audiobook: { filepath: getInternalAudioDirectory(book) },
+    },
+  )
+
+  try {
+    await persistEpub(book, paths.epubFile)
+  } catch (e) {
+    if (e instanceof Error && "code" in e && e.code === "EEXIST") {
+      book = await updateBook(book.uuid, {
+        suffix: getDefaultSuffix(book.uuid),
+      })
+      await persistEpub(book, paths.epubFile)
+    }
+
+    throw e
+  }
+
+  await persistAudio(book, paths.audioFiles)
 
   return NextResponse.json(book)
 })

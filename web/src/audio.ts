@@ -9,10 +9,15 @@ import { promisify } from "util"
 
 const execPromise = promisify(exec)
 
-export const COVER_IMAGE_FILE_EXTENSIONS = [".jpeg", ".jpg", ".png"]
+export const COVER_IMAGE_FILE_EXTENSIONS = [".jpeg", ".jpg", ".png", ".svg"]
 export const MP3_FILE_EXTENSIONS = [".mp3"]
 export const MPEG4_FILE_EXTENSIONS = [".mp4", ".m4a", ".m4b", ".aac"]
 export const OPUS_FILE_EXTENSIONS = [".ogg", ".oga", ".opus"]
+export const AUDIO_FILE_EXTENSIONS = [
+  ...MP3_FILE_EXTENSIONS,
+  ...MPEG4_FILE_EXTENSIONS,
+  ...OPUS_FILE_EXTENSIONS,
+]
 
 type FfmpegTrackFormat = {
   format: {
@@ -77,13 +82,13 @@ type TrackInfo = {
  * @param ext The extension (or complete filename) to check
  * @returns Whether the file *may* contain audio
  */
-export function isAudioFile(ext: string): boolean {
+export function isAudioFile(filenameOrExt: string): boolean {
   // The mime-db package does not recognize m4b (jshttp/mime-db#357).
-  if (ext.endsWith(".m4b")) {
+  if (filenameOrExt.endsWith(".m4b")) {
     return true
   }
 
-  const mimetype = lookup(ext)
+  const mimetype = lookup(filenameOrExt)
   return mimetype
     ? mimetype.startsWith("audio") || mimetype.startsWith("video")
     : false

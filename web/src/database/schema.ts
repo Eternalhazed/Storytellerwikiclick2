@@ -77,6 +77,7 @@ export interface Book {
   publicationDate: string | null
   rating: number | null
   statusUuid: import("@/uuid").UUID
+  suffix: Generated<string>
   title: string
   updatedAt: Generated<string>
   uuid: Generated<import("@/uuid").UUID>
