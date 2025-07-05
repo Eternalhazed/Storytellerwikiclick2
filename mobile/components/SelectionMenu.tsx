@@ -4,7 +4,6 @@ import {
   TouchableOpacity,
   View,
   useWindowDimensions,
-  Linking,
 } from "react-native"
 import Clipboard from "@react-native-clipboard/clipboard"
 import uuid from "react-native-uuid"
@@ -15,7 +14,6 @@ import { TrashIcon } from "../icons/TrashIcon"
 import { HighlightColorPicker } from "./HighlightColorPicker"
 import { useColorTheme } from "../hooks/useColorTheme"
 import { CopyIcon } from "../icons/CopyIcon"
-import { WikipediaSearchIcon } from "../icons/WikipediaSearchIcon"
 import type { UUID } from "node:crypto"
 
 type Props = {
@@ -39,7 +37,7 @@ export function SelectionMenu({
   const { background } = useColorTheme()
   const dispatch = useAppDispatch()
 
-  const numIcons = existingHighlight ? 8 : 7
+  const numIcons = existingHighlight ? 7 : 6
   const panelWidth = numIcons * (24 + 16)
   const leftOffset = Math.max(
     16, // Minimum left padding
@@ -89,35 +87,6 @@ export function SelectionMenu({
           }}
         >
           <CopyIcon />
-        </Pressable>
-        <Pressable
-          style={styles.searchButton}
-          onPress={() => {
-            const text = (
-              existingHighlight?.locator ?? locator
-            ).text?.highlight?.toString() ?? ""
-            if (text) {
-              const query = encodeURIComponent(text)
-              const appUrl =
-                `wikipedia://en.wikipedia.org/wiki/Special:Search?search=${query}`
-              const webUrl =
-                `https://en.wikipedia.org/wiki/Special:Search?search=${query}`
-              Linking.canOpenURL(appUrl)
-                .then((supported) => {
-                  if (supported) {
-                    Linking.openURL(appUrl)
-                  } else {
-                    Linking.openURL(webUrl)
-                  }
-                })
-                .catch(() => {
-                  Linking.openURL(webUrl)
-                })
-            }
-            onClose()
-          }}
-        >
-          <WikipediaSearchIcon />
         </Pressable>
         {existingHighlight && (
           <Pressable
@@ -174,11 +143,6 @@ const styles = StyleSheet.create({
     borderColor: "#AAA",
   },
   copyButton: {
-    width: 24,
-    height: 24,
-    margin: 8,
-  },
-  searchButton: {
     width: 24,
     height: 24,
     margin: 8,
