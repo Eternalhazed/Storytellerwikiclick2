@@ -39,6 +39,23 @@ export function SelectionMenu({
   const { background } = useColorTheme()
   const dispatch = useAppDispatch()
 
+  async function openWikipediaSearch(text: string) {
+    const query = encodeURIComponent(text)
+    const appUrl =
+      `wikipedia://en.wikipedia.org/wiki/Special:Search?search=${query}`
+    const webUrl =
+      `https://en.wikipedia.org/wiki/Special:Search?search=${query}`
+    try {
+      if (await Linking.canOpenURL(appUrl)) {
+        await Linking.openURL(appUrl)
+      } else {
+        await Linking.openURL(webUrl)
+      }
+    } catch {
+      Linking.openURL(webUrl)
+    }
+  }
+
   const numIcons = existingHighlight ? 8 : 7
   const panelWidth = numIcons * (24 + 16)
   const leftOffset = Math.max(
@@ -97,22 +114,7 @@ export function SelectionMenu({
               existingHighlight?.locator ?? locator
             ).text?.highlight?.toString() ?? ""
             if (text) {
-              const query = encodeURIComponent(text)
-              const appUrl =
-                `wikipedia://en.wikipedia.org/wiki/Special:Search?search=${query}`
-              const webUrl =
-                `https://en.wikipedia.org/wiki/Special:Search?search=${query}`
-              Linking.canOpenURL(appUrl)
-                .then((supported) => {
-                  if (supported) {
-                    Linking.openURL(appUrl)
-                  } else {
-                    Linking.openURL(webUrl)
-                  }
-                })
-                .catch(() => {
-                  Linking.openURL(webUrl)
-                })
+              openWikipediaSearch(text)
             }
             onClose()
           }}
