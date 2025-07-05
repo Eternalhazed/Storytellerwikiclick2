@@ -19,7 +19,7 @@ import {
 import { writeMetadataToEpub } from "@/process/processEpub"
 import { UUID } from "@/uuid"
 import { isProcessing, isQueued } from "@/work/distributor"
-import { Epub } from "@smoores/epub"
+import { Epub } from "@smoores/epub/node"
 import { extension } from "mime-types"
 import { NextResponse } from "next/server"
 

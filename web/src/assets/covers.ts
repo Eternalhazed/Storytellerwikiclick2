@@ -2,7 +2,8 @@ import { readdir, readFile, rm, writeFile } from "node:fs/promises"
 import { basename, extname, join } from "node:path"
 import { UUID } from "@/uuid"
 import { BookWithRelations, getBookOrThrow } from "@/database/books"
-import { COVER_IMAGE_FILE_EXTENSIONS } from "@/audio"
+import { AUDIO_FILE_EXTENSIONS, COVER_IMAGE_FILE_EXTENSIONS } from "@/audio"
+import { parseFile, selectCover } from "music-metadata"
 
 export type AudioFile = {
   filename: string
@@ -13,6 +14,21 @@ export type AudioFile = {
 export type AudioIndex = {
   cover?: string
   processed_files?: AudioFile[]
+}
+
+export async function getFirstCoverImage(directory: string) {
+  const entries = await readdir(directory, { recursive: true })
+
+  const firstTrack = entries.find((entry) =>
+    AUDIO_FILE_EXTENSIONS.includes(extname(entry)),
+  )
+  if (!firstTrack) return null
+
+  const { common } = await parseFile(join(directory, firstTrack))
+  const coverImage = selectCover(common.picture)
+  if (!coverImage) return null
+
+  return coverImage.data
 }
 
 async function findValidAudioCoverFile(directory: string) {

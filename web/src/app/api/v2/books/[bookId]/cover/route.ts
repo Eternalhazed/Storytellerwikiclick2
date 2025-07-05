@@ -2,9 +2,8 @@ import { withHasPermission } from "@/auth/auth"
 import { getBook, getBookUuid } from "@/database/books"
 import { open } from "node:fs/promises"
 import { basename } from "node:path"
-import { Epub } from "@smoores/epub"
-import { getAudioCoverFilepath } from "@/assets/covers"
-import { getFirstCoverImage } from "@/process/processAudio"
+import { Epub } from "@smoores/epub/node"
+import { getAudioCoverFilepath, getFirstCoverImage } from "@/assets/covers"
 
 export const dynamic = "force-dynamic"
 
@@ -54,7 +53,7 @@ export const GET = withHasPermission<Params>("bookRead")(async (
     }
   }
 
-  const epubFilepath = book.ebook?.filepath
+  const epubFilepath = book.alignedBook?.filepath ?? book.ebook?.filepath
   if (!epubFilepath) return new Response(null, { status: 404 })
 
   const epub = await Epub.from(epubFilepath)

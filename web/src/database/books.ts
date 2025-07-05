@@ -8,7 +8,7 @@ import {
 import { BookEvents } from "@/events"
 import { DB } from "./schema"
 import { Insertable, Selectable, Updateable } from "kysely"
-import { Epub } from "@smoores/epub"
+import { Epub } from "@smoores/epub/node"
 import { NewAuthor } from "./authors"
 import { NewSeries } from "./series"
 import { syncRelations } from "./relations"
@@ -77,8 +77,13 @@ export type NewAudiobook = Insertable<DB["audiobook"]>
 export type Audiobook = Selectable<DB["audiobook"]>
 export type AudiobookUpdate = Updateable<DB["audiobook"]>
 
+export type NewAlignedBook = Insertable<DB["alignedBook"]>
+export type AlignedBook = Selectable<DB["alignedBook"]>
+export type AlignedBookUpdate = Updateable<DB["alignedBook"]>
+
 export type EbookRelation = Omit<NewEbook, "bookUuid">
 export type AudiobookRelation = Omit<NewAudiobook, "bookUuid">
+export type AlignedBookRelation = Omit<NewAlignedBook, "bookUuid">
 
 export type Book = Selectable<DB["book"]>
 export type NewBook = Insertable<DB["book"]>
@@ -87,8 +92,15 @@ export type BookUpdate = Updateable<DB["book"]>
 export async function createBookFromEpub(
   epub: Epub,
   fallbackTitle: string,
-  ebookFilepath?: string,
-  audiobookFilepath?: string,
+  {
+    bookUuid,
+    ebookFilepath,
+    audiobookFilepath,
+  }: {
+    bookUuid?: UUID
+    ebookFilepath?: string
+    audiobookFilepath?: string
+  } = {},
 ) {
   const title = await epub.getTitle()
   const authors = await epub.getCreators()
@@ -113,6 +125,7 @@ export async function createBookFromEpub(
 
   return await createBook(
     {
+      uuid: bookUuid,
       title: title ?? fallbackTitle,
       language: language?.toString() ?? null,
       alignedByStorytellerVersion: storytellerVersion?.value ?? null,
@@ -407,6 +420,10 @@ export async function deleteBook(bookUuid: UUID) {
 
   await db.deleteFrom("position").where("bookUuid", "=", bookUuid).execute()
 
+  await db.deleteFrom("alignedBook").where("bookUuid", "=", bookUuid).execute()
+  await db.deleteFrom("audiobook").where("bookUuid", "=", bookUuid).execute()
+  await db.deleteFrom("ebook").where("bookUuid", "=", bookUuid).execute()
+
   await db.deleteFrom("book").where("uuid", "=", bookUuid).execute()
 
   BookEvents.emit("message", {
@@ -426,6 +443,7 @@ export async function updateBook(
     tags?: string[]
     ebook?: EbookRelation
     audiobook?: AudiobookRelation
+    alignedBook?: AlignedBookRelation
   } = {},
 ) {
   if (update) {
@@ -643,6 +661,27 @@ export async function updateBook(
       await db
         .insertInto("audiobook")
         .values({ bookUuid: uuid, filepath: relations.audiobook.filepath })
+        .execute()
+    }
+  }
+
+  if (relations.alignedBook) {
+    const existing = await db
+      .selectFrom("alignedBook")
+      .select(["uuid"])
+      .where("bookUuid", "=", uuid)
+      .executeTakeFirst()
+
+    if (existing) {
+      await db
+        .updateTable("alignedBook")
+        .set({ filepath: relations.alignedBook.filepath })
+        .where("uuid", "=", existing.uuid)
+        .execute()
+    } else {
+      await db
+        .insertInto("alignedBook")
+        .values({ bookUuid: uuid, filepath: relations.alignedBook.filepath })
         .execute()
     }
   }

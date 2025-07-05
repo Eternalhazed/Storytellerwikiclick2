@@ -1,5 +1,5 @@
 import { describe, it } from "node:test"
-import { Epub, XmlElement } from "@smoores/epub"
+import { Epub, XmlElement } from "@smoores/epub/node"
 import { join } from "node:path"
 import { Synchronizer } from "../synchronizer"
 import transcription from "../../__fixtures__/transcriptions/mobydick_001_002_melville.json"

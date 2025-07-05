@@ -14,7 +14,6 @@ import { basename, dirname, extname, join } from "node:path"
 import { tmpdir } from "node:os"
 import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader } from "@zip.js/zip.js"
 import {
-  AUDIO_FILE_EXTENSIONS,
   COVER_IMAGE_FILE_EXTENSIONS,
   getTrackChapters,
   getTrackDuration,
@@ -38,21 +37,6 @@ import { AudioFile, persistCustomAudioCover } from "@/assets/covers"
 import { logger } from "@/logging"
 import { Book, BookWithRelations } from "@/database/books"
 import { getProcessedAudioFiles } from "@/assets/fs"
-
-export async function getFirstCoverImage(directory: string) {
-  const entries = await readdir(directory, { recursive: true })
-
-  const firstTrack = entries.find((entry) =>
-    AUDIO_FILE_EXTENSIONS.includes(extname(entry)),
-  )
-  if (!firstTrack) return null
-
-  const { common } = await parseFile(join(directory, firstTrack))
-  const coverImage = selectCover(common.picture)
-  if (!coverImage) return null
-
-  return coverImage.data
-}
 
 export async function extractCover(bookUuid: UUID, trackPath: string) {
   const { common } = await parseFile(trackPath)

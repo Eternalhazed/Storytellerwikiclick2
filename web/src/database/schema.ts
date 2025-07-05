@@ -28,10 +28,8 @@ export interface Account {
 }
 
 export interface AlignedBook {
-  audiobookUuid: string
   bookUuid: string
   createdAt: Generated<string>
-  ebookUuid: string
   filepath: string | null
   status: Generated<string>
   updatedAt: Generated<string>

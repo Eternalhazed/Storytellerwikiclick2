@@ -2,9 +2,8 @@ import { withHasPermission } from "@/auth/auth"
 import { getBook, getBookUuid } from "@/database/books"
 import { open } from "node:fs/promises"
 import { basename } from "node:path"
-import { Epub } from "@smoores/epub"
-import { getAudioCoverFilepath } from "@/assets/covers"
-import { getFirstCoverImage } from "@/process/processAudio"
+import { Epub } from "@smoores/epub/node"
+import { getAudioCoverFilepath, getFirstCoverImage } from "@/assets/covers"
 
 export const dynamic = "force-dynamic"
 

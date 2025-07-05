@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises"
 import { basename, dirname, parse, relative } from "node:path/posix"
 import memoize from "memoize"
-import { Epub, ManifestItem, ParsedXml } from "@smoores/epub"
+import { Epub, ManifestItem, ParsedXml } from "@smoores/epub/node"
 import { getTrackDuration } from "@/audio"
 import {
   SentenceRange,

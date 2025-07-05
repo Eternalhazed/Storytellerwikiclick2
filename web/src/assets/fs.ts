@@ -1,13 +1,16 @@
-import { Book, BookWithRelations } from "@/database/books"
+import { Book, BookWithRelations, updateBook } from "@/database/books"
 import {
+  getDefaultSuffix,
   getInternalBookDirectory,
+  getInternalEpubAlignedFilepath,
+  getInternalEpubFilepath,
   getInternalOriginalAudioFilepath,
   getProcessedAudioFilepath,
   getTranscriptionsFilepath,
 } from "./paths"
-import { copyFile, mkdir, readdir, rm, stat } from "node:fs/promises"
+import { mkdir, readdir, rename, rm, stat } from "node:fs/promises"
 import { isAudioFile } from "@/audio"
-import { dirname, basename } from "node:path"
+import { dirname } from "node:path"
 
 export async function getProcessedAudioFiles(book: Book) {
   const directory = getProcessedAudioFilepath(book)
@@ -16,28 +19,68 @@ export async function getProcessedAudioFiles(book: Book) {
   return entries.filter((path) => isAudioFile(path))
 }
 
-export async function persistEpub(book: Book, tmpPath: string) {
-  const filepath = getInternalBookDirectory(book)
+export async function persistEpub(
+  book: Book,
+  tmpPath: string,
+  aligned?: boolean,
+) {
+  const filepath = aligned
+    ? getInternalEpubAlignedFilepath(book)
+    : getInternalEpubFilepath(book)
+
+  try {
+    await mkdir(getInternalBookDirectory(book))
+  } catch (e) {
+    if (e instanceof Error && "code" in e && e.code === "EEXIST") {
+      book = await updateBook(book.uuid, {
+        suffix: getDefaultSuffix(book.uuid),
+      })
+      await persistEpub(book, tmpPath, aligned)
+      return
+    }
+
+    throw e
+  }
+
   const directory = dirname(filepath)
   await mkdir(directory, { recursive: true })
-  await copyFile(tmpPath, filepath)
-  await rm(tmpPath)
+  await rename(tmpPath, filepath)
+  await updateBook(book.uuid, null, {
+    ...(aligned
+      ? {
+          alignedBook: {
+            filepath,
+          },
+        }
+      : { ebook: { filepath } }),
+  })
 }
 
 export async function persistAudio(
   book: BookWithRelations,
-  audioPaths: string[],
+  tmpPath: string,
+  relativePath: string,
 ) {
-  await Promise.all(
-    audioPaths.map(async (path) => {
-      const filename = basename(path)
-      const filepath = getInternalOriginalAudioFilepath(book, filename)
-      const directory = dirname(filepath)
-      await mkdir(directory, { recursive: true })
-      await copyFile(path, filepath)
-      await rm(path)
-    }),
-  )
+  const filepath = getInternalOriginalAudioFilepath(book, relativePath)
+
+  try {
+    await mkdir(getInternalBookDirectory(book))
+  } catch (e) {
+    if (e instanceof Error && "code" in e && e.code === "EEXIST") {
+      book = await updateBook(book.uuid, {
+        suffix: getDefaultSuffix(book.uuid),
+      })
+      await persistAudio(book, tmpPath, relativePath)
+      return
+    }
+
+    throw e
+  }
+
+  const directory = getInternalOriginalAudioFilepath(book)
+  await mkdir(directory, { recursive: true })
+  await rename(tmpPath, filepath)
+  await updateBook(book.uuid, null, { audiobook: { filepath: directory } })
 }
 
 export async function originalEpubExists(book: BookWithRelations) {

@@ -5,6 +5,7 @@ import { ActionIcon, Button, Group, Modal, Stack, Tooltip } from "@mantine/core"
 import { IconTrash } from "@tabler/icons-react"
 import { useDisclosure } from "@mantine/hooks"
 import { useDeleteBookMutation } from "@/store/api"
+import { useRouter } from "next/navigation"
 
 type Props = {
   book: BookDetail
@@ -17,6 +18,8 @@ export function BookOptions({ book, aligned }: Props) {
   const permissions = usePermissions()
 
   const [deleteBook] = useDeleteBookMutation()
+
+  const router = useRouter()
 
   return (
     <>
@@ -35,8 +38,9 @@ export function BookOptions({ book, aligned }: Props) {
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                void deleteBook({ uuid: book.uuid })
+              onClick={async () => {
+                await deleteBook({ uuid: book.uuid })
+                router.back()
               }}
             >
               Delete

@@ -205,33 +205,28 @@ export default async function migrate() {
 
     try {
       const legacyEpubIndex = legacyPaths.getEpubIndexPath(book.uuid)
-      const newEpubIndex = paths.getInternalEpubIndexPath(book)
-      renameSync(legacyEpubIndex, newEpubIndex)
+      rmSync(legacyEpubIndex)
 
-      logger.info("Migrated ebook index file")
+      logger.info("Deleted ebook index file")
     } catch (e) {
       if (e instanceof Error && "code" in e && e.code === "ENOENT") {
         logger.info("Skipped ebook index file (missing)")
       } else {
-        logger.error(`Failed to migrate ebook index file`)
+        logger.error(`Failed to delete ebook index file`)
         logger.error(e)
       }
     }
 
     try {
       const legacyAudioIndex = legacyPaths.getAudioIndexPath(book.uuid)
-      const newAudioIndex = paths.getInternalOriginalAudioFilepath(
-        book,
-        ".storyteller-index.json",
-      )
-      renameSync(legacyAudioIndex, newAudioIndex)
+      rmSync(legacyAudioIndex)
 
-      logger.info("Migrated audio index file")
+      logger.info("Deleted audio index file")
     } catch (e) {
       if (e instanceof Error && "code" in e && e.code === "ENOENT") {
         logger.info("Skipped audio index file (missing)")
       } else {
-        logger.error(`Failed to migrate audio index file`)
+        logger.error(`Failed to delete audio index file`)
         logger.error(e)
       }
     }

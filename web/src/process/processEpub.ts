@@ -1,4 +1,4 @@
-import { Epub } from "@smoores/epub"
+import { Epub } from "@smoores/epub/node"
 import { BookWithRelations } from "@/database/books"
 import { extension, lookup } from "mime-types"
 

@@ -33,7 +33,7 @@ try {
 }
 
 export const db = new Kysely<DB>({
-  // log: ["error", "query"],
+  log: ["error", "query"],
   dialect: new SqliteDialect({ database: sqlite }),
   plugins: [
     new CamelCasePlugin(),

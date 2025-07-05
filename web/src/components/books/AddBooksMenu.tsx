@@ -3,6 +3,7 @@ import { Button, ButtonVariant, Menu } from "@mantine/core"
 import { IconBooks, IconBookUpload, IconCirclePlus } from "@tabler/icons-react"
 import { AddBooksModal } from "./modals/AddBooksModal"
 import { useState } from "react"
+import { UploadBooksModal } from "./modals/UploadBooksModal"
 
 interface Props {
   className?: string
@@ -12,16 +13,28 @@ interface Props {
 
 export function AddBooksMenu({ className, variant, collection }: Props) {
   const [isAddBooksModalOpen, setIsAddBooksModalOpen] = useState(false)
+  const [isUploadBooksModalOpen, setIsUploadBooksModalOpen] = useState(false)
 
   if (!collection) {
     return (
-      <Button
-        {...(className && { className })}
-        variant={variant ?? "light"}
-        leftSection={<IconBookUpload />}
-      >
-        Upload books
-      </Button>
+      <>
+        <UploadBooksModal
+          isOpen={isUploadBooksModalOpen}
+          onClose={() => {
+            setIsUploadBooksModalOpen(false)
+          }}
+        />
+        <Button
+          {...(className && { className })}
+          variant={variant ?? "light"}
+          leftSection={<IconBookUpload />}
+          onClick={() => {
+            setIsUploadBooksModalOpen(true)
+          }}
+        >
+          Upload books
+        </Button>
+      </>
     )
   }
 
@@ -31,6 +44,13 @@ export function AddBooksMenu({ className, variant, collection }: Props) {
         isOpen={isAddBooksModalOpen}
         onClose={() => {
           setIsAddBooksModalOpen(false)
+        }}
+        collection={collection}
+      />
+      <UploadBooksModal
+        isOpen={isUploadBooksModalOpen}
+        onClose={() => {
+          setIsUploadBooksModalOpen(false)
         }}
         collection={collection}
       />
@@ -46,7 +66,14 @@ export function AddBooksMenu({ className, variant, collection }: Props) {
         </Menu.Target>
 
         <Menu.Dropdown>
-          <Menu.Item leftSection={<IconBookUpload />}>Upload books</Menu.Item>
+          <Menu.Item
+            leftSection={<IconBookUpload />}
+            onClick={() => {
+              setIsUploadBooksModalOpen(true)
+            }}
+          >
+            Upload books
+          </Menu.Item>
           <Menu.Item
             leftSection={<IconBooks />}
             onClick={() => {

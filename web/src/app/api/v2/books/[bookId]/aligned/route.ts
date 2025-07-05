@@ -3,7 +3,7 @@ import { getBook, getBookUuid } from "@/database/books"
 import { FileHandle, open } from "node:fs/promises"
 import { NextResponse } from "next/server"
 import { createHash } from "node:crypto"
-import { Epub } from "@smoores/epub"
+import { Epub } from "@smoores/epub/node"
 import contentDisposition from "content-disposition"
 
 export const dynamic = "force-dynamic"

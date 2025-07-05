@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# yarn workspace @storyteller/web tsx src/database/migrate.ts
-dotenvx run --env-file=web/.env.local -- sqlite3 ${STORYTELLER_DATA_DIR}/storyteller.db .schema > schema.sql
+
+yarn workspace @storyteller/web db:dump-schema
 
 yarn prettier --write schema.sql
 
