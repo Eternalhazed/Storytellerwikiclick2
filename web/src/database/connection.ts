@@ -14,7 +14,10 @@ import { DB } from "./schema"
 import { BooleanPlugin } from "./plugins/booleanPlugin"
 import { DatePlugin } from "./plugins/datePlugin"
 
-const DATABASE_URL = join(DATA_DIR, "storyteller.db")
+const DATABASE_URL = join(
+  DATA_DIR,
+  process.env["STORYTELLER_DB_FILENAME"] ?? "storyteller.db",
+)
 
 const UUID_EXT_PATH = join(cwd(), "sqlite", "uuid.c")
 
@@ -30,7 +33,7 @@ try {
 }
 
 export const db = new Kysely<DB>({
-  // log: ["error", "query"],
+  log: ["error", "query"],
   dialect: new SqliteDialect({ database: sqlite }),
   plugins: [
     new CamelCasePlugin(),

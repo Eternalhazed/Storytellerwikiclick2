@@ -1,18 +1,14 @@
-import { UUID } from "@/uuid"
-import { extname } from "node:path"
-import { Epub } from "@smoores/epub"
-import { getEpubFilepath } from "@/assets/paths"
-import {
-  getCustomEpubCover,
-  getEpubCoverFilename,
-  getEpubCoverFilepath,
-  persistCustomEpubCover,
-} from "@/assets/covers"
-import { logger } from "@/logging"
+import { Epub } from "@smoores/epub/node"
 import { BookWithRelations } from "@/database/books"
+import { extension, lookup } from "mime-types"
 
-export async function readEpub(bookUuid: UUID) {
-  return Epub.from(getEpubFilepath(bookUuid))
+export async function readEpub(book: BookWithRelations) {
+  if (!book.ebook?.filepath) {
+    throw new Error(
+      `Cannot read EPUB for book ${book.title} (${book.id}): It has no associated ebook record`,
+    )
+  }
+  return Epub.from(book.ebook.filepath)
 }
 
 export async function getFullText(epub: Epub) {
@@ -23,44 +19,59 @@ export async function getFullText(epub: Epub) {
   return chapterTexts.join("\n")
 }
 
-export async function processEpub(bookUuid: UUID) {
-  const coverFilepath = await getEpubCoverFilepath(bookUuid)
-  if (coverFilepath) return
+interface WriteMetadataToEpubOptions {
+  includeAlignmentMetadata?: boolean
+  textCover?: File
+  audioCover?: File
+}
 
-  const epub = await readEpub(bookUuid)
+async function getAudioCoverItem(epub: Epub) {
+  const manifest = await epub.getManifest()
+  return Object.values(manifest).find((item) =>
+    item.properties?.includes("stoyteller:audio-cover-image"),
+  )
+}
 
-  try {
-    const coverImageItem = await epub.getCoverImageItem()
-    if (!coverImageItem) {
-      logger.info(
-        `Could not find cover image while processing EPUB file for book ${bookUuid}`,
-      )
-      return
-    }
-
-    const fileExtension = extname(coverImageItem.href)
-
-    const coverImage = await epub.readItemContents(coverImageItem.id)
-
-    await persistCustomEpubCover(bookUuid, `Cover${fileExtension}`, coverImage)
-  } finally {
-    await epub.close()
+async function setAudioCoverImage(epub: Epub, href: string, data: Uint8Array) {
+  const coverImageItem = await getAudioCoverItem(epub)
+  if (coverImageItem) {
+    await epub.removeManifestItem(coverImageItem.id)
   }
+  const mediaType = lookup(href)
+  if (!mediaType) {
+    throw new Error(`Invalid file extension for cover image: ${href}`)
+  }
+
+  await epub.addManifestItem(
+    {
+      id: "audio-cover-image",
+      href,
+      mediaType,
+      properties: ["storyteller:audio-cover-image"],
+    },
+    data,
+  )
 }
 
 export async function writeMetadataToEpub(
   book: BookWithRelations,
   epub: Epub,
-  { includeAlignmentMetadata }: { includeAlignmentMetadata?: boolean } = {},
+  {
+    includeAlignmentMetadata,
+    textCover,
+    audioCover,
+  }: WriteMetadataToEpubOptions = {},
 ) {
   await epub.setTitle(book.title)
   if (book.language) {
     await epub.setLanguage(new Intl.Locale(book.language))
   }
+
   const epubAuthors = await epub.getCreators()
   for (let i = 0; i < epubAuthors.length; i++) {
     await epub.removeCreator(i)
   }
+
   for (const author of book.authors) {
     await epub.addCreator({
       name: author.name,
@@ -68,13 +79,26 @@ export async function writeMetadataToEpub(
       role: author.role ?? "aut",
     })
   }
-  const epubCover = await getCustomEpubCover(book.uuid)
-  const epubCoverFilename = await getEpubCoverFilename(book.uuid)
-  if (epubCover) {
+
+  if (textCover) {
+    const ext = extension(textCover.type)
+    const arrayBuffer = await textCover.arrayBuffer()
+    const data = new Uint8Array(arrayBuffer)
+
     const prevCoverItem = await epub.getCoverImageItem()
-    await epub.setCoverImage(
-      prevCoverItem?.href ?? `images/${epubCoverFilename}`,
-      epubCover,
+    await epub.setCoverImage(prevCoverItem?.href ?? `images/cover${ext}`, data)
+  }
+
+  if (audioCover) {
+    const ext = extension(audioCover.type)
+    const arrayBuffer = await audioCover.arrayBuffer()
+    const data = new Uint8Array(arrayBuffer)
+
+    const prevCoverItem = await getAudioCoverItem(epub)
+    await setAudioCoverImage(
+      epub,
+      prevCoverItem?.href ?? `images/audio-cover${ext}`,
+      data,
     )
   }
 
@@ -104,10 +128,10 @@ export async function writeMetadataToEpub(
         value: book.alignedWith,
       })
     }
-
-    await epub.setPackageVocabularyPrefix(
-      "storyteller",
-      "https://storyteller-platform.gitlab.io/storyteller/docs/vocabulary",
-    )
   }
+
+  await epub.setPackageVocabularyPrefix(
+    "storyteller",
+    "https://storyteller-platform.gitlab.io/storyteller/docs/vocabulary",
+  )
 }
