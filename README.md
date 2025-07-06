@@ -28,6 +28,12 @@ interface, and the mobile apps. Together, these components allow you to take
 audiobooks and ebooks that you already own and automatically synchronize them,
 as well as read or listen to (or both!) the resulting synced books.
 
+### Cloning the repository
+
+This repo uses [Git LFS](https://git-lfs.com/) to store large test fixtures
+such as `moby-dick.epub`. After installing Git LFS, run `git lfs pull` once the
+repository is cloned so these files are downloaded correctly.
+
 ## Contributing
 
 Please take a look at our
